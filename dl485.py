@@ -20,8 +20,9 @@ import time
 import logging
 import math
 import json
-# import commentjson
-import jstyleson
+import re
+# from jsoncomment import JsonComment
+# import jstyleson
 
 class Log:
     def __init__(self, file='log.txt', logstate=0):
@@ -279,7 +280,11 @@ class Bus:
         """
         config = open(config_file, 'r')
         config = config.read()
-        self.config = jstyleson.loads(config)
+        config = re.sub(r'#.*\n', '\n', config)
+        config = re.sub(r'\\\n', '', config)
+        config = re.sub(r'//.*\n', '\n', config)
+        config = json.loads(config)
+        self.config = config
         
     def dictBoardIo(self):
         """

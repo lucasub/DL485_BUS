@@ -1,66 +1,66 @@
 // File di configurazione DL485
-/*
-    Tipo di dispositivi disponibili su Domoticz
-    "Air Quality"
-    "Alert"
-    "Barometer"
-    "Counter Incremental"
-    "Current/Ampere"7
-    "Current (Single)"
-    "Custom"
-    "Distance"
-    "Gas"
-    "Humidity"
-    "Illumination"
-    "kWh"
-    "Leaf Wetness"
-    "Percentage"
-    "Pressure"
-    "Rain"
-    "Selector Switch"
-    "Soil Moisture"
-    "Solar Radiation"
-    "Sound Level"
-    "Switch"
-    "Temperature"
-    "Temp+Hum"
-    "Temp+Hum+Baro"
-    "Text"
-    "Usage"
-    "UV"
-    "Visibility"
-    "Voltage"
-    "Waterflow"
-    "Wind"
-    "Wind+Temp+Chill"
-*/
 
-/*
-    Descrizione PLC
-    All'interno delle singole board è presente un PLC che può essere attivato tramite la funzione desiderata (es. toggle_on)
+// COMMENTI DEVONO INIZIARE CON // o #
+
+#   Tipo di dispositivi disponibili su Domoticz
+#    "Air Quality"
+#    "Alert"
+#    "Barometer"
+#    "Counter Incremental"
+#    "Current/Ampere"7
+#    "Current (Single)"
+#    "Custom"
+#    "Distance"
+#    "Gas"
+#    "Humidity"
+#    "Illumination"
+#    "kWh"
+#    "Leaf Wetness"
+#    "Percentage"
+#    "Pressure"
+#    "Rain"
+#    "Selector Switch"
+#    "Soil Moisture"
+#    "Solar Radiation"
+#    "Sound Level"
+#    "Switch"
+#    "Temperature"
+#    "Temp+Hum"
+#    "Temp+Hum+Baro"
+#    "Text"
+#    "Usage"
+#    "UV"
+#    "Visibility"
+#    "Voltage"
+#    "Waterflow"
+#    "Wind"
+#    "Wind+Temp+Chill"
+
+# Descrizione PLC
+# All'interno delle singole board è presente un PLC che può essere attivato tramite la funzione desiderata (es. toggle_on)
     
-    plc_function:       => Funzione associata al PLC relativa a quell'uscita
-        disable         => PLC disabilitato
-        equal           => funzione uguale. Ad esempio uscita = ingresso
-        and             => funzione AND
-        or              => funzione OR
-        xor             => funzione XOR
-        odd             => funzione dispari. Uscita a 1 se gli ingressi a 1 sono dispari
-        toggle_on       => fa il toggle sul fronte ON dell'ingresso
-        toggle_off      => fa il toggle sul fronte OFF dell'ingresso
-        toggle_on_off   => fa il toggle sul fronte OFF e ON dell'ingresso
-        timer           => timer uscita
+#    plc_function:       => Funzione associata al PLC relativa a quell'uscita
+#        disable         => PLC disabilitato
+#        equal           => funzione uguale. Ad esempio uscita = ingresso
+#        and             => funzione AND
+#        or              => funzione OR
+#        xor             => funzione XOR
+#        odd             => funzione dispari. Uscita a 1 se gli ingressi a 1 sono dispari
+#        toggle_on       => fa il toggle sul fronte ON dell'ingresso
+#        toggle_off      => fa il toggle sul fronte OFF dell'ingresso
+#        toggle_on_off   => fa il toggle sul fronte OFF e ON dell'ingresso
+#        timer           => timer uscita
         
-    inverted            => uscita negata
-        0               => non invertita
-        1               => invertita
-        *
+#    inverted            => uscita negata
+#        0               => non invertita
+#        1               => invertita
+#
     
-*/
+
 
 
 {
-    // Tipi di Board disponibili. Non toccare
+    # Tipi di Board disponibili. Non toccare
     "TYPEB":
     {
 
@@ -73,10 +73,10 @@
         "3": "dl485box"
     },
 
-    // Configurazione generale del BUS
+    # Configurazione generale del BUS
     "GENERAL":
     {
-        "bus_port": "/dev/ttyUSB0", // Porta seriale Raspberry PI
+        "bus_port": "/dev/ttyUSB0", # Porta seriale Raspberry PI
         "bus_baudrate": 9600, // Velocità BUS e seriale
         "max_board_address": 24, // Numero massimo di Board presenti sul BUS
         "board_address": 2 // ID assegnato a Raspberry. Deve avere l'ID della scheda collegata alla seriale di Raspberry PI +1
