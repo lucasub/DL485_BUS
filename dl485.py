@@ -356,7 +356,7 @@ class Bus:
         # pprint(self.mapiotype)
         pprint(self.mapproc)
 
-    def inverted(self, board_id, io_logic, value):
+    def make_inverted(self, board_id, io_logic, value):
         """
         Invert IO value
         """
@@ -424,6 +424,17 @@ class Bus:
                 # print()
                 return crc
 
+    def ADC_value(self, VIN, Rvcc, Rgnd):
+        """
+        Dato il valore della tensione e le resistenze del partitore, ricavo la tensione in ingresso ADC del micro
+        """
+        try:
+            value = VIN / (Rvcc + Rgnd) * Rgnd *930
+            return int(value)
+        except:
+            print("ERROR ADC_value", VIN, Rvcc, Rgnd)
+            return 0
+
     def calculate(self, board_id, io_logic, value):
         """
         Ritorna il valore calcolato a seconda del dispositivo connesso:
@@ -470,7 +481,7 @@ class Bus:
                 Rvcc = self.mapiotype[board_id][io_logic]['Rvcc']
                 Rgnd = self.mapiotype[board_id][io_logic]['Rgnd']
                 try:
-                    value = (value[0] + (value[1] * 128)) * (Rvcc + Rgnd) / (Rgnd * 930)
+                    value = (value[0] + (value[1] * 256)) * (Rvcc + Rgnd) / (Rgnd * 930)
                     return round(value, 1)
                 except:
                     print("Analog Error: Value:", value)
@@ -776,6 +787,13 @@ class Bus:
         Init IO of board (read configuration in EEPROM)
         """
         data = [self.BOARD_ADDRESS, self.code['CR_INIT_SINGOLO_IO'], board_id, io_logic]
+        return data
+
+    def ping(self):
+        """
+        Make Ping
+        """
+        data = [self.BOARD_ADDRESS]
         return data
 
     def enableSerial(self, board_id, speed):
@@ -1094,6 +1112,7 @@ class Bus:
                         # 7 TOGGLE_OFF -> su fronte OFF
                         # 8 TOGGLE_ON_OFF su fronte ON OFF
                         # 9 TIMER
+                        # 30 POWER_ON => Uscita per comandare il rele di reset alimentazione RAPBERRY quando non risponde sulla seriale per un certo tempo. 
                         # OR 128 = uscita negata
                         
                         # Ogni uscita con funzione associata ad ingressi digitali puo' avere al massimo 8 ingressi
@@ -1102,9 +1121,26 @@ class Bus:
                         """
                         OFFSET 8: codice funzione
                         """
-                        byte8 = 0 if not 'plc_function' in board.get(b) or board.get(b)['plc_function'] == 'disable' else int(board.get(b)['plc_function'])
+                        plc_function =  {
+                            'disable': 0,
+                            
+                            'power_on': 30,
+                        }
+                        
+                        byte8 = 0 if not 'plc_function' in board.get(b) or board.get(b)['plc_function'] == 'disable' else board.get(b)['plc_function']
+                        plc_params = 0 if not 'plc_params' in board.get(b) else board.get(b)['plc_params']
                         plc = []
                         if byte8:
+                            message_conf_app.append(plc_function[byte8])
+                            
+                            if byte8 == 'power_on':
+                                # print("plc_params", plc_params, float(plc_params[3]), int(plc_params[4]), int(plc_params[5])) 
+                                value_dac_in = self.ADC_value(float(plc_params[3]), int(plc_params[4]), int(plc_params[5]))
+                                plc.extend((int(plc_params[0]), int(plc_params[1]) & 255, int(plc_params[1]) >> 8, int(plc_params[2]) & 255, int(plc_params[2]) >> 8, value_dac_in & 255, value_dac_in >> 8 ))
+                                print("POWER_ON data:", plc)
+                                
+                            else:
+                            
                                 message_conf_app.append(byte8)  # Byte 8:  PLC
                         
                                 # OFFSET 31: BYTE con NEGAZIONE ingressi
@@ -1149,19 +1185,19 @@ class Bus:
                                 # Byte: Tempo OFF LS
                                 # Byte: Tempo OFF MS
                                 
-                                plclen = len(plc)
-                                plc.reverse()
-                                
-                                plc_EE_start = (io_logic * 32) + 32 - plclen 
-                                
-                                plc_eels = plc_EE_start & 127  # Indirizzo EE ls
-                                plc_eems = plc_EE_start >> 7  # Indirizzo EE ms
-                                
-                                
-                                print("PLC_EE:", idbus, plc_eels, plc_eems, plc)
-                                plc_data = self.writeEE(idbus, plc_eels, plc_eems, plc)
-                                print("PLC_DATA:", plc_data)
-                                msg.append(plc_data)
+                            plclen = len(plc)
+                            plc.reverse()
+                            
+                            plc_EE_start = (io_logic * 32) + 32 - plclen 
+                            
+                            plc_eels = plc_EE_start & 127  # Indirizzo EE ls
+                            plc_eems = plc_EE_start >> 7  # Indirizzo EE ms
+                            
+                            
+                            print("PLC_EE:", idbus, plc_eels, plc_eems, plc)
+                            plc_data = self.writeEE(idbus, plc_eels, plc_eems, plc)
+                            print("PLC_DATA:", plc_data)
+                            msg.append(plc_data)
                                 
                         
                         # print("TRAMA CONFIGURAZIONE:             ", message_conf_app)
@@ -1256,7 +1292,7 @@ if __name__ == '__main__':
     """ LOOP """
     oldtime = time.time() - 10  # init oldtime per stampe dizionario con i/o per stampa subito al primo loop
 
-    ping = 0
+    ping = b.ping()
     while 1:
         nowtime = int(time.time())
         RXbyte = ser.read()
@@ -1314,6 +1350,9 @@ if __name__ == '__main__':
 
             if nowtime - oldtime > 2:
                 oldtime = nowtime
+                
+                print("PING:", ping)
+                TXmsg.append(ping)
 
                 # TXmsg.append(b.readEE(3, 32, 0, 5))  # Read EEPROM
                 # TXmsg.append(b.getTypeBoard(5))  # Read Board Type

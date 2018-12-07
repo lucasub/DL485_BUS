@@ -7,7 +7,7 @@
 #    "Alert"
 #    "Barometer"
 #    "Counter Incremental"
-#    "Current/Ampere"7
+#    "Current/Ampere"
 #    "Current (Single)"
 #    "Custom"
 #    "Distance"
@@ -40,16 +40,17 @@
 # All'interno delle singole board è presente un PLC che può essere attivato tramite la funzione desiderata (es. toggle_on)
     
 #    plc_function:       => Funzione associata al PLC relativa a quell'uscita
-#        disable         => PLC disabilitato
-#        equal           => funzione uguale. Ad esempio uscita = ingresso
-#        and             => funzione AND
-#        or              => funzione OR
-#        xor             => funzione XOR
-#        odd             => funzione dispari. Uscita a 1 se gli ingressi a 1 sono dispari
-#        toggle_on       => fa il toggle sul fronte ON dell'ingresso
-#        toggle_off      => fa il toggle sul fronte OFF dell'ingresso
-#        toggle_on_off   => fa il toggle sul fronte OFF e ON dell'ingresso
-#        timer           => timer uscita
+#       disable         => PLC disabilitato
+#       equal           => funzione uguale. Ad esempio uscita = ingresso
+#       and             => funzione AND
+#       or              => funzione OR
+#       xor             => funzione XOR
+#       odd             => funzione dispari. Uscita a 1 se gli ingressi a 1 sono dispari
+#       toggle_on       => fa il toggle sul fronte ON dell'ingresso
+#       toggle_off      => fa il toggle sul fronte OFF dell'ingresso
+#       toggle_on_off   => fa il toggle sul fronte OFF e ON dell'ingresso
+#       timer           => timer uscita
+#       power_on        => Uscita per comandare il rele di reset alimentazione RAPBERRY quando non risponde sulla seriale per un certo tempo.      
         
 #    inverted            => uscita negata
 #        0               => non invertita
@@ -88,7 +89,7 @@
         // Configurazione generale della BOARD
         "GENERAL":
         {
-            "name": "Caldaia", // Nome della BOARD
+            "name": "Prova test", // Nome della BOARD
             "boardtype": 2, // Tipo di Board: Vedi TYPEB
             "enable": 0 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
         },
@@ -104,7 +105,7 @@
             "time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
             "Rgnd": 470, // Valore resistenza posta tra IO e 0V.
-            "enable": 0, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "name": "Vin", // Nome che verrà riportato su DOMOTICZ
             "description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Voltage" // Tipo dispositivo Domoticz
@@ -116,7 +117,7 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 0,
+            "enable": 1,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
@@ -127,7 +128,7 @@
             "io_logic": 10,
             "io_type": "i2c",
             "time_refresh": 50,
-            "enable": 1,
+            "enable": 0,
             "device_name": "AM2320",
             "address": "0xB8",
             "name": "AM2320",
@@ -147,7 +148,7 @@
             "n_refresh_off": 1,
             "inverted": 0,
             "function": "toggle",
-            "enable": 1,
+            "enable": 0,
             "name": "IN1",
             "description": "Pulsante Luce 1",
             "dtype": "Switch"
@@ -163,7 +164,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 1,
+            "enable": 0,
             "name": "IN2",
             "description": "Pulsante Luce 2",
             "dtype": "Switch"
@@ -179,7 +180,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 1,
+            "enable": 0,
             "name": "IN3",
             "description": "Pulsante Luce 3",
             "dtype": "Switch"
@@ -195,7 +196,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 1,
+            "enable": 0,
             "name": "IN4",
             "description": "Pulsante Luce 4",
             "dtype": "Switch"
@@ -214,7 +215,7 @@
             "n_refresh_off": 1,
             "linked_board_id_io_logic": ["3-3", "3-4"],
             "linked_proc": "or",
-            "enable": 1,
+            "enable": 0,
             "name": "RELE1",
             "description": "Uscita rele1",
             "dtype": "Switch"
@@ -233,7 +234,7 @@
             "n_refresh_off": 1,
             "linked_board_id_io_logic": ["3-3", "3-4"],
             "linked_proc": "or",
-            "enable": 1,
+            "enable": 0,
 
             "name": "RELE2",
             "description": "Uscita rele2",
@@ -253,7 +254,7 @@
             "n_refresh_off": 1,
             "linked_board_id_io_logic": ["3-3", "3-4"],
             "linked_proc": "or",
-            "enable": 1,
+            "enable": 0,
             "name": "RELE3",
             "description": "Uscita rele3",
             "dtype": "Switch"
@@ -445,7 +446,7 @@
         {
             "name": "Board 5",
             "boardtype": 1,
-            "enable": 1
+            "enable": 0
         },
 
         "PD4":
@@ -726,8 +727,68 @@
         }
 
 
-    }
+    },
+    
+    "BOARD1":
+    {
+        "GENERAL":
+        {
+            "name": "Board 1",
+            "boardtype": 1,
+            "enable": 1
+        },
+        
+        "VIN":
+        {
+            "io_logic": 1,
+            "direction": "input",
+            "io_type": "analog",
+            "default_startup_value": 1,
+            "pullup": 0,
+            "filter": 127,
+            "time_refresh": 600,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "enable": 1,
+            "Rvcc": 12000,
+            "Rgnd": 470,
+            "name": "VIN",
+            "description": "Tensione ingresso Board 4",
+            "dtype": "Voltage"
+        },
 
+      "TEMP_ATMEGA":
+        {
+            "io_logic": 2,
+            "direction": "input",
+            "io_type": "temp_atmega",
+            "time_refresh": 600,
+            "enable": 1,
+            "name": "TEMP_ATMEGA",
+            "description": "Temperatura Board ATMEGA328PB",
+            "dtype": "Temperature"
+        },
+
+        "PD4":
+        {
+            "io_logic": 3,
+            "direction": "output",
+            "io_type": "digital",
+            "default_startup_value": 0,
+            "inverted": 0,
+            "filter": 127,
+            "time_refresh": 16383,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "plc_function": "power_on",
+            "plc_params": ["1", "100", "30", "12.8", "12000", "470"],
+            "enable": 1,
+            "name": "OUT RESET",
+            "description": "Uscita RELE RESET RASPBERRY",
+            "dtype": "Switch"
+        }
+
+    }
 
 
 }
