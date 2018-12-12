@@ -7,12 +7,13 @@ Class protocol DL485
 import sys
 import os
 
-if os.getcwd() == "/home/pi/danbus/DL485":
-    import arduinoserial
-if os.getcwd() == "/home/pi/danbus/DLSERIAL":
-    import arduinoserial
-if os.getcwd() == "/home/pi/domoticz/plugin/DL485-serial":
-    import arduinoserial
+print("Working PATH:", os.getcwd())
+# if os.getcwd() == "/home/pi/danbus/DL485":
+    # import arduinoserial
+# if os.getcwd() == "/home/pi/danbus/DLSERIAL":
+    # import arduinoserial
+# if os.getcwd() == "/home/pi/domoticz/plugin/DL485-serial":
+    # import arduinoserial
 import arduinoserial
 
 from pprint import pprint
@@ -267,6 +268,8 @@ class Bus:
         self.mapiotype = {}  # Tipi di IO disponibili
         self.mapproc = {}  # Procedure associate agli ingressi verso le uscite
         self.logstate = 0
+        self.poweroff_voltage_n = 0  # Time to make shutdown for unvervoltage limit
+        self.poweroff_voltage_limit = 10
 
     # def getConfig(self, config_file="config.txt"):
     #     """
@@ -338,23 +341,23 @@ class Bus:
                             'only_fronte_on': int(self.config[b][bb]['only_fronte_on']) if 'only_fronte_on' in self.config[b][bb] else 0,
                             'only_fronte_off': int(self.config[b][bb]['only_fronte_off']) if 'only_fronte_off' in self.config[b][bb] else 0,
                             'function': self.config[b][bb]['function'] if 'function' in self.config[b][bb] else 0,
-                            'linked_board_id_io_logic': self.config[b][bb]['linked_board_id_io_logic'] if 'linked_board_id_io_logic' in self.config[b][bb] else [],
-
+                            'plc_linked_board_id_io_logic': self.config[b][bb]['plc_linked_board_id_io_logic'] if 'plc_linked_board_id_io_logic' in self.config[b][bb] else [],
+                            'default_startup_filter_value': int(self.config[b][bb]['default_startup_filter_value']) if 'default_startup_filter_value' in self.config[b][bb] else 0,
                         }
 
-                        linked_board_id_io_logic = self.config[b][bb]['linked_board_id_io_logic'] if 'linked_board_id_io_logic' in self.config[b][bb] else [],
+                        plc_linked_board_id_io_logic = self.config[b][bb]['plc_linked_board_id_io_logic'] if 'plc_linked_board_id_io_logic' in self.config[b][bb] else [],
                         linked_proc = self.config[b][bb]['linked_proc'] if 'linked_proc' in self.config[b][bb] else [],
 
 
-                        if linked_board_id_io_logic:
-                            # print(linked_board_id_io_logic, linked_board_id_io_logic[0], type(linked_board_id_io_logic[0]))
-                            for x in linked_board_id_io_logic[0]:
+                        if plc_linked_board_id_io_logic:
+                            # print(plc_linked_board_id_io_logic, plc_linked_board_id_io_logic[0], type(plc_linked_board_id_io_logic[0]))
+                            for x in plc_linked_board_id_io_logic[0]:
                                 if not x in self.mapproc:
                                     self.mapproc[x] = {}
                                 self.mapproc[x]["%s-%s" %(idbus, io_logic)] = {'linked_proc': linked_proc[0]}
 
         # pprint(self.mapiotype)
-        pprint(self.mapproc)
+        # pprint(self.mapproc)
 
     def make_inverted(self, board_id, io_logic, value):
         """
@@ -434,6 +437,29 @@ class Bus:
         except:
             print("ERROR ADC_value", VIN, Rvcc, Rgnd)
             return 0
+            
+    def voltageLimit(self, board_id, io_logic, value):
+        """
+        
+        """
+        poweroff_voltage = 0 if not 'poweroff_voltage' in self.config.get('GENERAL') else float(self.config.get('GENERAL')['poweroff_voltage'])  # Read if need shutdown below the  voltage limit
+        if poweroff_voltage:
+            poweroff_board_id = 0 if not 'poweroff_board_id' in self.config.get('GENERAL') else int(self.config.get('GENERAL')['poweroff_board_id'])  # Read board_id to for shutdown voltage limit
+            poweroff_io_logic = 0 if not 'poweroff_io_logic' in self.config.get('GENERAL') else int(self.config.get('GENERAL')['poweroff_io_logic'])  # Read io_logic to for shutdown voltage limit    
+            # print("poweroff ===>>>> Voff:%s  Voltage:%s, B.ID:%s, IO:%s" %(poweroff_voltage, value, poweroff_board_id, poweroff_io_logic))
+            # print("board_id:%s  io_logic:%s" %(board_id, io_logic))
+            if board_id == poweroff_board_id and io_logic == poweroff_io_logic:
+                if value < poweroff_voltage and value > 0:
+                    self.poweroff_voltage_n += 1
+                    print("************ Make SHUTDOWN OK ************* Count:%s LIMIT:%s" %(self.poweroff_voltage_n, self.poweroff_voltage_limit))
+                    if self.poweroff_voltage_n  >= 10:
+                        pass
+                        self.shutdownRequest()
+                else:
+                    if self.poweroff_voltage_n > 0:
+                        self.poweroff_voltage_n -= 1
+                    print("************ Make SHUTDOWN NO ************* Count:%s LIMIT:%s" %(self.poweroff_voltage_n, self.poweroff_voltage_limit))
+
 
     def calculate(self, board_id, io_logic, value):
         """
@@ -471,6 +497,7 @@ class Bus:
                 if self.mapiotype[board_id][io_logic]['device_name'] == 'AM2320':
                     hum = (value[2] * 256 + value[3]) / 10.0
                     temp = (value[4] * 256 + value[5]) / 10.0
+                    # print("AM2320", hum, temp)
                     return [temp, hum]
 
             elif self.mapiotype[board_id][io_logic]['io_type'] == 'temp_atmega':
@@ -478,14 +505,18 @@ class Bus:
                 return round(value, 1)
 
             elif self.mapiotype[board_id][io_logic]['io_type'] == 'analog':
-                Rvcc = self.mapiotype[board_id][io_logic]['Rvcc']
+                Rvcc = self.mapiotype[board_id][io_logic]['Rvcc'] 
                 Rgnd = self.mapiotype[board_id][io_logic]['Rgnd']
+                
                 try:
-                    value = (value[0] + (value[1] * 256)) * (Rvcc + Rgnd) / (Rgnd * 930)
-                    return round(value, 1)
+                    value = round((value[0] + (value[1] * 256)) * (Rvcc + Rgnd) / (Rgnd * 930), 1)
                 except:
                     print("Analog Error: Value:", value)
                     return 0
+                    
+                
+                return value
+                
 
             elif self.mapiotype[board_id][io_logic]['io_type'] == 'digital':
                 # b0: dato filtrato
@@ -545,7 +576,7 @@ class Bus:
         """
         return ['{:02X} '.format(a) for a in msg]
 
-    def ser(self, port='/dev/ttyUSB0', baudrate=57600):
+    def ser(self, port='/dev/ttyAMA0', baudrate=9600):
         """
         Instance of serial
         """
@@ -671,6 +702,14 @@ class Bus:
             self.crctrasm = self.calccrc(txapp1, self.crctrasm)
         bytedatrasm.append((self.crctrasm & 0x0f) | (self.crctrasm & 8)*2 | (self.crctrasm & 0x38 ^ 8)*4)
         return bytedatrasm
+
+    def shutdownRequest(self):
+        """
+        Command poweroff Domoticz: ex. when battery is low
+        """
+        os.system("nohup sudo /home/pi/domocontrol/shutdown.sh -h now &")  # Poweroff Domoticz and then raspberry
+        # os.system("nohup sudo shutdown -h now &")
+
 
     def boardReboot(self, board_id):
         """
@@ -1055,6 +1094,7 @@ class Bus:
 
                         if direction == 'input':
                             byte2 = 0 if not 'pullup' in board.get(b) else int(board.get(b)['pullup'])
+                            # byte2 = 0 if not 'default_startup_filter_value' in board.get(b) else int(board.get(b)['default_startup_filter_value']) | 2
                             byte3 = 0
                         elif direction == 'output':
                             default_startup_value = int(board.get(b)['default_startup_value'])
@@ -1100,6 +1140,12 @@ class Bus:
                         message_conf_app.append(byte5)  # Byte 5: rinfresco periodico ls
                         message_conf_app.append(byte6)  # Byte 6: rinfresco periodico ms
                         message_conf_app.append(byte7)  # Byte 7:  Filtro
+                       
+                       # print("TRAMA CONFIGURAZIONE:             ", message_conf_app)
+                        msg.append(message_conf_app)
+                        # msg.append(self.initIO(idbus, io_logic))  # iNIt io
+                       
+                       
                         
                         # Funzioni PLC:
                         # 0 DISABLE -> se non si usa il PLC
@@ -1123,69 +1169,115 @@ class Bus:
                         """
                         plc_function =  {
                             'disable': 0,
-                            
+                            'equal': 1,
+                            'and': 2,
+                            'nand': 2 | 128,
+                            'or': 3,
+                            'nor': 3 | 128,
+                            'xor': 4,
+                            'nxor': 4| 128,
+                            'odd': 5,
+                            'even': 5 | 128,
+                            'toggle_on': 6,
+                            'toggle_off': 7,
+                            'toggle_on_off': 8,
+                            'timer': 9,
+                            'ntimer': 9 | 128,
+                            'autostart_timer': 10,
                             'power_on': 30,
                         }
                         
-                        byte8 = 0 if not 'plc_function' in board.get(b) or board.get(b)['plc_function'] == 'disable' else board.get(b)['plc_function']
+                        pprint(board.get(b))
+                        byte8 = 'disable' if not 'plc_function' in board.get(b) or board.get(b)['plc_function'] == 'disable' else board.get(b)['plc_function']
+                        # print("PLC_FUNCTION:************************", plc_function[byte8], byte8)
+                        message_conf_app.append(plc_function[byte8])
+                        
                         plc_params = 0 if not 'plc_params' in board.get(b) else board.get(b)['plc_params']
                         plc = []
-                        if byte8:
-                            message_conf_app.append(plc_function[byte8])
+                        if byte8 != "disable":
+                            
                             
                             if byte8 == 'power_on':
                                 # print("plc_params", plc_params, float(plc_params[3]), int(plc_params[4]), int(plc_params[5])) 
                                 value_dac_in = self.ADC_value(float(plc_params[3]), int(plc_params[4]), int(plc_params[5]))
                                 plc.extend((int(plc_params[0]), int(plc_params[1]) & 255, int(plc_params[1]) >> 8, int(plc_params[2]) & 255, int(plc_params[2]) >> 8, value_dac_in & 255, value_dac_in >> 8 ))
-                                print("POWER_ON data:", plc)
+                                # print("POWER_ON data:", byte8, value_dac_in, plc)
                                 
-                            else:
-                            
-                                message_conf_app.append(byte8)  # Byte 8:  PLC
+                            else:  # Funzione PLC
+                                
+                                plc.append(0)  # OFFSET 31: BYTE con NEGAZIONE ingressi
+                                plc.append(0)  # OFFSET 30: BYTE PRESET valore default prima che arrivino i dati dalla rete
                         
-                                # OFFSET 31: BYTE con NEGAZIONE ingressi
-                                plc.append(0)
-                        
-                                # OFFSET 30: BYTE PRESET valore default prima che arrivino i dati dalla rete
-                                plc.append(0)
-                        
-                                # OFFSET 29: Numero ingressi per la funzione PLC
-                                plc.append(1)
-                        
-                                linked_board_id_io_logic = [] if not 'linked_board_id_io_logic' in board.get(b) else board.get(b)['linked_board_id_io_logic']
-                                if linked_board_id_io_logic:
-                                    for plc_bio in linked_board_id_io_logic:
+                                plc_linked_board_id_io_logic = [] if not 'plc_linked_board_id_io_logic' in board.get(b) else board.get(b)['plc_linked_board_id_io_logic']
+                                plc.append(len(plc_linked_board_id_io_logic))  # OFFSET 29: Numero ingressi per la funzione PLC
+                                if plc_linked_board_id_io_logic:
+                                    for plc_bio in plc_linked_board_id_io_logic:
                                         plc_bio = plc_bio.split("-")
-                                        # OFFSET 28: BOARD_ID
-                                        plc.append(int(plc_bio[0]))
-                                        # OFFSET 27: IO_LOGICO
-                                        plc.append(int(plc_bio[1]))
-                                        print("====>>>>PLB BIO:", plc_bio)
+                                        plc.append(int(plc_bio[0]))  # OFFSET 28: BOARD_ID
+                                        plc.append(int(plc_bio[1]))  # OFFSET 27: IO_LOGICO
                                         
                                 else:
                                     print("BOARD_ID and IO_LOGIC not defined on CONFIGURATION File")
+                             
+                                if  byte8 == "timer" or byte8 == "autostart_timer":          
+                                    # Se timer, dopo elenco di BOARD_ID e IO_LOGIC, seguono questi parametri:
+                                    # Modo TIMER:   b0: innesca su fronte ON
+                                    #               b1: innesca su fronte OFF
+                                    #               b2: innesco permanente con ingresso a 1
+                                    #               b3: innesco permanente con ingresso a 0
+                                    #               b4: se 1 considera innesco se arriva con timer già innescato
+                                    #               b5: se 1 somma tempo ON a tempo residuo timer ad ogni innesco sui fronti. Se 0 risetta il tempo timer
+                                    #               b6 e b7: 0 0 centesimi di secondo
+                                    #               b6 e b7: 1 0 decimi di secondo
+                                    #               b6 e b7: 0 1 secondi
+                                    #               b6 e b7: 1 1 2.5 secondi
+                                    # Byte: numero massimo di commutazioni. 0=infinito
+                                    # Byte: Tempo ON LS
+                                    # Byte: Tempo ON MS
+                                    # Byte: Tempo OFF LS
+                                    # Byte: Tempo OFF MS
+
+                                    plc_mode_timer = 0 if not 'plc_mode_timer' in board.get(b) else int(board.get(b)['plc_mode_timer'])
+                                    plc.append(plc_mode_timer)
+                                    
+                                    plc_timer_n_transitions = 0 if not 'plc_timer_n_transitions' in board.get(b) else int(board.get(b)['plc_timer_n_transitions'])
+                                    plc.append(plc_timer_n_transitions)
+                                    
+                                    plc_time_on = 0 if not 'plc_time_on' in board.get(b) else int(board.get(b)['plc_time_on'])
+                                    plc.append(plc_time_on & 255)
+                                    plc.append(plc_time_on >> 8)
+                                    
+                                    plc_time_off = 0 if not 'plc_time_off' in board.get(b) else int(board.get(b)['plc_time_off'])
+                                    plc.append(plc_time_off & 255)
+                                    plc.append(plc_time_off >> 8)
+                                
+                                elif byte8 == "equal":
+                                    
+                                    plc_time_unit = '1' if not 'plc_time_unit' in board.get(b) else board.get(b)['plc_time_unit']
+                                    
+                                    # Unità di tempo
+                                    if plc_time_unit == "1":
+                                        plc.append(0x80) # Modo timer
+                                    elif plc_time_unit == "0.1":
+                                        plc.append(0x40) # Modo timer
+                                    elif plc_time_unit == "0.01":  # Centesimi                                      
+                                        plc.append(0) # Modo timer
+                                    elif plc_time_unit == "2.5":                                        
+                                        plc.append(0xC0) # Modo timer
                                         
-                                
-                        
-                                #.....
-                                # Se timer, dopo elenco di BOARD_ID e IO_LOGIC, seguono questi parametri:
-                                # Modo TIMER:   b0: innesca su fronte ON
-                                #               b1: innesca su fronte OFF
-                                #               b2: innesco permanente con ingresso a 1
-                                #               b3: innesco permanente con ingresso a 0
-                                #               b4: innesco se timer già innescato
-                                #               b5: somma tempo a timer ad ogni innesco sui fronti
-                                #               b6 e b7: 0 0 centesimi di secondo
-                                #               b6 e b7: 1 0 decimi di secondo
-                                #               b6 e b7: 0 1 secondi
-                                #               b6 e b7: 1 1 2.5 secondi a unità
-                                # Byte: numero massimo di commutazioni. 0=infinito
-                                # Byte: Tempo ON LS
-                                # Byte: Tempo ON MS
-                                # Byte: Tempo OFF LS
-                                # Byte: Tempo OFF MS
-                                
+                                    plc.append(0) # Numero massimo di coomutazioni (ignorato)
+                                    
+                                    plc_delay_on_off = 0 if not 'plc_delay_on_off' in board.get(b) else int(board.get(b)['plc_delay_on_off'])
+                                    plc.append(plc_delay_on_off & 0xff)
+                                    plc.append(plc_delay_on_off >> 8)
+                                    
+                                    plc_delay_off_on = 0 if not 'plc_delay_off_on' in board.get(b) else int(board.get(b)['plc_delay_off_on'])
+                                    plc.append(plc_delay_off_on & 0xff)
+                                    plc.append(plc_delay_off_on >> 8)
+                                    
+                                   
                             plclen = len(plc)
+                            print("CONFIGURAZIONE PLC =======>>>>>: ", plc)
                             plc.reverse()
                             
                             plc_EE_start = (io_logic * 32) + 32 - plclen 
@@ -1200,9 +1292,7 @@ class Bus:
                             msg.append(plc_data)
                                 
                         
-                        # print("TRAMA CONFIGURAZIONE:             ", message_conf_app)
-                        msg.append(message_conf_app)
-                        # msg.append(self.initIO(idbus, io_logic))  # iNIt io
+                        
 
                         # Configurazione relativa ai sensori I2C e OneWire
                         if io_type == 'i2c':
@@ -1220,10 +1310,13 @@ class Bus:
 
                             elif b == 'AM2320':
                                 print("CONFIGURAZIONE AM2320")
-                                msg.append(self.writeEE(idbus, eels + 10, eems, [2 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0xb8]))  # 3|128: 128 per concatenare con prg. successivo), 32 reset +
-                                msg.append(self.writeEE(idbus, eels + 13, eems, [5 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'],  3, 0xb8, 0x03, 0x00, 0x04]))
-                                # FLAG PAUSA: aggiungere prima del byte opzioni 1 byte (potrebbe essere anche 2 byte a 7 bit) che indica la pausa in decine di uS
-                                msg.append(self.writeEE(idbus, eels + 19, eems, [3 | self.i2c_const['FLAG_PAUSA'] | self.i2c_const['BYTE_OPZIONI_LETTURA'], 100, 3 | 64, 0xb9, 0 ]))
+                                i2cconf = []
+                                i2cconf.append(self.writeEE(idbus, eels + 10, eems, [2 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0xb8]))  # 3|128: 128 per concatenare con prg. successivo), 32 reset +
+                                i2cconf.append(self.writeEE(idbus, eels + 13, eems, [5 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'],  3, 0xb8, 0x03, 0x00, 0x04]))
+                                i2cconf.append(self.writeEE(idbus, eels + 19, eems, [3 | self.i2c_const['FLAG_PAUSA'] | self.i2c_const['BYTE_OPZIONI_LETTURA'], 100, 3 | 64, 0xb9, 0 ]))
+                                msg.extend(i2cconf)
+                                # print("CONFIGURAZIONE I2C:", i2cconf)
+                                
 
                         elif io_type == 'onewire':
                             msg.append(self.writeEE(idbus, eels + 10, eems, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0xcc, 0x44]))  # num. byte, byte opzioni, campionamento di tutte le sonde, leggi temp.
@@ -1243,6 +1336,9 @@ class Bus:
         # msg.append(self.getTypeBoard(5))
         # print("RESET TOTALE")
         msg.append(self.boardReboot(0))
+        pprint(msg)
+        # if(msg[])
+        
         return msg
 # END BUS Class
 
@@ -1282,8 +1378,8 @@ if __name__ == '__main__':
 
     """ Reset parametri SCHEDE """
     msg = b.resetEE(2, 0)  # Board_id, io_logic. Se io_logic=0, resetta tutti gli IO
-    print("CONFIGURATION TRAMA:", msg)
-    TXmsg = msg
+    # print("RESET IO SCHEDE:", msg)
+    # TXmsg = msg
 
     """ Configurazione SCHEDE """
     message_conf_app = b.sendConfiguration()  # Set configuration of boards
@@ -1301,6 +1397,7 @@ if __name__ == '__main__':
             # time.sleep(0.001)
             continue
 
+        # print(RXbyte)
         for d in RXbyte:
             # print(d)
             RXtrama = b.readSerial(d)
@@ -1331,16 +1428,24 @@ if __name__ == '__main__':
                 if len(RXtrama) > 1:  # Mosra solo comunicazioni valide (senza PING)
                     # print(RXtrama)  # Visualizza trama
                     # print(b.code)
-                    if RXtrama[1] in b.code:
-                        log.write("{:<12} TX {:<18} {} ".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama)))
-                        value = b.checkIO(RXtrama[0], RXtrama[2], RXtrama[3:])
-                        # print(value)
+                    if RXtrama[0] == 3:
+                        pass
+                        # print("=========>>>>>>>>", RXtrama)
+                    
+                    if RXtrama[1] == 14 or RXtrama[1] == 8:  # COMUNICA_IO / Scrive valore USCITA
+                        # board_id, io_logic, value = b.updateState(self.RXtrama[0], self.RXtrama[2], value)
+                        value = b.calculate(RXtrama[0], RXtrama[2], RXtrama[3:])  # Aggiorna DOMOTICZ
+                        # print("VALUE:", value)
                         try:
-                            # b.status[RXtrama[0]]['io'][RXtrama[2] - 1] = value
-                            self.updateIO(self.RXtrama[0], self.RXtrama[2], self.RXtrama[3:])  # Aggiorna DOMOTICZ
+                            # log.write("{:<12} RX {:<18} {}".format(nowtime, b.code[RXtrama[1] - 32], b.int2hex(RXtrama)))
+                            
+                            b.status[RXtrama[0]]['io'][RXtrama[2] - 1] = value
                         except:
                             pass
+                            print("ERROR: board_id:%s or io_logic:%s NOT EXSIST in the status dict" %(RXtrama[0], RXtrama[2]))
+                            # pprint(b.status)
 
+                    
                     elif (RXtrama[1] - 32) in b.code:
                         err = ''
                         if RXtrama[1] == 29:
@@ -1348,11 +1453,11 @@ if __name__ == '__main__':
                             err = b.error[RXtrama[2]] if RXtrama[2] in b.error else 'ERRORE NON DEFINITO'
                         log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[RXtrama[1] - 32], b.int2hex(RXtrama), err))
 
-            if nowtime - oldtime > 2:
-                oldtime = nowtime
+            if nowtime - oldtime > 20:
+                TXmsg.append(ping)  # Not remove. Is neccesary to reset shutdown counter
+                oldtime = nowtime  # Not remove
                 
-                print("PING:", ping)
-                TXmsg.append(ping)
+                
 
                 # TXmsg.append(b.readEE(3, 32, 0, 5))  # Read EEPROM
                 # TXmsg.append(b.getTypeBoard(5))  # Read Board Type

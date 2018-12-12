@@ -91,7 +91,7 @@
         {
             "name": "Prova test", // Nome della BOARD
             "boardtype": 2, // Tipo di Board: Vedi TYPEB
-            "enable": 0 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
+            "enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
         },
 
         // Tensione alimentazione BOARD
@@ -105,7 +105,7 @@
             "time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
             "Rgnd": 470, // Valore resistenza posta tra IO e 0V.
-            "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "enable": 0, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "name": "Vin", // Nome che verrà riportato su DOMOTICZ
             "description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Voltage" // Tipo dispositivo Domoticz
@@ -117,7 +117,7 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 1,
+            "enable": 0,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
@@ -147,8 +147,7 @@
             "n_refresh_on": 1,
             "n_refresh_off": 1,
             "inverted": 0,
-            "function": "toggle",
-            "enable": 0,
+            "enable": 1,
             "name": "IN1",
             "description": "Pulsante Luce 1",
             "dtype": "Switch"
@@ -160,11 +159,11 @@
             "direction": "input",
             "io_type": "digital",
             "pullup": 1,
-            "filter": 127,
+            "filter": 10,
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 0,
+            "enable": 1,
             "name": "IN2",
             "description": "Pulsante Luce 2",
             "dtype": "Switch"
@@ -213,9 +212,9 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "linked_board_id_io_logic": ["3-3", "3-4"],
-            "linked_proc": "or",
-            "enable": 0,
+            "plc_linked_board_id_io_logic": ["3-3", "3-4", "1-3"],
+            "plc_function": "disable",
+            "enable": 1,
             "name": "RELE1",
             "description": "Uscita rele1",
             "dtype": "Switch"
@@ -232,10 +231,13 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "linked_board_id_io_logic": ["3-3", "3-4"],
-            "linked_proc": "or",
-            "enable": 0,
-
+            "plc_linked_board_id_io_logic": ["1-3"],
+            "plc_function": "timer",
+            "plc_mode_timer": "34",
+            "plc_time_on": 200,
+            "plc_time_off": 0,
+            "plc_timer_n_transitions": 2,           
+            "enable": 1,
             "name": "RELE2",
             "description": "Uscita rele2",
             "dtype": "Switch"
@@ -252,9 +254,12 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "linked_board_id_io_logic": ["3-3", "3-4"],
-            "linked_proc": "or",
-            "enable": 0,
+            "plc_linked_board_id_io_logic": ["3-7"],
+            "plc_time_unit": "1",  // 1=secondi - 0.1=decimi, 0.01=centesimi, 2.5=2.5s/unit
+            "plc_delay_on_off": "1",
+            "plc_delay_off_on": "2",
+            "plc_function": "disable",
+            "enable": 1,
             "name": "RELE3",
             "description": "Uscita rele3",
             "dtype": "Switch"
@@ -310,7 +315,7 @@
             "pullup": 1,
             "inverted": 0,
             "filter": 127,
-            "time_refresh": 100,
+            "time_refresh": 3000,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
             "enable": 1,
@@ -327,7 +332,7 @@
             "default_startup_value": 1,
             "inverted": 0,
             "filter": 127,
-            "time_refresh": 600,
+            "time_refresh": 3000,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
             "enable": 1,
@@ -439,301 +444,12 @@
             "dtype": "Temp+Hum"
         }
     },
-
-    "BOARD5":
-    {
-        "GENERAL":
-        {
-            "name": "Board 5",
-            "boardtype": 1,
-            "enable": 0
-        },
-
-        "PD4":
-        {
-            "io_logic": 1,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "name": "OUT PD4",
-            "description": "Uscita PD4",
-            "dtype": "Switch"
-        },
-
-        "PE0":
-        {
-            "io_logic": 2,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "name": "OUT PE0",
-            "description": "Uscita IO2",
-            "dtype": "Switch"
-        },
-
-        "PE1":
-        {
-            "io_logic": 3,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "name": "OUT PE1",
-            "description": "Uscita IO3",
-            "dtype": "Switch"
-        },
-
-        "PB0":
-        {
-            "io_logic": 4,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "plc_function": 1, // Funzione PLC assegnato all'uscita
-            "linked_board_id_io_logic": ["5-5", "5-6"],
-            "linked_proc": "toggle",
-            "enable": 1,
-            "name": "OUT PB0",
-            "description": "Uscita IO3",
-            "dtype": "Switch"
-        },
-
-        "PB1":
-        {
-            "io_logic": 5,
-            "direction": "input",
-            "io_type": "digital",
-            "pullup": 1,
-            "inverted": 0,
-            "filter": 10,
-            "time_refresh": 100,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "name": "IN PB1",
-            "description": "IN PB1",
-            "dtype": "Switch"
-        },
-
-        "PB5":
-        {
-            "io_logic": 6,
-            "direction": "input",
-            "io_type": "digital",
-            "pullup": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "name": "IN PB5",
-            "description": "IN PB5",
-            "dtype": "Switch"
-        },
-
-      "PB2":
-        {
-            "io_logic": 7,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "name": "OUT PB2",
-            "description": "Uscita IO3",
-            "dtype": "Switch"
-        },
-
-        "PE2":
-        {
-            "io_logic": 8,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "name": "OUT PE2",
-            "description": "Uscita IO3",
-            "dtype": "Switch"
-        },
-
-      "PC0":
-        {
-            "io_logic": 9,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "name": "OUT PC0",
-            "description": "Uscita IO3",
-            "dtype": "Switch"
-        },
-
-        "PC1":
-        {
-            "io_logic": 10,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 0,
-            "name": "OUT PC1",
-            "description": "Uscita IO3",
-            "dtype": "Switch"
-        },
-
-      "PC2":
-        {
-            "io_logic": 11,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 0,
-            "name": "OUT PC2",
-            "description": "Uscita IO3",
-            "dtype": "Switch"
-        },
-
-        "PC3":
-        {
-            "io_logic": 12,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 0,
-            "name": "OUT PC3",
-            "description": "Uscita IO3",
-            "dtype": "Switch"
-        },
-
-        "VIN":
-        {
-            "io_logic": 13,
-            "direction": "input",
-            "io_type": "analog",
-            "pullup": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 0,
-            "Rvcc": 12000,
-            "Rgnd": 470,
-            "name": "VIN",
-            "description": "Tensione ingresso Board 4",
-            "dtype": "Voltage"
-        },
-
-        "BME280":
-        {
-            "io_logic": 14,
-            "io_type": "i2c",
-            "time_refresh": 600,
-            "enable": 0,
-            "device_name": "BME280",
-            "address": "0xEC",
-            "name": "BME280",
-            "description": "Sensore T+U+B bagno",
-            "dtype": "Temp+Hum+Baro"
-        },
-
-        "DS18B20-1":
-        {
-            "io_logic": 15,
-            "io_type": "onewire",
-            "time_refresh": 500,
-            "enable": 0,
-            "device_name": "DS18B20",
-            "address": ["28", "FF", "5F", "6B", "A1", "16", "04", "CC"],
-            "name": "DS18B20",
-            "description": "Sensore Temperatura",
-            "dtype": "Temperature"
-        },
-
-        "DS18B20-2":
-        {
-            "io_logic": 16,
-            "io_type": "onewire",
-            "time_refresh": 500,
-            "enable": 0,
-            "address": ["28", "FF", "87", "6a", "A1", "16", "04", "23"],
-            "device_name": "DS18B20",
-            "name": "DS18B20",
-            "description": "Sensore Temperatura",
-            "dtype": "Temperature"
-        },
-
-        "AM2320":
-        {
-            "io_logic": 17,
-            "io_type": "i2c",
-            "time_refresh": 50,
-            "enable": 0,
-            "device_name": "AM2320",
-            "address": "0xB8",
-            "name": "AM2320",
-            "description": "Sensore T+U bagno",
-            "dtype": "Temp+Hum"
-        }
-
-
-    },
     
     "BOARD1":
     {
         "GENERAL":
         {
-            "name": "Board 1",
+            "name": "Morsetti",
             "boardtype": 1,
             "enable": 1
         },
@@ -749,7 +465,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 1,
+            "enable": 0,
             "Rvcc": 12000,
             "Rgnd": 470,
             "name": "VIN",
@@ -763,12 +479,46 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 1,
+            "enable": 0,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
         },
+        
+        "PC0":
+        {
+            "io_logic": 3,
+            "direction": "input",
+            "io_type": "digital",
+            "inverted": 0,
+            "filter": 10,
+            "pullup": 1,
+            "time_refresh": 60,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "enable": 1,
+            "name": "OUT PC0",
+            "description": "Ingressp PC0",
+            "dtype": "Switch"
+        },
 
+        "PB1":
+        {
+            "io_logic": 4,
+            "direction": "input",
+            "io_type": "digital",
+            "inverted": 0,
+            "filter": 10,
+            "pullup": 1,
+            "time_refresh": 60,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "enable": 0,
+            "name": "IO PC1",
+            "description": "Ingressp PC1",
+            "dtype": "Switch"
+        },
+        
         "PD4":
         {
             "io_logic": 3,
@@ -777,12 +527,36 @@
             "default_startup_value": 0,
             "inverted": 0,
             "filter": 127,
+            "pullup": 1,
             "time_refresh": 16383,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "plc_function": "power_on",
-            "plc_params": ["1", "100", "30", "12.8", "12000", "470"],
-            "enable": 1,
+            //"plc_function": "power_on",
+            //"plc_params": ["1", "100", "30", "12.8", "12000", "470"],
+            "linked_board_id_io_logic": ["5-5", "5-6"],
+            "linked_proc": "toggle",
+            "enable": 0,
+            "name": "OUT RESET",
+            "description": "Uscita RELE RESET RASPBERRY",
+            "dtype": "Switch"
+        },
+
+        "PD4":
+        {
+            "io_logic": 4,
+            "direction": "output",
+            "io_type": "digital",
+            "default_startup_value": 0,
+            "inverted": 0,
+            "filter": 127,
+            "time_refresh": 16383,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            //"plc_function": "power_on",
+            //"plc_params": ["1", "100", "30", "12.8", "12000", "470"],
+            "linked_board_id_io_logic": ["5-5", "5-6"],
+            "linked_proc": "toggle",
+            "enable": 0,
             "name": "OUT RESET",
             "description": "Uscita RELE RESET RASPBERRY",
             "dtype": "Switch"
