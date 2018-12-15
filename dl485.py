@@ -318,8 +318,8 @@ class Bus:
 
                         inverted = int(self.config[b][bb]['inverted']) if 'inverted' in self.config[b][bb] else 0
                         default_startup_value = 0  if not 'default_startup_value' in self.config[b][bb] else int(self.config[b][bb]['default_startup_value'])
-                        print("*** Board_id:%s,  io_logic=%s,  inverted=%s,  default_startup_value=%s,  default_startup_value_new=%s" %(idbus, io_logic, inverted, default_startup_value, default_startup_value ^ inverted))
-                        default_startup_value = default_startup_value ^ inverted
+                        # print("*** Board_id:%s,  io_logic=%s,  default_startup_value=%s,  default_startup_value_new=%s" %(idbus, io_logic, default_startup_value, default_startup_value))
+                        # default_startup_value = default_startup_value ^ inverted
 
                         self.mapiotype[idbus][io_logic] = {
                             'io_logic': io_logic,
@@ -363,6 +363,8 @@ class Bus:
         """
         Invert IO value
         """
+        if not board_id in self.mapiotype or not io_logic in self.mapiotype[board_id]:
+            return 0
         inverted = self.mapiotype[board_id][io_logic]['inverted']
         if inverted:
             value = 1 - value & 1
@@ -1098,8 +1100,9 @@ class Bus:
                             byte3 = 0
                         elif direction == 'output':
                             default_startup_value = int(board.get(b)['default_startup_value'])
-                            inverted = 0 if 'inverted' not in board.get(b) else int(board.get(b)['inverted'])
-                            byte2 = 127 & (default_startup_value ^ inverted)  # Byte 2: valore default ls
+                            # inverted = 0 if 'inverted' not in board.get(b) else int(board.get(b)['inverted'])
+                            # byte2 = 127 & (default_startup_value ^ inverted)  # Byte 2: valore default ls
+                            byte2 = 127 & default_startup_value
                             byte3 = int(board.get(b)['default_startup_value']) >> 7  # Byte 2: valore default ms
                         elif io_type == 'i2c' or io_type == 'onewire':
                             byte2 = 0
@@ -1118,6 +1121,9 @@ class Bus:
                         else:
                             byte4 = 0
 
+                        inverted = 0 if 'inverted' not in board.get(b) else int(board.get(b)['inverted'])
+                        if inverted:  # Invert OUTPUT. Se inverted, lo stato ON in uscita di un rele si ha con lo stato zero.
+                            byte4 |= 128
                         byte5 = int(board.get(b)['time_refresh']) & 127  # Byte 5: rinfresco periodico ls in decimi di secondo
                         byte6 = int(board.get(b)['time_refresh']) >> 7  # Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
                         # print("RINGRESCHI", byte5, byte6)
@@ -1184,18 +1190,26 @@ class Bus:
                             'timer': 9,
                             'ntimer': 9 | 128,
                             'autostart_timer': 10,
+                            'nautostart_timer': 10 | 128,
                             'power_on': 30,
                         }
                         
                         pprint(board.get(b))
                         byte8 = 'disable' if not 'plc_function' in board.get(b) or board.get(b)['plc_function'] == 'disable' else board.get(b)['plc_function']
                         # print("PLC_FUNCTION:************************", plc_function[byte8], byte8)
-                        message_conf_app.append(plc_function[byte8])
+                        
                         
                         plc_params = 0 if not 'plc_params' in board.get(b) else board.get(b)['plc_params']
                         plc = []
-                        if byte8 != "disable":
-                            
+                                                   
+                        
+                        if byte8 == "disable":
+                            message_conf_app.append(plc_function[byte8])   
+                             
+                        elif byte8 != "disable":
+                            # if inverted:
+                                # plc_function[byte8] ^= 0x80
+                            message_conf_app.append(plc_function[byte8])    
                             
                             if byte8 == 'power_on':
                                 # print("plc_params", plc_params, float(plc_params[3]), int(plc_params[4]), int(plc_params[5])) 
@@ -1204,9 +1218,11 @@ class Bus:
                                 # print("POWER_ON data:", byte8, value_dac_in, plc)
                                 
                             else:  # Funzione PLC
+                                plc_xor_input = 0 if not 'plc_xor_input' in board.get(b) else int(board.get(b)['plc_xor_input'])
+                                plc.append(plc_xor_input)  # OFFSET 31: BYTE con NEGAZIONE ingressi
                                 
-                                plc.append(0)  # OFFSET 31: BYTE con NEGAZIONE ingressi
-                                plc.append(0)  # OFFSET 30: BYTE PRESET valore default prima che arrivino i dati dalla rete
+                                plc_preset_input = 0 if not 'plc_preset_input' in board.get(b) else int(board.get(b)['plc_preset_input'])
+                                plc.append(plc_preset_input)  # OFFSET 30: BYTE PRESET valore default prima che arrivino i dati dalla rete
                         
                                 plc_linked_board_id_io_logic = [] if not 'plc_linked_board_id_io_logic' in board.get(b) else board.get(b)['plc_linked_board_id_io_logic']
                                 plc.append(len(plc_linked_board_id_io_logic))  # OFFSET 29: Numero ingressi per la funzione PLC
@@ -1219,7 +1235,7 @@ class Bus:
                                 else:
                                     print("BOARD_ID and IO_LOGIC not defined on CONFIGURATION File")
                              
-                                if  byte8 == "timer" or byte8 == "autostart_timer":          
+                                if  byte8 == "timer" or byte8 == "ntimer" or byte8 == "autostart_timer" or byte8 == "nautostart_timer":          
                                     # Se timer, dopo elenco di BOARD_ID e IO_LOGIC, seguono questi parametri:
                                     # Modo TIMER:   b0: innesca su fronte ON
                                     #               b1: innesca su fronte OFF
@@ -1415,6 +1431,7 @@ if __name__ == '__main__':
                         # print("Trama to TX: ", len(TXmsg))
                         msg = TXmsg.pop(0)
                         # print("Trasmetto:", msg)
+                        #log.write("{:<12} TX {:<18} {}".format(nowtime, b.code[msg[1]], b.int2hex(msg)))
                         msg = b.eight2seven(msg)
                         # print("MSG:", msg)
                         # print("{:<11} ==>>{:<15}".format('MSG 8 to 7', msg))
