@@ -1102,8 +1102,8 @@ class Bus:
                             default_startup_value = int(board.get(b)['default_startup_value'])
                             # inverted = 0 if 'inverted' not in board.get(b) else int(board.get(b)['inverted'])
                             # byte2 = 127 & (default_startup_value ^ inverted)  # Byte 2: valore default ls
-                            byte2 = 127 & default_startup_value
-                            byte3 = int(board.get(b)['default_startup_value']) >> 7  # Byte 2: valore default ms
+                            byte2 = default_startup_value & 255
+                            byte3 = int(board.get(b)['default_startup_value']) >> 8  # Byte 2: valore default ms
                         elif io_type == 'i2c' or io_type == 'onewire':
                             byte2 = 0
                             byte3 = 0
@@ -1124,8 +1124,8 @@ class Bus:
                         inverted = 0 if 'inverted' not in board.get(b) else int(board.get(b)['inverted'])
                         if inverted:  # Invert OUTPUT. Se inverted, lo stato ON in uscita di un rele si ha con lo stato zero.
                             byte4 |= 128
-                        byte5 = int(board.get(b)['time_refresh']) & 127  # Byte 5: rinfresco periodico ls in decimi di secondo
-                        byte6 = int(board.get(b)['time_refresh']) >> 7  # Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
+                        byte5 = int(board.get(b)['time_refresh']) & 255  # Byte 5: rinfresco periodico ls in decimi di secondo
+                        byte6 = int(board.get(b)['time_refresh']) >> 8  # Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
                         # print("RINGRESCHI", byte5, byte6)
 
                         if io_type == 'analog' or io_type == 'digital':
@@ -1430,8 +1430,9 @@ if __name__ == '__main__':
                     if len(TXmsg):
                         # print("Trama to TX: ", len(TXmsg))
                         msg = TXmsg.pop(0)
-                        # print("Trasmetto:", msg)
-                        #log.write("{:<12} TX {:<18} {}".format(nowtime, b.code[msg[1]], b.int2hex(msg)))
+                        log.write("{:<12} TX                    {:<18} {} {}".format(nowtime, str(b.int2hex(msg)), '', ''))
+                        
+                        # log.write("{:<12} TX {:<18} {}".format(nowtime, b.code[msg[1]], b.int2hex(msg)))
                         msg = b.eight2seven(msg)
                         # print("MSG:", msg)
                         # print("{:<11} ==>>{:<15}".format('MSG 8 to 7', msg))
@@ -1454,7 +1455,7 @@ if __name__ == '__main__':
                         value = b.calculate(RXtrama[0], RXtrama[2], RXtrama[3:])  # Aggiorna DOMOTICZ
                         # print("VALUE:", value)
                         try:
-                            # log.write("{:<12} RX {:<18} {}".format(nowtime, b.code[RXtrama[1] - 32], b.int2hex(RXtrama)))
+                            log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama), ''))
                             
                             b.status[RXtrama[0]]['io'][RXtrama[2] - 1] = value
                         except:
