@@ -38,7 +38,7 @@
 
 # Descrizione PLC
 # All'interno delle singole board è presente un PLC che può essere attivato tramite la funzione desiderata (es. toggle_on)
-    
+
 #    plc_function:       => Funzione associata al PLC relativa a quell'uscita
 #       disable         => PLC disabilitato
 #       equal           => funzione uguale. Ad esempio uscita = ingresso
@@ -50,13 +50,13 @@
 #       toggle_off      => fa il toggle sul fronte OFF dell'ingresso
 #       toggle_on_off   => fa il toggle sul fronte OFF e ON dell'ingresso
 #       timer           => timer uscita
-#       power_on        => Uscita per comandare il rele di reset alimentazione RAPBERRY quando non risponde sulla seriale per un certo tempo.      
-        
+#       power_on        => Uscita per comandare il rele di reset alimentazione RAPBERRY quando non risponde sulla seriale per un certo tempo.
+
 #    inverted            => uscita negata
 #        0               => non invertita
 #        1               => invertita
 #
-    
+
 
 
 
@@ -91,7 +91,7 @@
         {
             "name": "Prova test", // Nome della BOARD
             "boardtype": 2, // Tipo di Board: Vedi TYPEB
-            "enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
+            "enable": 0 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
         },
 
         // Tensione alimentazione BOARD
@@ -99,7 +99,7 @@
         {
             "io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "direction": "input", // Valori: input, output. Direzione dell' IO
-            "io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO 
+            "io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
             "pullup": 0, // Valori: 0, 1. Assegna un pullup all'ingresso. Da inserire solo in caso di ingressi analogici
             "filter": 127, // Valori: 0...127. Filtro antirimbalzo. Solo nel caso di ingressi analogici.
             "time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
@@ -147,7 +147,7 @@
             "n_refresh_on": 1,
             "n_refresh_off": 1,
             "inverted": 1,
-            "enable": 1,
+            "enable": 0,
             "name": "IN1",
             "description": "Pulsante Luce 1",
             "dtype": "Switch"
@@ -164,7 +164,7 @@
             "n_refresh_on": 1,
             "n_refresh_off": 1,
             "inverted": 1,
-            "enable": 1,
+            "enable": 0,
             "name": "IN2",
             "description": "Pulsante Luce 2",
             "dtype": "Switch"
@@ -219,7 +219,7 @@
             "plc_function": "nor",
             "plc_preset_input": 0,
             "plc_xor_input": 0,
-            "enable": 1,
+            "enable": 0,
             "name": "RELE1",
             "description": "Uscita rele1",
             "dtype": "Switch"
@@ -241,12 +241,12 @@
             //"plc_mode_timer": "50",
             //"plc_time_on": 300,
             //"plc_time_off": 0,
-            //"plc_timer_n_transitions": 2,           
+            //"plc_timer_n_transitions": 2,
             "plc_function": "nor",
             "plc_linked_board_id_io_logic": ["3-4", "3-7"],
             "plc_preset_input": 0,
             "plc_xor_input": 0,
-            "enable": 1,
+            "enable": 0,
             "name": "RELE2",
             "description": "Uscita rele2",
             "dtype": "Switch"
@@ -268,7 +268,7 @@
             "plc_delay_on_off": "1",
             "plc_delay_off_on": "2",
             "plc_function": "disable",
-            "enable": 1,
+            "enable": 0,
             "name": "RELE3",
             "description": "Uscita rele3",
             "dtype": "Switch"
@@ -281,13 +281,13 @@
         "GENERAL":
         {
             "name": "Board 2",
-            "boardtype": 1,
-            "enable": 0
+            "boardtype": 2,
+            "enable": 1
         },
 
         "VIN":
         {
-            "io_logic": 1,
+            "io_logic": 9,
             "direction": "input",
             "io_type": "analog",
             "default_startup_value": 1,
@@ -296,7 +296,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 1,
+            "enable": 0,
             "Rvcc": 12000,
             "Rgnd": 470,
             "name": "VIN",
@@ -304,17 +304,57 @@
             "dtype": "Voltage"
         },
 
-      "TEMP_ATMEGA":
+        "TEMP_ATMEGA":
         {
-            "io_logic": 2,
+            "io_logic": 8,
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 1,
+            "enable": 0,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
         },
+
+        "VIRT1":
+        {
+            "io_logic": 2,
+            "direction": "output",
+            "io_type": "virtual",
+            "default_startup_value": 0,
+            "time_refresh": 10,
+            "enable": 0,
+            "plc_function": "analog_in1_max_analog_in2",
+            "plc_linked_board_id_io_logic": ["4-13", "4-12"],  // Valore uscita = "4-13" - "4-12"
+            "name": "VIRT1",
+            "description": "Variabile virtuale 1",
+            "dtype": "Switch"
+        },
+
+
+        "OUT1":
+        {
+            "io_logic": 1,
+            "direction": "output",
+            "io_type": "digital",
+            "default_startup_value": 0,
+            "inverted": 1,
+            "filter": 127,
+            "time_refresh": 3000,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "enable": 1,
+            "plc_function": "powermeter",
+            "counter_mode": 27, // Aggiorna risultato ogni 10 secondi
+            "powermeter_k": 60000,
+            "counter_filter": 0, // non usato
+            "counter_timeout": 0, // 5 secondi
+            "plc_linked_board_id_io_logic": ["4-11"],
+            "name": "OUT1",
+            "description": "Contatore",
+            "dtype": "Switch"
+        },
+
 
         "IO1":
         {
@@ -322,91 +362,71 @@
             "direction": "input",
             "io_type": "digital",
             "pullup": 1,
-            "inverted": 0,
-            "filter": 127,
+            "filter": 10,
             "time_refresh": 3000,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
+            "n_refresh_on": 0,
+            "n_refresh_off": 0,
             "enable": 1,
             "name": "IO1",
-            "description": "Uscita IO1",
+            "description": "Ingresso IO1",
+            "dtype": "Switch"
+        },
+
+        "IO2":
+        {
+            "io_logic": 12,
+            "direction": "input",
+            "io_type": "digital",
+            "pullup": 1,
+            "filter": 20,
+            "time_refresh": 3000,
+            "n_refresh_on": 0,
+            "n_refresh_off": 0,
+            "enable": 0,
+            "name": "IO2",
+            "description": "Ingresso IO2",
+            "dtype": "Switch"
+        },
+
+        "IO3":
+        {
+            "io_logic": 13,
+            "direction": "input",
+            "io_type": "analog",
+            "pullup": 1,
+            "filter": 20,
+            "time_refresh": 40,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "enable": 0,
+            "name": "IO4",
+            "description": "IO3",
             "dtype": "Switch"
         },
 
         "IO4":
         {
-            "io_logic": 12,
-            "direction": "output",
+            "io_logic": 14,
+            "direction": "input",
             "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
+            "pullup": 1,
+            "filter": 20,
             "time_refresh": 3000,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
+            "n_refresh_on": 0,
+            "n_refresh_off": 0,
             "enable": 1,
             "name": "IO4",
-            "description": "Uscita IO4",
+            "description": "IO4",
             "dtype": "Switch"
         },
 
-        "IO11":
-        {
-            "io_logic": 13,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "name": "IO11",
-            "description": "Uscita IO11",
-            "dtype": "Switch"
-        },
-
-        "IO12":
-        {
-            "io_logic": 14,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 1,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "name": "IO12",
-            "description": "Uscita IO12",
-            "dtype": "Switch"
-        },
-
-        "IO13":
-        {
-            "io_logic": 15,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 1,
-            "inverted": 1,
-            "filter": 127,
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "name": "IO13",
-            "description": "Uscita IO13",
-            "dtype": "Switch"
-        },
 
         "DS18B20-1":
         {
             "io_logic": 5,
             "io_type": "onewire",
             "time_refresh": 100,
-            "enable": 1,
+            "enable": 0,
             "device_name": "DS18B20",
             "address": ["0x28", "0xFF", "0x5f", "6B", "A1", "16", "04", "CC"],
             "name": "DS18B20",
@@ -419,7 +439,7 @@
             "io_logic": 6,
             "io_type": "onewire",
             "time_refresh": 200,
-            "enable": 1,
+            "enable": 0,
             "address": ["0x28", "0xff", "0x87", "0x6a", "0xA1", "0x16", "0x04", "0x23"],
             "device_name": "DS18B20",
             "name": "DS18B20",
@@ -432,7 +452,7 @@
             "io_logic": 7,
             "io_type": "i2c",
             "time_refresh": 100,
-            "enable": 1,
+            "enable": 0,
             "device_name": "BME280",
             "address": "0xEC",
             "name": "BME280",
@@ -445,7 +465,7 @@
             "io_logic": 8,
             "io_type": "i2c",
             "time_refresh": 50,
-            "enable": 1,
+            "enable": 0,
             "device_name": "AM2320",
             "address": "0xB8",
             "name": "AM2320",
@@ -453,7 +473,7 @@
             "dtype": "Temp+Hum"
         }
     },
-    
+
     "BOARD1":
     {
         "GENERAL":
@@ -462,7 +482,7 @@
             "boardtype": 1,
             "enable": 1
         },
-        
+
         "VIN":
         {
             "io_logic": 1,
@@ -482,7 +502,7 @@
             "dtype": "Voltage"
         },
 
-      "TEMP_ATMEGA":
+        "TEMP_ATMEGA":
         {
             "io_logic": 2,
             "direction": "input",
@@ -493,7 +513,7 @@
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
         },
-        
+
         "PC0":
         {
             "io_logic": 3,
@@ -505,7 +525,7 @@
             "time_refresh": 60,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 1,
+            "enable": 0,
             "name": "OUT PC0",
             "description": "Ingressp PC0",
             "dtype": "Switch"
@@ -527,10 +547,10 @@
             "description": "Ingressp PC1",
             "dtype": "Switch"
         },
-        
+
         "PD4":
         {
-            "io_logic": 3,
+            "io_logic": 5,
             "direction": "output",
             "io_type": "digital",
             "default_startup_value": 0,
@@ -552,7 +572,7 @@
 
         "PD4":
         {
-            "io_logic": 4,
+            "io_logic": 6,
             "direction": "output",
             "io_type": "digital",
             "default_startup_value": 0,
@@ -569,8 +589,76 @@
             "name": "OUT RESET",
             "description": "Uscita RELE RESET RASPBERRY",
             "dtype": "Switch"
+        },
+
+        "AM2320":
+        {
+            "io_logic": 7,
+            "io_type": "i2c",
+            "time_refresh": 50,
+            "enable": 0,
+            "device_name": "AM2320",
+            "address": "0xB8",
+            "name": "S1S T+U AM2320",
+            "description": "S1S Sensore T+U",
+            "dtype": "Temp+Hum"
         }
 
+    },
+
+    "BOARD8":
+    {
+        "GENERAL":
+        {
+            "name": "Serra1 - SENSORE",
+            "boardtype": 3,
+            "enable": 0
+        },
+
+        "VIN":
+        {
+            "io_logic": 1,
+            "direction": "input",
+            "io_type": "analog",
+            "default_startup_value": 1,
+            "pullup": 0,
+            "filter": 127,
+            "time_refresh": 60,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "enable": 0,
+            "Rvcc": 12000,
+            "Rgnd": 470,
+            "name": "S1S VIN",
+            "description": "S1S Tensione Board",
+            "dtype": "Voltage"
+        },
+
+        "TEMP_ATMEGA":
+        {
+            "io_logic": 2,
+            "direction": "input",
+            "io_type": "temp_atmega",
+            "time_refresh": 50,
+            "enable": 0,
+            "name": "S1S TEMP_ATMEGA",
+            "description": "S1S Temperatura ATMEGA328PB",
+            "dtype": "Temperature"
+        },
+
+
+        "AM2320":
+        {
+            "io_logic": 3,
+            "io_type": "i2c",
+            "time_refresh": 50,
+            "enable": 0,
+            "device_name": "AM2320",
+            "address": "0xB8",
+            "name": "S1S T+U AM2320",
+            "description": "S1S Sensore T+U",
+            "dtype": "Temp+Hum"
+        }
     }
 
 
