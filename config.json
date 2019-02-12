@@ -343,7 +343,7 @@
             "time_refresh": 3000,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 1,
+            "enable": 0,
             "plc_function": "powermeter",
             "counter_mode": 27, // Aggiorna risultato ogni 10 secondi
             "powermeter_k": 60000,
@@ -366,7 +366,7 @@
             "time_refresh": 3000,
             "n_refresh_on": 0,
             "n_refresh_off": 0,
-            "enable": 1,
+            "enable": 0,
             "name": "IO1",
             "description": "Ingresso IO1",
             "dtype": "Switch"
@@ -414,7 +414,7 @@
             "time_refresh": 3000,
             "n_refresh_on": 0,
             "n_refresh_off": 0,
-            "enable": 1,
+            "enable": 0,
             "name": "IO4",
             "description": "IO4",
             "dtype": "Switch"
@@ -446,6 +446,8 @@
             "description": "Sensore Temperatura",
             "dtype": "Temperature"
         },
+
+
 
         "BME280":
         {
@@ -485,13 +487,13 @@
 
         "VIN":
         {
-            "io_logic": 1,
+            "io_logic": 20,
             "direction": "input",
             "io_type": "analog",
             "default_startup_value": 1,
             "pullup": 0,
             "filter": 127,
-            "time_refresh": 600,
+            "time_refresh": 50,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
             "enable": 0,
@@ -501,7 +503,154 @@
             "description": "Tensione ingresso Board 4",
             "dtype": "Voltage"
         },
+        
+        "TSL2561":
+        {
+            "io_logic": 1,
+            "io_type": "i2c",
+            "time_refresh": 30,
+            "enable": 1,
+            "device_name": "TSL2561",
+            "address": "0x72",
+            "name": "TSL2561",
+            "description": "Sensore Luminosità",
+            "dtype": "Light"
+        },
+        
+        "BME280":
+        {
+            "io_logic": 2,
+            "io_type": "i2c",
+            "time_refresh": 30,
+            "enable": 1,
+            "device_name": "BME280",
+            "address": "0xEC",
+            "name": "BME280",
+            "description": "Sensore T+U+B bagno",
+            "dtype": "Temp+Hum+Baro"
+        },
+        
+        "AM2320":
+        {
+            "io_logic": 3,
+            "io_type": "i2c",
+            "time_refresh": 30,
+            "enable": 1,
+            "device_name": "AM2320",
+            "address": "0xB8",
+            "name": "S1S T+U AM2320",
+            "description": "S1S Sensore T+U",
+            "dtype": "Temp+Hum"
+        },        
 
+
+        "PD4":
+        {
+            "io_logic": 4,
+            "io_type": "onewire",
+            "time_refresh": 30,
+            "enable": 0,
+            "device_name": "DS18B20",
+            "address": ["0x28", "0x22", "0xdc", "0f", "09", "00", "00", "ad"],
+            "name": "DS18B20",
+            "description": "Sensore Temperatura",
+            "dtype": "Temperature"
+        },
+        
+        "PD3":
+        {
+            "io_logic": 4,
+            "direction": "output",
+            "io_type": "analog",
+            "default_startup_value": 30,
+            "time_refresh": 50,
+            "enable": 1,
+            "name": "PWM1",
+            "description": "PWM1",
+            "dtype": "Voltage"
+        },
+        
+        "PB1":
+        {
+            "io_logic": 5,
+            "direction": "output",
+            "io_type": "analog",
+            "default_startup_value": 100,
+            "time_refresh": 50,
+            "enable": 1,
+            "name": "PWM2",
+            "description": "PWM2",
+            "dtype": "Voltage"
+        },
+        
+        "PB2":
+        {
+            "io_logic": 6,
+            "direction": "output",
+            "io_type": "analog",
+            "default_startup_value": 200,
+            "time_refresh": 50,
+            "enable": 1,
+            "name": "PWM3",
+            "description": "PWM3",
+            "dtype": "Voltage"
+        }
+    },
+
+    "BOARD20":
+    {
+        "GENERAL":
+        {
+            "name": "Serra1 - SENSORE",
+            "boardtype": 3,
+            "enable": 0
+        },
+
+        "VIN":
+        {
+            "io_logic": 1,
+            "direction": "input",
+            "io_type": "analog",
+            "default_startup_value": 1,
+            "pullup": 0,
+            "filter": 127,
+            "time_refresh": 60,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "enable": 0,
+            "Rvcc": 12000,
+            "Rgnd": 470,
+            "name": "S1S VIN",
+            "description": "S1S Tensione Board",
+            "dtype": "Voltage"
+        },
+
+        "TEMP_ATMEGA":
+        {
+            "io_logic": 2,
+            "direction": "input",
+            "io_type": "temp_atmega",
+            "time_refresh": 50,
+            "enable": 0,
+            "name": "S1S TEMP_ATMEGA",
+            "description": "S1S Temperatura ATMEGA328PB",
+            "dtype": "Temperature"
+        },
+
+
+        "AM2320":
+        {
+            "io_logic": 3,
+            "io_type": "i2c",
+            "time_refresh": 50,
+            "enable": 0,
+            "device_name": "AM2320",
+            "address": "0xB8",
+            "name": "S1S T+U AM2320",
+            "description": "S1S Sensore T+U",
+            "dtype": "Temp+Hum"
+        },
+        
         "TEMP_ATMEGA":
         {
             "io_logic": 2,
@@ -589,75 +738,6 @@
             "name": "OUT RESET",
             "description": "Uscita RELE RESET RASPBERRY",
             "dtype": "Switch"
-        },
-
-        "AM2320":
-        {
-            "io_logic": 7,
-            "io_type": "i2c",
-            "time_refresh": 50,
-            "enable": 0,
-            "device_name": "AM2320",
-            "address": "0xB8",
-            "name": "S1S T+U AM2320",
-            "description": "S1S Sensore T+U",
-            "dtype": "Temp+Hum"
-        }
-
-    },
-
-    "BOARD8":
-    {
-        "GENERAL":
-        {
-            "name": "Serra1 - SENSORE",
-            "boardtype": 3,
-            "enable": 0
-        },
-
-        "VIN":
-        {
-            "io_logic": 1,
-            "direction": "input",
-            "io_type": "analog",
-            "default_startup_value": 1,
-            "pullup": 0,
-            "filter": 127,
-            "time_refresh": 60,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 0,
-            "Rvcc": 12000,
-            "Rgnd": 470,
-            "name": "S1S VIN",
-            "description": "S1S Tensione Board",
-            "dtype": "Voltage"
-        },
-
-        "TEMP_ATMEGA":
-        {
-            "io_logic": 2,
-            "direction": "input",
-            "io_type": "temp_atmega",
-            "time_refresh": 50,
-            "enable": 0,
-            "name": "S1S TEMP_ATMEGA",
-            "description": "S1S Temperatura ATMEGA328PB",
-            "dtype": "Temperature"
-        },
-
-
-        "AM2320":
-        {
-            "io_logic": 3,
-            "io_type": "i2c",
-            "time_refresh": 50,
-            "enable": 0,
-            "device_name": "AM2320",
-            "address": "0xB8",
-            "name": "S1S T+U AM2320",
-            "description": "S1S Sensore T+U",
-            "dtype": "Temp+Hum"
         }
     }
 

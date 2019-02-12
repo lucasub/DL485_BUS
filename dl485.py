@@ -137,36 +137,36 @@ class Bus:
     mapmicro = {  # MAP PIN Atmega328P QFN32PIN
          1: {'name': 'PD3',         'iomicro':    3,    'function': ['I', 'O', 'P']},
          2: {'name': 'PD4',         'iomicro':    4,    'function': ['I', 'O']},
-         3: {'name': 'PE0',         'iomicro':   21,    'function': ['I', 'O', 'SDA']},
+         3: {'name': 'PE0',         'iomicro':   23,    'function': ['I', 'O', 'SDA']},
          4: {'name': 'VCC',         'iomicro':   99,    'function': ['VCC']},
          5: {'name': 'GND',         'iomicro':   99,    'function': ['GND']},
          6: {'name': 'PE1',         'iomicro':   22,    'function': ['I', 'O', 'A']},
          7: {'name': 'XTAL1',       'iomicro':   99,    'function': ['X']},
          8: {'name': 'XTAL2',       'iomicro':   99,    'function': ['X']},
-         9: {'name': 'PD5',         'iomicro':    5,    'function': ['PR']},
-        10: {'name': 'PD6',         'iomicro':    6,    'function': ['LT']},
+         9: {'name': 'PD5',         'iomicro':    5,    'function': ['PROG']},
+        10: {'name': 'PD6',         'iomicro':    6,    'function': ['LED_TX']},
         11: {'name': 'PD7',         'iomicro':    7,    'function': ['LR']},
         12: {'name': 'PB0',         'iomicro':    8,    'function': ['I', 'O']},
         13: {'name': 'PB1',         'iomicro':    9,    'function': ['I', 'O', 'P']},
         14: {'name': 'PB2',         'iomicro':   10,    'function': ['I', 'O', 'P']},
-        15: {'name': 'PB3',         'iomicro':   11,    'function': ['I', 'O', 'P', 'MO']},
+        15: {'name': 'PB3',         'iomicro':   11,    'function': ['I', 'O', 'MO']},
         16: {'name': 'PB4',         'iomicro':   12,    'function': ['I', 'O', 'MI']},
         17: {'name': 'PB5',         'iomicro':   13,    'function': ['I', 'O', 'SC']},
         18: {'name': 'AVCC',        'iomicro':   99,    'function': ['VCC']},
-        19: {'name': 'ADC6 PE2',    'iomicro':   23,    'function': ['']},
-        20: {'name': 'AREF',        'iomicro':   99,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        21: {'name': 'GND',         'iomicro':   99,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        22: {'name': 'ADC7 PE3',    'iomicro':   24,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        23: {'name': 'PC0',         'iomicro':   14,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        24: {'name': 'PC1',         'iomicro':   15,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        25: {'name': 'PC2',         'iomicro':   16,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        26: {'name': 'PC3',         'iomicro':   17,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        27: {'name': 'PC4',         'iomicro':   18,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        28: {'name': 'PC5',         'iomicro':   19,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        29: {'name': 'RST',         'iomicro':   99,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        30: {'name': 'PD0',         'iomicro':    0,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        31: {'name': 'PD1',         'iomicro':    1,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        32: {'name': 'PD2',         'iomicro':    2,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
+        19: {'name': 'ADC6 PE2',    'iomicro':   23,    'function': []},
+        20: {'name': 'AREF',        'iomicro':   99,    'function': []},
+        21: {'name': 'GND',         'iomicro':   99,    'function': []},
+        22: {'name': 'ADC7 PE3',    'iomicro':   24,    'function': []},
+        23: {'name': 'PC0',         'iomicro':   14,    'function': []},
+        24: {'name': 'PC1',         'iomicro':   15,    'function': []},
+        25: {'name': 'PC2',         'iomicro':   16,    'function': []},
+        26: {'name': 'PC3',         'iomicro':   17,    'function': []},
+        27: {'name': 'PC4',         'iomicro':   18,    'function': []},
+        28: {'name': 'PC5',         'iomicro':   19,    'function': []},
+        29: {'name': 'RST',         'iomicro':   99,    'function': []},
+        30: {'name': 'PD0',         'iomicro':    0,    'function': []},
+        31: {'name': 'PD1',         'iomicro':    1,    'function': ['TX_BUS']},
+        32: {'name': 'PD2',         'iomicro':    2,    'function': ['']},
         33: {'name': 'BME280',      'iomicro':   18,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
         34: {'name': 'BME280',      'iomicro':   18,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
         35: {'name': 'DS18B20',     'iomicro':    3,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
@@ -177,7 +177,6 @@ class Bus:
         43: {'name': 'VIRT3',       'iomicro':   40,    'function': ['VIRTUAL3']},
         44: {'name': 'VIRT4',       'iomicro':   40,    'function': ['VIRTUAL4']},
         45: {'name': 'VIRT5',       'iomicro':   40,    'function': ['VIRTUAL5']},
-
     }
 
     iomap = {  # MAP IO of board
@@ -213,6 +212,7 @@ class Bus:
             'DS18B20-6':    {'pin':  35,  'name':     'DS18B20'},
             'DS18B20-6':    {'pin':  35,  'name':     'DS18B20'},
             'TEMP_ATMEGA':  {'pin':  37,  'name':     'TEMP_ATMEGA'},
+            'DS18B20-6':    {'pin':  35,  'name':     'DS18B20'},
         },
 
         3: {  # Board DL485PCB  #
@@ -247,16 +247,16 @@ class Bus:
         },
 
         2: {  # Board DL485BOXx
-            'IO1':          {'pin':  23,  'name':      'IO1'},
-            'IO2':          {'pin':  24,  'name':      'IO2'},
-            'IO3':          {'pin':  25,  'name':      'IO3'},
-            'IO4':          {'pin':  26,  'name':      'IO4'},
-            'OUT1':         {'pin':   3,  'name':      'RELE1'},
-            'OUT2':         {'pin':   2,  'name':      'RELE2'},
-            'OUT3':         {'pin':   1,  'name':      'RELE3'},
-            'VIN':          {'pin':  22,  'name':      'VIN'},
-            'SDA':          {'pin':  27,  'name':      'SDA'},
-            'SCL':          {'pin':  28,  'name':      'SCL'},
+            'IO1':          {'pin':  23,  'name':      'IO1',       'function': ['I', 'O', 'A']},
+            'IO2':          {'pin':  24,  'name':      'IO2',       'function': ['I', 'O', 'A']},
+            'IO3':          {'pin':  25,  'name':      'IO3',       'function': ['I', 'O', 'A']},
+            'IO4':          {'pin':  26,  'name':      'IO4',       'function': ['I', 'O', 'A']},
+            'OUT1':         {'pin':   3,  'name':      'RELE1',     'function': ['O']},
+            'OUT2':         {'pin':   2,  'name':      'RELE2',     'function': ['O']},
+            'OUT3':         {'pin':   1,  'name':      'RELE3',     'function': ['O']},
+            'VIN':          {'pin':  22,  'name':      'VIN',       'function': ['VIN']},
+            'SDA':          {'pin':  27,  'name':      'SDA',       'function': ['SDA']},
+            'SCL':          {'pin':  28,  'name':      'SCL',       'function': ['SCL']},
             'PCA9535':      {'pin':   0,  'name':      'PCA9535'},
             'BME280A':      {'pin':   0,  'name':      'BME280'},
             'BME280B':      {'pin':   0,  'name':      'BME280'},
@@ -434,6 +434,7 @@ class Bus:
                 BME280          -> Temp + Hum + Bar
                 ATMEGA CHIP     -> Temp
                 AM2320          -> Temp + Hum
+                TSL2561         -> Light
             Voltage:
                 Analog Input
             Digital:
@@ -454,6 +455,7 @@ class Bus:
                         return None
 
             elif self.mapiotype[board_id][io_logic]['io_type'] == 'i2c':
+                # print(self.mapiotype[board_id][io_logic]['io_type'], self.mapiotype[board_id][io_logic]['device_name'] )
                 if self.mapiotype[board_id][io_logic]['device_name'] == 'BME280':
                     value = self.getBME280(value)
                     return value
@@ -462,6 +464,27 @@ class Bus:
                     temp = (value[4] * 256 + value[5]) / 10.0
                     # print("AM2320", hum, temp)
                     return [temp, hum]
+                if self.mapiotype[board_id][io_logic]['device_name'] == 'TSL2561':
+                    # print("TSL2561 Data:", value)
+                    ch0 = value[0] + (value[1] * 256)
+                    ch1 = value[2] + (value[3] * 256)
+                    if ch0 > 0:
+                        a = ch1 / ch0
+                        if a <= 0.5:
+                            lux = (0.0304 * ch0) - (0.062 * ch0 * (a ** 1.4))
+                        elif a <= 0.61:
+                            lux = (0.0224 * ch0) - (0.031 * ch1)
+                        elif a <= 0.8:
+                            lux = (0.0128 * ch0) - (0.0153 * ch1)
+                        elif a <= 1.3:
+                            lux = (0.00146 * ch0) - (0.001122 * ch1)
+                        else:
+                            lux = 0
+                    else:
+                        lux = 0
+                    # print("LUX:%s, CH0:%s, CH1:%s, A:%s" %(lux, ch0, ch1, a) )
+                    return round(lux, 1)
+                    
 
             elif self.mapiotype[board_id][io_logic]['io_type'] == 'temp_atmega':
                 value = (value[0] + (value[1] * 256)) - 270 + 25
@@ -472,7 +495,7 @@ class Bus:
                 Rgnd =  self.mapiotype[board_id][io_logic]['Rgnd']
                 # print(Rvcc, Rgnd, value)
                 try:
-                    print("\t\t\t\t\t\t\t\t\t\t\t\tANALOG", value[0] + (value[1] * 256))
+                    # print("\t\t\t\t\t\t\t\t\t\t\t\tANALOG", value[0] + (value[1] * 256))
                     value = round((value[0] + (value[1] * 256)) * (Rvcc + Rgnd) / (Rgnd * 930), 1)
                 except:
                     print("Analog Error: Value:", value)
@@ -1413,6 +1436,20 @@ class Bus:
                                 i2cconf.append(self.writeEE(idbus, eels + 19, eems, [3 | self.i2c_const['FLAG_PAUSA'] | self.i2c_const['BYTE_OPZIONI_LETTURA'], 100, 3 | 64, 0xb9, 0 ]))
                                 msg.extend(i2cconf)
                                 # print("CONFIGURAZIONE I2C:", i2cconf)
+                            
+                            elif b == 'TSL2561':
+                                print("CONFIGURAZIONE TSL2561")
+                                i2cconf = []
+                                i2cconf.append(self.writeEE(idbus, eels + 10, eems, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC]))
+                                i2cconf.append(self.writeEE(idbus, eels + 14, eems, [2 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 32, 0x72 | 1  ]))
+                                                                
+                                i2cconf.append(self.writeEE(idbus, eels + 17, eems, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x80]))
+                                i2cconf.append(self.writeEE(idbus, eels + 21, eems, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03]))
+                                # i2cconf.append(self.writeEE(idbus, eels + 25, eems, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x81 ]))
+                                # i2cconf.append(self.writeEE(idbus, eels + 29, eems, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x11 ]))
+                                
+                                msg.extend(i2cconf)
+                                # print("CONFIGURAZIONE I2C:", i2cconf)
 
 
                         elif io_type == 'onewire':
@@ -1548,7 +1585,7 @@ if __name__ == '__main__':
                             err = b.error[RXtrama[2]] if RXtrama[2] in b.error else 'ERRORE NON DEFINITO'
                         log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[RXtrama[1] - 32], b.int2hex(RXtrama), err))
 
-            if nowtime - oldtime > 20:
+            if nowtime - oldtime > 8:
                 TXmsg.append(ping)  # Not remove. Is neccesary to reset shutdown counter
                 oldtime = nowtime  # Not remove
 
