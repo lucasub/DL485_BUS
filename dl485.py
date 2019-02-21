@@ -137,7 +137,7 @@ class Bus:
     mapmicro = {  # MAP PIN Atmega328P QFN32PIN
          1: {'name': 'PD3',         'iomicro':    3,    'function': ['I', 'O', 'P']},
          2: {'name': 'PD4',         'iomicro':    4,    'function': ['I', 'O']},
-         3: {'name': 'PE0',         'iomicro':   23,    'function': ['I', 'O', 'SDA']},
+         3: {'name': 'PE0',         'iomicro':   21,    'function': ['I', 'O', 'SDA']},
          4: {'name': 'VCC',         'iomicro':   99,    'function': ['VCC']},
          5: {'name': 'GND',         'iomicro':   99,    'function': ['GND']},
          6: {'name': 'PE1',         'iomicro':   22,    'function': ['I', 'O', 'A']},
@@ -215,37 +215,6 @@ class Bus:
             'DS18B20-6':    {'pin':  35,  'name':     'DS18B20'},
         },
 
-        3: {  # Board DL485PCB  #
-            'SDA':          {'pin':  27,  'name':     'IO1'},  # IO Logico: IO Fisico
-            'SCL':          {'pin':  28,  'name':     'IO2'},
-            'PD7':          {'pin':  11,  'name':     'IO3'},
-            'PB0':          {'pin':  12,  'name':     'IO4'},
-            'PB1':          {'pin':  13,  'name':     'IO5'},
-            'PD3':          {'pin':   1,  'name':     'IO6'},
-            'PD4':          {'pin':   2,  'name':     'IO7'},
-            'PB2':          {'pin':  14,  'name':     'IO8'},
-            'PC0':          {'pin':  23,  'name':     'IO9'},
-            'PC1':          {'pin':  24,  'name':     'IO10'},
-            'PC2':          {'pin':  25,  'name':     'IO11'},
-            'PC3':          {'pin':  26,  'name':     'IO12'},
-            'PB4':          {'pin':  16,  'name':     'IO13'},
-            'PB5':          {'pin':  17,  'name':     'IO14'},
-            'PB3':          {'pin':  15,  'name':     'IO15'},
-            'PE0':          {'pin':   3,  'name':     'IO8'},
-            'PE1':          {'pin':   6,  'name':     'IO8'},
-            'PE2':          {'pin':  19,  'name':     'ADC'},
-            'PE3':          {'pin':  22,  'name':     'VIN'},
-            'PCA9535':      {'pin':   0,  'name':     'PCA9535'},
-            'BME280':       {'pin':   0,  'name':     'BME280'},
-            'BME280B':      {'pin':   0,  'name':     'BME280'},
-            'AM2320':       {'pin':   0,  'name':     'AM2320'},
-            'TSL2561':      {'pin':   0,  'name':     'TSL2561'},
-            'DS18B20-1':    {'pin':  35,  'name':     'DS18B20'},
-            'DS18B20-2':    {'pin':  35,  'name':     'DS18B20'},
-            'DS18B20B':     {'pin':  36,  'name':     'DS18B20'},
-            'TEMP_ATMEGA':  {'pin':  37,  'name':     'TEMP_ATMEGA'}
-        },
-
         2: {  # Board DL485BOXx
             'IO1':          {'pin':  23,  'name':      'IO1',       'function': ['I', 'O', 'A']},
             'IO2':          {'pin':  24,  'name':      'IO2',       'function': ['I', 'O', 'A']},
@@ -254,6 +223,63 @@ class Bus:
             'OUT1':         {'pin':   3,  'name':      'RELE1',     'function': ['O']},
             'OUT2':         {'pin':   2,  'name':      'RELE2',     'function': ['O']},
             'OUT3':         {'pin':   1,  'name':      'RELE3',     'function': ['O']},
+            'VIN':          {'pin':  22,  'name':      'VIN',       'function': ['VIN']},
+            'SDA':          {'pin':  27,  'name':      'SDA',       'function': ['SDA']},
+            'SCL':          {'pin':  28,  'name':      'SCL',       'function': ['SCL']},
+            'PCA9535':      {'pin':   0,  'name':      'PCA9535'},
+            'BME280A':      {'pin':   0,  'name':      'BME280'},
+            'BME280B':      {'pin':   0,  'name':      'BME280'},
+            'TSL2561':      {'pin':   0,  'name':      'TSL2561'},
+            'DS18B20':      {'pin':  35,  'name':      'DS18B20'},
+            'TEMP_ATMEGA':  {'pin':  37,  'name' :     'TEMP_ATMEGA'},
+            'VIRT1':        {'pin':  41,  'name' :     'VIRT1'},
+            'VIRT2':        {'pin':  42,  'name' :     'VIRT2'},
+            'VIRT3':        {'pin':  43,  'name' :     'VIRT3'},
+            'VIRT4':        {'pin':  44,  'name' :     'VIRT4'},
+            'VIRT5':        {'pin':  45,  'name' :     'VIRT5'},
+        },
+
+
+        3: {  # Board DL485PCB  #
+            'SDA':          {'pin':  27},
+            'SCL':          {'pin':  28},
+            'PD7':          {'pin':  11},
+            'PD6':          {'pin':  10},
+            'PB0':          {'pin':  12},
+            'PB1':          {'pin':  13},
+            'PD3':          {'pin':   1},
+            'PD4':          {'pin':   2},
+            'PB2':          {'pin':  14},
+            'PC0':          {'pin':  23},
+            'PC1':          {'pin':  24},
+            'PC2':          {'pin':  25},
+            'PC3':          {'pin':  26},
+            'PB4':          {'pin':  16},
+            'PB5':          {'pin':  17},
+            'PB3':          {'pin':  15},
+            'PE0':          {'pin':   3},
+            'PE1':          {'pin':   6},
+            'PE2':          {'pin':  19},
+            'PE3':          {'pin':  22},
+            'VIN':          {'pin':  22, 'function': ['VIN']},
+            'TEMP_ATMEGA':  {'pin':  37},
+            'PCA9535':      {'pin':   0},
+            'BME280':       {'pin':   0},
+            'BME280B':      {'pin':   0},
+            'AM2320':       {'pin':   0},
+            'TSL2561':      {'pin':   0},
+
+        },
+
+
+
+        4: {  # Board DL485Reset
+            'IO1':          {'pin':  15,   'name':     'IO1',       'function': ['I', 'O', 'A']},
+            'IO2':          {'pin':  16,  'name':      'IO2',       'function': ['I', 'O', 'A']},
+            'IO3':          {'pin':  25,  'name':      'IO3',       'function': ['I', 'O', 'A']},
+            'IO4':          {'pin':  26,  'name':      'IO4',       'function': ['I', 'O', 'A']},
+            'OUT1':         {'pin':   2,  'name':      'RELE1',     'function': ['O']},
+            'OUT2':         {'pin':   1,  'name':      'RELE2',     'function': ['O']},
             'VIN':          {'pin':  22,  'name':      'VIN',       'function': ['VIN']},
             'SDA':          {'pin':  27,  'name':      'SDA',       'function': ['SDA']},
             'SCL':          {'pin':  28,  'name':      'SCL',       'function': ['SCL']},
@@ -428,7 +454,7 @@ class Bus:
 
     def calculate(self, board_id, io_logic, value):
         """
-        Ritorna il valore calcolato a seconda del dispositivo connesso:
+        Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso:
             Temperature:
                 DS18B20         -> Temp
                 BME280          -> Temp + Hum + Bar
@@ -440,7 +466,7 @@ class Bus:
             Digital:
                 Digital input
         """
-        # print("board_id:%s, io_logic:%s, value:%s, io_type:%s" %(board_id, io_logic, value, self.mapiotype[board_id][io_logic]['io_type']))
+        # print("CALCULATE: board_id:%s, io_logic:%s, value:%s, io_type:%s" %(board_id, io_logic, value, self.mapiotype[board_id][io_logic]['io_type']))
         if board_id in self.mapiotype and io_logic in self.mapiotype[board_id]:
             if self.mapiotype[board_id][io_logic]['io_type'] == 'onewire':
                 if self.mapiotype[board_id][io_logic]['device_name'] == 'DS18B20':
@@ -484,7 +510,7 @@ class Bus:
                         lux = 0
                     # print("LUX:%s, CH0:%s, CH1:%s, A:%s" %(lux, ch0, ch1, a) )
                     return round(lux, 1)
-                    
+
 
             elif self.mapiotype[board_id][io_logic]['io_type'] == 'temp_atmega':
                 value = (value[0] + (value[1] * 256)) - 270 + 25
@@ -541,18 +567,19 @@ class Bus:
         """
         Show to screen the IO status
         """
-        print("\n", "-" * 40, "STATUS IO", "-" * 40)
-        print("ID  Name         BoardType  IO:", end=' ')
-        for i in range(1, 23):
-            print("{:<6} ".format(i), end='')
+        print("\n", "-" * 83, "STATUS IO", "-" * 83)
+        print(" ID Name        BoardType  IO:", end='')
+        for i in range(1, 31):  # estremo superiore viene escluso
+            print("{:>4} ".format(i), end='')
         print()
         for b in self.status:
-            print("{:<4}{:<10} {} {:<13}".format(b, self.status[b]['name'], self.status[b]['boardtype'], self.status[b]['boardtypename']), end='')
+            print("{:>3} {:<11} {} {:>5}     ".format(b, self.status[b]['name'][:11], self.status[b]['boardtype'], self.status[b]['boardtypename']), end='')
 
             for i in self.status[b]['io']:
-                print(' %s ' % i, end='')
+                
+                print("{:>5}".format(str(i)), end='')
             print()
-        print("-" * 40, "END STATUS", "-" * 40, "\n")
+        print("-" * 83, "END STATUS", "-" * 83, "\n")
 
     def int2hex(self, msg):
         """
@@ -673,9 +700,9 @@ class Bus:
             trama.append(resto)
         return trama
 
-    def calcCrcTx(self, msg):
+    def encodeMsgCalcCrcTx(self, msg):
         """
-        Calc CRC of TX trama
+        Codifica byte messaggio con bit sincronismo, e codice di fine trama piu crc finale
         """
         bytedatrasm = []
         self.crctrasm = self.INITCRC
@@ -1097,7 +1124,7 @@ class Bus:
                             byte4 |= 128
                         byte5 = int(board.get(b)['time_refresh']) & 255  # Byte 5: rinfresco periodico ls in decimi di secondo
                         byte6 = int(board.get(b)['time_refresh']) >> 8  # Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
-                        # print("RINGRESCHI", byte5, byte6)
+                        # print("RINFRESCHI", byte5, byte6)
 
                         if io_type == 'analog' or io_type == 'digital':
                             byte7 = 0 if not 'filter' in board.get(b) else int(board.get(b)['filter'])
@@ -1145,13 +1172,13 @@ class Bus:
                         plc_function =  {
                             'disable': 0,
                             'equal': 1,
-                            'not_equal': 1 | 128,
+                            'nequal': 1 | 128,
                             'and': 2,
                             'nand': 2 | 128,
                             'or': 3,
                             'nor': 3 | 128,
                             'xor': 4,
-                            'nxor': 4| 128,
+                            'nxor': 4 | 128,
                             'odd': 5,
                             'even': 5 | 128,
                             'toggle_on': 6,
@@ -1162,19 +1189,41 @@ class Bus:
                             'autostart_timer': 10,
                             'nautostart_timer': 10 | 128,
                             'test_nio_>=_n': 11,
+                            'ntest_nio_>=_n': 11 | 128,
                             'test_nio_into_n': 12,
+                            'ntest_nio_into_n': 12 | 128,
                             'test_schmitt_nio': 13,
+                            'ntest_schmitt_nio': 13 | 128,
+                            'or_transition_on': 15,
+                            'nor_transition_on': 15 | 128,
+                            'or_transition_on_all': 16,
+                            'nor_transition_on_all': 16 | 128,
                             'analog_in_=_n': 20,
+                            'nanalog_in_=_n': 20 | 128,
                             'analog_in_>_n': 21,
+                            'nanalog_in_>_n': 21 | 128,
                             'analog_in_>=_n': 22,
+                            'nanalog_in_>=_n': 22 | 128,
                             'analog_in_schmitt_n': 23,
+                            'nanalog_in_schmitt_n': 23 | 128,
                             'if_analog_in1_=_analog_in2': 24,
+                            'nif_analog_in1_=_analog_in2': 24 | 128,
                             'if_analog_in1_>_analog_in2': 25,
+                            'nif_analog_in1_>_analog_in2': 25 | 128,
                             'if_analog_in1_>=_analog_in2': 26,
+                            'nif_analog_in1_>=_analog_in2': 26 | 128,
                             'if_analog_in1_-_analog_in2_schmitt_value': 27,
+                            'nif_analog_in1_-_analog_in2_schmitt_value': 27 | 128,
                             'last_change': 28,
+                            'nlast_change': 28 | 128,
                             'last_change_all': 29,
+                            'nlast_change_all': 29 | 128,
                             'power_on': 30, # Funzione che gestische l'alimentazione raspberry
+                            'counter_up': 32,
+                            'counter_dw': 33,
+                            'counter_up_dw': 34,
+                            'time_meter': 35,
+                            'powermeter': 36,
                             'analog_in_+_n': 40,
                             'analog_in_-_n': 41,
                             'analog_in_*_n': 42,
@@ -1189,30 +1238,25 @@ class Bus:
                             'analog_in1_%_analog_in2': 54,
                             'analog_in1_min_analog_in2': 55,
                             'analog_in1_max_analog_in2': 56,
-                            'counter_up': 32,
-                            'counter_dw': 33,
-                            'counter_up_dw': 34,
-                            'time_meter': 35,
-                            'powermeter': 36,
+                            'sampletrigger': 60,
                         }
 
                         # pprint(board.get(b))
-                        byte8 = 'disable' if not 'plc_function' in board.get(b) or board.get(b)['plc_function'] == 'disable' else board.get(b)['plc_function']
+                        sbyte8 = 'disable' if not 'plc_function' in board.get(b) or board.get(b)['plc_function'] == 'disable' else board.get(b)['plc_function']
                         # print("PLC_FUNCTION:************************", plc_function[byte8], byte8)
 
-                        plc_params = 0 if not 'plc_params' in board.get(b) else board.get(b)['plc_params']
-                        plc = []
+                        if sbyte8 == "disable":
+                            message_conf_app.append(plc_function[sbyte8])
 
-
-                        if byte8 == "disable":
-                            message_conf_app.append(plc_function[byte8])
-
-                        elif byte8 != "disable":
+                        else:  ## byte8 != "disable":
                             # if inverted:
                                 # plc_function[byte8] ^= 0x80
-                            message_conf_app.append(plc_function[byte8])
+                            plc_params = 0 if not 'plc_params' in board.get(b) else board.get(b)['plc_params']
+                            plc = []
 
-                            if byte8 == 'power_on':
+                            message_conf_app.append(plc_function[sbyte8])
+
+                            if sbyte8 == 'power_on':
                                 # print("plc_params", plc_params, float(plc_params[3]), int(plc_params[4]), int(plc_params[5]))
                                 value_dac_in = self.ADC_value(float(plc_params[3]), int(plc_params[4]), int(plc_params[5]))
                                 plc.extend((int(plc_params[0]), int(plc_params[1]) & 255, int(plc_params[1]) >> 8, int(plc_params[2]) & 255, int(plc_params[2]) >> 8, value_dac_in & 255, value_dac_in >> 8 ))
@@ -1235,8 +1279,8 @@ class Bus:
 
                                 else:
                                     print("BOARD_ID and IO_LOGIC not defined on CONFIGURATION File")
-
-                                if  byte8 == "timer" or byte8 == "ntimer" or byte8 == "autostart_timer" or byte8 == "nautostart_timer":
+                                
+                                if sbyte8 in ["timer", "ntimer", "autostart_timer", "nautostart_timer"]:
                                     # Se timer, dopo elenco di BOARD_ID e IO_LOGIC, seguono questi parametri:
                                     # Modo TIMER:   b1:b0
                                     #                       0:0 innesca su fronte ON e su fronte OFF (se b2==1 => b0=stato uscita)
@@ -1290,7 +1334,7 @@ class Bus:
                                     plc.append(plc_time_off & 255)
                                     plc.append(plc_time_off >> 8)
 
-                                elif byte8 == "equal":
+                                elif sbyte8 in ["equal", "nequal"]:
 
                                     plc_time_unit = 0.01 if not 'plc_time_unit' in board.get(b) else board.get(b)['plc_time_unit']
 
@@ -1314,50 +1358,49 @@ class Bus:
                                     plc.append(plc_delay_off_on & 0xff)
                                     plc.append(plc_delay_off_on >> 8)
 
-                                elif byte8 == 'test_nio_>_n' or byte8 == 'test_nio_into_n' or byte8 == 'test_schmitt_nio':
+                                elif sbyte8 in ['test_nio_>_n', 'ntest_nio_>_n', 'test_nio_into_n', 'ntest_nio_into_n', 'test_schmitt_nio', 'ntest_schmitt_nio']:
                                     plc_params_val = int(plc_params)
                                     plc.append(plc_params_val)
 
-                                elif  byte8 == 'analog_in_=_n' or byte8 == 'analog_in_>_n' or byte8 == 'analog_in_>=_n':
+                                elif sbyte8 in ['analog_in_=_n', 'nanalog_in_=_n', 'analog_in_>_n', 'nanalog_in_>_n', 'analog_in_>=_n', 'nanalog_in_>=_n']:
                                     plc_params_val = int(plc_params)
                                     plc.append(plc_params_val & 255)
                                     plc.append(plc_params_val >> 8)
 
-                                elif  byte8 == 'analog_in_schmitt_n':
+                                elif sbyte8 in ['analog_in_schmitt_n','nanalog_in_schmitt_n']:
                                     plc_params_val = list(plc_params)
                                     plc.append(plc_params_val[0] & 255)
                                     plc.append(plc_params_val[0] >> 8)
                                     plc.append(plc_params_val[1] & 255)
                                     plc.append(plc_params_val[1] >> 8)
 
-                                elif byte8 == 'if_analog_in1_=_analog_in2' or byte8 == 'if_analog_in1_>_analog_in2' or byte8 == 'if_analog_in1_>=_analog_in2':
+                                elif sbyte8 in ['if_analog_in1_=_analog_in2', 'nif_analog_in1_=_analog_in2', 'if_analog_in1_>_analog_in2', 'nif_analog_in1_>_analog_in2', 'if_analog_in1_>=_analog_in2', 'nif_analog_in1_>=_analog_in2']:
                                     pass
 
-                                elif byte8 == 'if_analog_in1_-_analog_in2_schmitt_value':
+                                elif sbyte8 in ['if_analog_in1_-_analog_in2_schmitt_value','nif_analog_in1_-_analog_in2_schmitt_value']:
                                     plc_params_val = list(plc_params)
                                     plc.append(plc_params_val[0] & 255)
                                     plc.append(plc_params_val[0] >> 8)
                                     plc.append(plc_params_val[1] & 255)
                                     plc.append(plc_params_val[1] >> 8)
 
-                                elif byte8 == 'last_change':
+                                elif sbyte8 == 'last_change':
                                     pass
 
-                                elif byte8 == 'last_change_all':
+                                elif sbyte8 == 'last_change_all':
                                     pass
 
-                                elif byte8 == 'analog_in_+_n' or byte8 == 'analog_in_-_n' or byte8 == 'analog_in_*_n' or byte8 == 'analog_in_/_n' or byte8 == 'analog_in_%_n' \
-                                    or byte8 ==  'analog_in_min_n' or byte8 == 'analog_in_max_n':
+                                elif sbyte8 in ['analog_in_+_n', 'analog_in_-_n', 'analog_in_*_n', 'analog_in_/_n', 'analog_in_%_n', 'analog_in_min_n', 'analog_in_max_n']:
 
                                     plc_params_val = int(plc_params)
                                     plc.append(plc_params_val & 255)
                                     plc.append(plc_params_val >> 8)
 
-                                elif byte8 == 'analog_in1_+_analog_in2' or byte8 == 'analog_in1_-_analog_in2' or byte8 == 'analog_in1_*_analog_in2' or byte8 == 'analog_in1_/_analog_in2' \
-                                or byte8 == 'analog_in1_/_analog_in2' or byte8 == 'analog_in1_%_analog_in2' or byte8 == 'analog_in1_min_analog_in2' or byte8 == 'analog_in1_max_analog_in2':
+                                elif sbyte8 in ['analog_in1_+_analog_in2', 'analog_in1_-_analog_in2', 'analog_in1_*_analog_in2', 'analog_in1_/_analog_in2', \
+                                                'analog_in1_/_analog_in2', 'analog_in1_%_analog_in2', 'analog_in1_min_analog_in2', 'analog_in1_max_analog_in2']:
                                     pass
 
-                                elif byte8 == 'counter_up' or byte8 == 'counter_dw':
+                                elif sbyte8 in ['counter_up', 'counter_dw']:
                                     counter_mode = 0 if not 'counter_mode' in board.get(b) else int(board.get(b)['counter_mode'])
                                     plc.append(counter_mode)
                                     counter_filter = 0 if not 'counter_filter' in board.get(b) else int(board.get(b)['counter_filter'])
@@ -1365,8 +1408,8 @@ class Bus:
                                     counter_timeout = 0 if not 'counter_timeout' in board.get(b) else int(board.get(b)['counter_timeout'])
                                     plc.append(counter_timeout & 255)
                                     plc.append(counter_timeout >> 8)
-                                    
-                                elif byte8 == 'time_meter':
+
+                                elif sbyte8 == 'time_meter':
                                     counter_mode = 0 if not 'counter_mode' in board.get(b) else int(board.get(b)['counter_mode'])
                                     plc.append(counter_mode)
                                     counter_filter = 0 if not 'counter_filter' in board.get(b) else int(board.get(b)['counter_filter'])
@@ -1374,8 +1417,8 @@ class Bus:
                                     counter_timeout = 0 if not 'counter_timeout' in board.get(b) else int(board.get(b)['counter_timeout'])
                                     plc.append(counter_timeout & 255)
                                     plc.append(counter_timeout >> 8)
-                                    
-                                elif byte8 == 'powermeter':
+
+                                elif sbyte8 == 'powermeter':
                                     counter_mode = 0 if not 'counter_mode' in board.get(b) else int(board.get(b)['counter_mode'])
                                     plc.append(counter_mode)
                                     counter_filter = 0 if not 'counter_filter' in board.get(b) else int(board.get(b)['counter_filter'])
@@ -1391,7 +1434,8 @@ class Bus:
 
 
                                 else:
-                                    pass
+                                    log.write("{:<12} TX                    {:<18} {} {}".format(nowtime, str(b.int2hex(msg)), '', 'FUNZIONE PLC NON TROVATA'))    
+                                    sys.exit()
 
 
 
@@ -1436,18 +1480,18 @@ class Bus:
                                 i2cconf.append(self.writeEE(idbus, eels + 19, eems, [3 | self.i2c_const['FLAG_PAUSA'] | self.i2c_const['BYTE_OPZIONI_LETTURA'], 100, 3 | 64, 0xb9, 0 ]))
                                 msg.extend(i2cconf)
                                 # print("CONFIGURAZIONE I2C:", i2cconf)
-                            
+
                             elif b == 'TSL2561':
                                 print("CONFIGURAZIONE TSL2561")
                                 i2cconf = []
                                 i2cconf.append(self.writeEE(idbus, eels + 10, eems, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC]))
                                 i2cconf.append(self.writeEE(idbus, eels + 14, eems, [2 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 32, 0x72 | 1  ]))
-                                                                
+
                                 i2cconf.append(self.writeEE(idbus, eels + 17, eems, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x80]))
                                 i2cconf.append(self.writeEE(idbus, eels + 21, eems, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03]))
                                 # i2cconf.append(self.writeEE(idbus, eels + 25, eems, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x81 ]))
                                 # i2cconf.append(self.writeEE(idbus, eels + 29, eems, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x11 ]))
-                                
+
                                 msg.extend(i2cconf)
                                 # print("CONFIGURAZIONE I2C:", i2cconf)
 
@@ -1455,14 +1499,16 @@ class Bus:
                         elif io_type == 'onewire':
                             msg.append(self.writeEE(idbus, eels + 10, eems, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0xcc, 0x44]))  # num. byte, byte opzioni, campionamento di tutte le sonde, leggi temp.
 
-                            address = board.get(b).get('address')
-                            address = [int(x, 16) for x in address]
+                            address = 0 if 'address' not in board.get(b) else board.get(b).get('address')
                             print("ADDRESS ID ONE WIRE:", address)
-
-                            msg.append(self.writeEE(idbus, eels + 14, eems, [11 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0x55] + address +  [0xbe, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp
+                            if address:
+                                address = [int(x, 16) for x in address]
+                                msg.append(self.writeEE(idbus, eels + 14, eems, [11 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0x55] + address +  [0xbe, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp
+                            else:
+                                msg.append(self.writeEE(idbus, eels + 14, eems, [3 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0xCC] + [0xbe, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp
                         else:
                             # If not I2C or OneWire, set 0, 0 at address 10 and 11.
-                            msg.append(self.writeEE(idbus, eels + 10, eems, [0,0]))
+                            msg.append(self.writeEE(idbus, eels + 10, eems, [0,0]))  # 0 = lunghezza programma periodico, 0 = lunghezza prg. inizializzazione
 
 
                 # print("ADD REBOOT")
@@ -1477,100 +1523,95 @@ class Bus:
 # END BUS Class
 
 
+# INIZIO PARTE MAIN
 if __name__ == '__main__':
     print("*" * 20, "START DL485 program", "*" * 20)
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 1:  # analisi parametro sulla riga di comando
         # print(sys.argv)
-        if sys.argv[1] == 'w':
+        if sys.argv[1] == 'w':  # stampa log su file
             logstate = 1
-        elif sys.argv[1] == 'p':
+        elif sys.argv[1] == 'p':  # stampa a schermo
             logstate = 2
-        elif sys.argv[1] == 'wp':
+        elif sys.argv[1] == 'wp':  # stampa a schermo e su file
             logstate = 3
-        else:
+        else:  # parametro non valido
             logstate = 0
-            print("LOG: w=write to file, p=print, wp=write+print")
+            print("errore parametro di riga non valido, parametri LOG: w=write to file, p=print, wp=write+print")
             sys.exit()
     else:
         logstate = 0
-        print("Nessun argomento specificato all'esecuzione del file. Possibili w, p, wp", end="\n\n")
+        print("Programma senza richiesta di log su schermo/file. parametri possibili w (log su file), p (log a schermo), wp (log a schermo e file)", end="\n\n")
 
-    b = Bus()  # Istanza la classe P
-    log = Log('log.txt', logstate)
-    config_file_name = "./config.json"
-    b.getJsonConfig(config_file_name)
+    b = Bus()  # Istanza la classe bus
+    log = Log('log.txt', logstate)  # Instazia la classe Log
+    
+    config_file_name = "./config.json"  # specifica nome file di configurazione
+    b.getJsonConfig(config_file_name) 
 
+    # righe da eseguire dopo aver specificato il file di configurazione
     bus_baudrate = b.config.get('GENERAL')['bus_baudrate']  # Legge la velocità del BUS
     bus_port = b.config.get('GENERAL')['bus_port']  # Legge la porta del BUS di Raspberry PI
-    b.BOARD_ADDRESS = int(b.config.get('GENERAL')['board_address'])  # Legge la porta del BUS di Raspberry PI
+    b.BOARD_ADDRESS = int(b.config.get('GENERAL')['board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
     print("BUS_BAUDRATE:%s, BUS_PORT:%s, BOARD_ADDRESS:%s" %(bus_baudrate, bus_port, b.BOARD_ADDRESS))
 
     ser = b.ser(bus_port, bus_baudrate)  # Setup serial
     TXmsg = []  # Vengono inserite le trame da trasmettere
     b.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo board attive)
-    board_ready = {}
-
+    board_ready = {}  # dizionario delle board rilevate sul bus che viene aggiornato periodicamente
+    TIME_PRINT_LOG = 8  # intervallo di tempo in secondi per la stampèa periodica del log a schermo
+    ping = b.ping()  # init variabile di appoggio con ping di questo nodo
+    
     """ Reset parametri SCHEDE """
-    msg = b.resetEE(2, 0)  # Board_id, io_logic. Se io_logic=0, resetta tutti gli IO
+    # se serve si resetta una o tutte le schede con le tre righe sotto
+    # msg = b.resetEE(2, 0)  # Board_id, io_logic. Se io_logic=0, resetta tutti gli IO
     # print("RESET IO SCHEDE:", msg)
     # TXmsg = msg
 
-    """ Configurazione SCHEDE """
+    """ Configurazione SCHEDE in base al file in config_file_name """
     message_conf_app = b.sendConfiguration()  # Set configuration of boards
     TXmsg = message_conf_app  # Configurazione
 
-    """ LOOP """
-    oldtime = time.time() - 10  # init oldtime per stampe dizionario con i/o per stampa subito al primo loop
 
-    ping = b.ping()
+    oldtime = int(time.time()) - 10  # init oldtime per stampe dizionario con i/o per stampa subito al primo loop
+   
+
+    """ LOOP """
     while 1:
-        nowtime = int(time.time())
-        RXbyte = ser.read()
+        nowtime = int(time.time())  # seleziona la parte intera dei secondi
+        RXbyte = ser.read() #legge uno o piu caratteri del buffer seriale
         # print(RXbyte)
         if not RXbyte:  # Monitor serial
             # time.sleep(0.001)
-            continue
+            continue  # seriale senza caratteri
 
         # print(RXbyte)
-        for d in RXbyte:
+        for d in RXbyte:  # analizza i caratteri ricevuti
             # print(d)
-            RXtrama = b.readSerial(d)
+            RXtrama = b.readSerial(d)  # accumula i vari caratteri e restituisce il pacchetto finito quando trova il carattere di fine pacchetto
             # print(RXtrama)
 
-            if RXtrama:  # Se arrivata una trama copleta
-                now = time.time()
-                if len(RXtrama) == 1:
-                    pass
-                    # print(RXtrama)
+            if RXtrama:  # Se arrivata una trama copmleta (PING e trame piu lunghe)
 
-                if RXtrama[0] == b.BOARD_ADDRESS - 1:  # E' ora di trasmettere
+                # if len(RXtrama) == 1: print(RXtrama)
+
+                if RXtrama[0] == b.BOARD_ADDRESS - 1:  # test su address ricevuto, e' ora di trasmettere
                     # print("TXmsg", TXmsg)
-                    if len(TXmsg):
+                    if len(TXmsg): #se qualcosa da trasmettere
                         # print("Trama to TX: ", len(TXmsg))
-                        msg = TXmsg.pop(0)
+                        msg = TXmsg.pop(0)  # prende dalla lista la prima trama da trasmettere
                         log.write("{:<12} TX                    {:<18} {} {}".format(nowtime, str(b.int2hex(msg)), '', ''))
+                        msg = b.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui 
+                        ##  ***** fare solo append del crc, quindi moficare la funzione calccrctx
+                        msg = b.encodeMsgCalcCrcTx(msg) # restituisce il messaggio codificato e completo di crc
+                        ser.write(bytes(msg))  # invia alla seriale
 
-                        # log.write("{:<12} TX {:<18} {}".format(nowtime, b.code[msg[1]], b.int2hex(msg)))
-                        msg = b.eight2seven(msg)
-                        # print("MSG:", msg)
-                        # print("{:<11} ==>>{:<15}".format('MSG 8 to 7', msg))
-                        msg = b.calcCrcTx(msg)
-                        # print("MSG:", msg)
-                        ser.write(bytes(msg))
+                b.labinitric()  # Reset buffer ricezione e init crc ricezione per prossimo pacchetto da ricevere
+                board_ready[RXtrama[0]] = nowtime  # Aggiorna la data di quando è stato ricevuto la trama del nodo, serve per dizionario delle board rilevate sul bus
 
-                b.labinitric()  # Resetta la coda per nuova ricezione alla fine dei calcoli
-                board_ready[RXtrama[0]] = nowtime  # Aggiorna la data di quando è stato ricevuto la trama del nodo
-
-                if len(RXtrama) > 1:  # Mosra solo comunicazioni valide (senza PING)
-                    # print(RXtrama)  # Visualizza trama
-                    # print(b.code)
-                    if RXtrama[0] == 3:
-                        pass
-                        # print("=========>>>>>>>>", RXtrama)
-
-                    if RXtrama[1] == 14 or RXtrama[1] == 8:  # COMUNICA_IO / Scrive valore USCITA
+                if len(RXtrama) > 1:  # Analizza solo comunicazioni valide (senza PING)
+                    if RXtrama[1] in [b.code['COMUNICA_IO'], b.code['CR_WR_OUT']]:  # COMUNICA_IO / Scrive valore USCITAù
                         try:
-                            value = b.calculate(RXtrama[0], RXtrama[2], RXtrama[3:])
+                            value = b.calculate(RXtrama[0], RXtrama[2], RXtrama[3:])  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
                             b.status[RXtrama[0]]['io'][RXtrama[2] - 1] = value
                             log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama), ''))
                         except:
@@ -1578,100 +1619,29 @@ if __name__ == '__main__':
                             print("\t\t\t\t\t\tERROR: board_id:%s or io_logic:%s NOT EXSIST in the status dict" %(RXtrama[0], RXtrama[2]))
 
 
-                    elif (RXtrama[1] - 32) in b.code:
-                        err = ''
-                        if RXtrama[1] == 29:
-                            # log.write("EEEEEEEEEEEEEEEEEEEEEEERRROR", RXtrama)
-                            err = b.error[RXtrama[2]] if RXtrama[2] in b.error else 'ERRORE NON DEFINITO'
-                        log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[RXtrama[1] - 32], b.int2hex(RXtrama), err))
+                    elif RXtrama[1] & 32:
+                            apprx=RXtrama[1]-32
+                            if apprx in b.code:
+                                err = ''
+                                if apprx == 29:
+                                # log.write("EEEEEEEEEEEEEEEEEEEEEEERRROR", RXtrama)
+                                    err = b.error[RXtrama[2]] if RXtrama[2] in b.error else 'ERRORE NON DEFINITO'
+                                log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[apprx], b.int2hex(RXtrama), err))
 
-            if nowtime - oldtime > 8:
+            if nowtime - oldtime > TIME_PRINT_LOG:
                 TXmsg.append(ping)  # Not remove. Is neccesary to reset shutdown counter
                 oldtime = nowtime  # Not remove
-
-
-
-                # TXmsg.append(b.readEE(3, 32, 0, 5))  # Read EEPROM
-                # TXmsg.append(b.getTypeBoard(5))  # Read Board Type
-                # TXmsg.append(b.boardReboot(0))  # Reboot board
-
-                # TXmsg.append(b.writeIO(1, 11, [0]))  # Write IO
-                # TXmsg.append(b.writeIO(1, 11, [1]))  # Write IO
-                # TXmsg.append(b.writeIO(1, 12, [1]))  # Write IO
-
-                # TXmsg.append(pingCrc)  # Trasmissione PING
-
-
-
-                # ********************* I2C comandi su EEPROM **********************
-                # --------------------- INIZIO COMANDI PCA9535 --------------------
-                # TXmsg.append(b.writeEE(4, 10, 5, [5, 3, 0x4e, 2, 0x0a, 0xa0]))
-                # TXmsg.append(b.writeIO(4, 1, [10 | 128]))
-                # TXmsg.append(b.writeIO(4, 1, [22 | 128]))
-
-                # TXmsg.append(b.writeEE(4, 16, 5, [5, 3, 0x4e, 2, 0x00, 0xff]))
-                # TXmsg.append(b.writeEE(4, 46, 5, [3 + 0x80, 0b01001 + 32, 0xec, 0xfa]))
-                # TXmsg.append(b.writeIO(4, 20, [16]))
-                # ------------------------- FINE PCA9535 -----------------------------
-
-                # -------------------- INIZIO COMANDI BME 280 --------------------------
-                # TXmsg.append(b.writeI2C(2, 7, 3 + 32, [0xec, 0xf2, 0x03]))  # Oversamplig umidità
-                # TXmsg.append(b.writeI2C(2, 7, 3, [0xec, 0xf4, 0x8f]))  # Oversampling, normal mode pressione e temperatura
-                # TXmsg.append(b.writeI2C(2, 7, 1 | 8, [0xec, 0xf7]))  # Indirizzo del primo indirizzo da leggere. Start senza stop
-                # TXmsg.append(b.readI2C(2, 7, 3 | 64, [0xec | 1]))  # Lettura 8 byte
-                # -------------------- FINE BME 280 --------------------------
-
-                # -------------------- INIZIO COMANDI AM2320 --------------------------
-                # TXmsg.append(b.writeI2C(2, 7, 3 + 32, [0xec, 0xf2, 0x03]))  # Oversamplig umidità
-                # TXmsg.append(b.writeI2C(2, 7, 3, [0xec, 0xf4, 0x8f]))  # Oversampling, normal mode pressione e temperatura
-                # TXmsg.append(b.writeI2C(2, 7, 1 | 8, [0xec, 0xf7]))  # Indirizzo del primo indirizzo da leggere. Start senza stop
-                # TXmsg.append(b.readI2C(2, 7, 3 | 64, [0xec | 1]))  # Lettura 8 byte
-                # -------------------- FINE BME 280 --------------------------
-
-
-                # ------------------------- INIZIO COMANDI DS18B20 -----------------------------
-                # TXmsg.append(b.writeOneWire(2, 6, 32))  # Reset Multitask OneWire
-                # TXmsg.append(b.readOneWire(2, 6, 1))  # Reset OneWire
-                # TXmsg.append(b.readOneWire(2, 6, 1+64, [0x33]))  # Richiesta codice ID OneWire per singola sonda collegata
-                # TXmsg.append(b.writeOneWire(2, 6, 1, [0xcc, 0x44]))  # Campionamento temperatura SENZA CODICE
-                # TXmsg.append(b.readOneWire(2, 6, 1+16, [0xcc, 0xbe]))  # Richiesta temperatura sonda senza ID (solo una sonda collegata). # Temperatura = (Secondo Byte H * 256 + Primo Byte L) * 0.0625
-
-
-                # TXmsg.append(b.writeOneWire(2, 6, 1, [0x55, 0x28, 0xff, 0x87, 0x6a, 0xa1, 0x16, 0x04, 0x23, 0x44]))  # Campionamento temperatura sonda con codice ID<
-                # TXmsg.append(b.readOneWire(2, 6, 1+16, [0x55, 0x28, 0xff, 0x87, 0x6a, 0xa1, 0x16, 0x04, 0x23, 0xbe]))  # Lettura temperatura senza ID sonda: Reset OneWire + numero byte da leggere
-
-                # TXmsg.append(b.readOneWire(2, 6, 1+16, [0xcc, 0xbe]))  # Richiesta temperatura sonda senza ID (solo una sonda collegata). # Temperatura = (Secondo Byte H * 256 + Primo Byte L) * 0.0625
-                # TXmsg.append(b.writeOneWire(2, 6, 1, [0x55, 0x28, 0xff, 0x5f, 0x6b, 0xa1, 0x16, 0x04, 0xcc, 0x44]))  # Campionamento temperatura sonda con codice ID
-                # TXmsg.append(b.readOneWire(2, 6, 1+16, [0x55, 0x28, 0xff, 0x5f, 0x6b, 0xa1, 0x16, 0x04, 0xcc, 0xbe]))  # Lettura temperatura senza ID sonda: Reset OneWire + numero byte da leggere
-
-                # Formula per la temperatura: ((secondo byte << 8) + primo byte) * 0.0625
-                # ------------------------- FINE DS18B20 -----------------------------
-
-
-
-                """
-                4 = board id
-                52 = indirizzo EE LS IO logico dove scrivere la EE + 10 (offset)
-                5 = indirizzo EE MS IO logico
-                3 = numero byte dati: b7: 1=concatena con prg. successivo; b6:comando I2C lettura
-                3 = byte opzioni
-                0xec = indirizzo dispostivo I2C
-                0xf4, 0x83 comando oversampling BME280
-                """
-
-                #------------------- TSL2561 -----------------------
-                # TXmsg.append(b.writeI2C(4, 1, 0b0011, [0x4e, 6, 0, 0])) # Impostare direzione OUT
-
 
                 # Routine che aggiorna le BOARD presenti sul BUS
                 board_to_remove = []
                 for k, v in board_ready.items():
                     # log.write(v, nowtime-v, v)
-                    if (nowtime - v) > 5:
+                    if (nowtime - v) > 5:  # rimuove board se i suoi pacchetti mancano da piu di 5 secondi
                         board_to_remove.append(k)
                 for k in board_to_remove:
                     del board_ready[k]
                 # b.BOARD_ADDRESS = max(list(board_ready.keys())) + 1
+
                 log.write("{:<12} BOARD_READY           {:<18} ".format(int(nowtime), str(list(board_ready.keys()))))
                 # log.write("{:<12} BOARD_READY           {:<18},   lenTx:{}, lenTxCrc:{}, ".format(int(nowtime), str(list(board_ready.keys())), len(TXmsg), len(TXmsgCrc) ))
                 # log.write("TXcount:",TXcount, "indiceTXtrasm:", indiceTXtrasm, "TXboard:", TXboard, "TXtimeout:", TXtimeout, "TXcode:", TXcode)
