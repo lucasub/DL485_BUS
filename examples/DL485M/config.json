@@ -1,0 +1,310 @@
+// File di configurazione DL485M Esempio 1
+
+// COMMENTI DEVONO INIZIARE CON // o #
+
+#   Tipo di dispositivi disponibili su Domoticz
+#    "Air Quality"
+#    "Alert"
+#    "Barometer"
+#    "Counter Incremental"
+#    "Current/Ampere"
+#    "Current (Single)"
+#    "Custom"
+#    "Distance"
+#    "Gas"
+#    "Humidity"
+#    "Illumination"
+#    "kWh"
+#    "Leaf Wetness"
+#    "Percentage"
+#    "Pressure"
+#    "Rain"
+#    "Selector Switch"
+#    "Soil Moisture"
+#    "Solar Radiation"
+#    "Sound Level"
+#    "Switch"
+#    "Temperature"
+#    "Temp+Hum"
+#    "Temp+Hum+Baro"
+#    "Text"
+#    "Usage"
+#    "UV"
+#    "Visibility"
+#    "Voltage"
+#    "Waterflow"
+#    "Wind"
+#    "Wind+Temp+Chill"
+
+# Descrizione PLC
+# All'interno delle singole board è presente un PLC che può essere attivato tramite la funzione desiderata (es. toggle_on)
+
+#    plc_function:       => Funzione associata al PLC relativa a quell'uscita
+#       disable         => PLC disabilitato
+#       equal           => funzione uguale. Ad esempio uscita = ingresso
+#       and             => funzione AND
+#       or              => funzione OR
+#       xor             => funzione XOR
+#       odd             => funzione dispari. Uscita a 1 se gli ingressi a 1 sono dispari
+#       toggle_on       => fa il toggle sul fronte ON dell'ingresso
+#       toggle_off      => fa il toggle sul fronte OFF dell'ingresso
+#       toggle_on_off   => fa il toggle sul fronte OFF e ON dell'ingresso
+#       timer           => timer uscita
+#       power_on        => Uscita per comandare il rele di reset alimentazione RAPBERRY quando non risponde sulla seriale per un certo tempo.
+
+#    inverted            => uscita negata
+#        0               => non invertita
+#        1               => invertita
+#
+
+{
+    # Tipi di Board disponibili. Non modificare
+    "TYPEB":
+    {
+        "DL485M": 1,
+        "DL485B": 2,
+        "DL485P": 3,
+        "DL485R": 4,
+
+        "1": "DL485M",
+        "2": "DL485B",
+        "3": "DL485P",
+        "4": "DL485R"
+    },
+
+    # Configurazione generale del BUS
+    "GENERAL":
+    {
+        "bus_port": "/dev/ttyUSB0", # Porta seriale Raspberry PI
+        "bus_baudrate": 9600, // Velocità BUS e seriale
+        "max_board_address": 24, // Numero massimo di Board presenti sul BUS
+        "board_address": 2 // ID assegnato a Raspberry o PC. Deve avere l'ID della scheda collegata alla seriale di Raspberry PI +1
+    },
+
+    // Definizione della BOARD con ID n.3. Sul BUS ogni Board deve avere un ID univoco
+    "BOARD1":
+    {
+        // Configurazione generale della BOARD
+        "GENERAL":
+        {
+            "name": "BUS", // Nome della BOARD
+            "boardtype": 1, // Tipo di Board: Vedi TYPEB
+            "enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
+        },
+
+        // Tensione alimentazione BOARD
+        "VIN":
+        {
+            "io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "direction": "input", // Valori: input, output. Direzione dell' IO
+            "io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
+            "time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            "Rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            "enable": 0, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "name": "Vin", // Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Voltage" // Tipo dispositivo Domoticz
+        },
+
+        // Temperatura CHIP ATMEGA
+        "TEMP_ATMEGA":
+        {
+            "io_logic": 2,
+            "direction": "input",
+            "io_type": "temp_atmega",
+            "time_refresh": 600,
+            "enable": 1,
+            "name": "TEMP_ATMEGA",
+            "description": "Temperatura Board ATMEGA328PB",
+            "dtype": "Temperature"
+        },
+
+        // DS18B20 n.1
+        "PD3":
+        {
+            "io_logic": 3,
+            "io_type": "onewire",
+            "pullup": 1,
+            "device_name": "DS18B20",
+            "time_refresh": 300,
+            "enable": 1,
+            "name": "TEMP1",
+            "description": "Sensore Temperatura 1",
+            "dtype": "Temperature"
+        },
+
+        // DS18B20 n.2
+        "PD4":
+        {
+            "io_logic": 4,
+            "io_type": "onewire",
+            "pullup": 1,
+            "device_name": "DS18B20",
+            "time_refresh": 300,
+            "enable": 1,
+            "name": "TEMP1",
+            "description": "Sensore Temperatura 1",
+            "dtype": "Temperature"
+        },
+      
+        // BME280 sensore temperatura + umidità + barometro
+        "BME280":
+        {
+            "io_logic": 5,
+            "io_type": "i2c",
+            "time_refresh": 300,
+            "enable": 0,
+            "device_name": "BME280",
+            "address": "0xEC",
+            "name": "BME280",
+            "description": "Sensore T+U+B bagno",
+            "dtype": "Temp+Hum+Baro"
+        },
+        
+        // TSL2561 sensore luminosità
+        "TSL2561":
+        {
+            "io_logic": 6,
+            "io_type": "i2c",
+            "time_refresh": 300,
+            "enable": 0,
+            "device_name": "TSL2561",
+            "address": "0x72",
+            "name": "TSL2561",
+            "description": "Sensore Luminosità",
+            "dtype": "Light"
+        },
+
+        // Pulsante 1
+        "PC3":
+        {
+            "io_logic": 7,
+            "direction": "input",
+            "io_type": "digital",
+            "pullup": 1,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "device_name": "IN 1",
+            "time_refresh": 300,
+            "enable": 1,
+            "name": "IN1",
+            "description": "Pulsante 1",
+            "dtype": "Switch"
+        },
+
+        // Pulsante 2
+        "PC2":
+        {
+            "io_logic": 8,
+            "direction": "input",
+            "io_type": "digital",
+            "pullup": 1,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "time_refresh": 300,
+            "enable": 1,
+            "name": "IN2",
+            "description": "Pulsante 2",
+            "dtype": "Switch"
+        },
+
+        // Pulsante 3
+        "PC1":
+        {
+            "io_logic": 9,
+            "direction": "input",
+            "io_type": "digital",
+            "pullup": 1,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "time_refresh": 300,
+            "enable": 1,
+            "name": "IN3",
+            "description": "Pulsante 3",
+            "dtype": "Switch"
+        },
+        
+        // Pulsante 4
+        "PC0":
+        {
+            "io_logic": 10,
+            "direction": "input",
+            "io_type": "digital",
+            "pullup": 1,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "time_refresh": 300,
+            "enable": 1,
+            "name": "IN4",
+            "description": "Pulsante 4",
+            "dtype": "Switch"
+        },
+
+        // Sensore PIR
+        "PE2":
+        {
+            "io_logic": 11,
+            "direction": "input",
+            "io_type": "digital",
+            "pullup": 1,
+            "time_refresh": 300,
+            "enable": 0,
+            "name": "PIR",
+            "description": "Sensore PIR",
+            "dtype": "Switch"
+        },
+
+        // Rele1
+        "PE0":
+        {
+            "io_logic": 12,
+            "direction": "output",
+            "io_type": "digital",
+            "time_refresh": 300,
+            "enable": 0,
+            "name": "R1",
+            "description": "Relè 1",
+            "dtype": "Switch"
+        },
+
+        // Rele2
+        "PE1":
+        {
+            "io_logic": 13,
+            "direction": "output",
+            "io_type": "digital",
+            "time_refresh": 300,
+            "enable": 0,
+            "name": "R2",
+            "description": "Relè 2",
+            "dtype": "Switch"
+        },
+
+        // Rele3
+        "PB0":
+        {
+            "io_logic": 14,
+            "direction": "output",
+            "io_type": "digital",
+            "time_refresh": 300,
+            "enable": 0,
+            "name": "R3",
+            "description": "Relè 3",
+            "dtype": "Switch"
+        },
+
+        // Rele4
+        "PB1":
+        {
+            "io_logic": 15,
+            "direction": "output",
+            "io_type": "digital",
+            "time_refresh": 300,
+            "enable": 0,
+            "name": "R4",
+            "description": "Relè 4",
+            "dtype": "Switch"
+        }
+    }
+}
