@@ -179,43 +179,43 @@ class Bus:
         45: {'name': 'VIRT5',       'iomicro':   40,    'function': ['VIRTUAL5']},
     }
 
-    iomap = {  # MAP IO of board
-        1: {  # Board 1 DomoOne
-            'PB0':          {'pin':  12,  'name':     'IO4'},
-            'PB1':          {'pin':  13,  'name':     'IO5'},
-            'PB2':          {'pin':  14,  'name':     'IO8'},
-            'PB3':          {'pin':  15,  'name':      'IO15'},
-            'PB4':          {'pin':  16,  'name':      'IO13'},
-            'PB5':          {'pin':  17,  'name':      'IO14'},
-            'PD3':          {'pin':   1,  'name':     'IO6'},
-            'PD4':          {'pin':   2,  'name':     'IO7'},
-            'PC0':          {'pin':  23,  'name':     'IO9'},
-            'PC1':          {'pin':  24,  'name':      'IO10'},
-            'PC2':          {'pin':  25,  'name':      'IO11'},
-            'PC3':          {'pin':  26,  'name':      'IO12'},
-            'PC4':          {'pin':  27,  'name':      'IO11'},
-            'PC5':          {'pin':  28,  'name':      'IO12'},
-            'PE0':          {'pin':   3,  'name':      'SDA'},
-            'PE1':          {'pin':   6,  'name':      ''},
-            'PE2':          {'pin':  19,  'name':      ''},
-            'VIN':          {'pin':  22,  'name':      'VIN'},
-            'PCA9535':      {'pin':   0,  'name':      'PCA9535'},
-            'BME280':       {'pin':   0,  'name':      'BME280'},
-            'BME280B':      {'pin':   0,  'name':      'BME280'},
-            'AM2320':       {'pin':   0,  'name':      'AM2320'},
-            'TSL2561':      {'pin':   0,  'name':      'TSL2561'},
-            'DS18B20-1':    {'pin':  35,  'name':      'DS18B20'},
-            'DS18B20-2':    {'pin':  35,  'name':      'DS18B20'},
-            'DS18B20-3':    {'pin':  35,  'name':      'DS18B20'},
-            'DS18B20-4':    {'pin':  35,  'name':      'DS18B20'},
-            'DS18B20-5':    {'pin':  35,  'name':      'DS18B20'},
-            'DS18B20-6':    {'pin':  35,  'name':     'DS18B20'},
-            'DS18B20-6':    {'pin':  35,  'name':     'DS18B20'},
-            'TEMP_ATMEGA':  {'pin':  37,  'name':     'TEMP_ATMEGA'},
-            'DS18B20-6':    {'pin':  35,  'name':     'DS18B20'},
+    iomap = { # MAP IO of board
+        1: {  # DL485M
+            'PB0':          {'pin':  12,  'name':   'IO4'},
+            'PB1':          {'pin':  13,  'name':   'IO5'},
+            'PB2':          {'pin':  14,  'name':   'IO8'},
+            'PB3':          {'pin':  15,  'name':   'IO15'},
+            'PB4':          {'pin':  16,  'name':   'IO13'},
+            'PB5':          {'pin':  17,  'name':   'IO14'},
+            'PD3':          {'pin':   1,  'name':   'IO6'},
+            'PD4':          {'pin':   2,  'name':   'IO7'},
+            'PC0':          {'pin':  23,  'name':   'IO9'},
+            'PC1':          {'pin':  24,  'name':   'IO10'},
+            'PC2':          {'pin':  25,  'name':   'IO11'},
+            'PC3':          {'pin':  26,  'name':   'IO12'},
+            'PC4':          {'pin':  27,  'name':   'IO11'},
+            'PC5':          {'pin':  28,  'name':   'IO12'},
+            'PE0':          {'pin':   3,  'name':   'SDA'},
+            'PE1':          {'pin':   6,  'name':   ''},
+            'PE2':          {'pin':  19,  'name':   ''},
+            'VIN':          {'pin':  22,  'name':   'VIN'},
+            'PCA9535':      {'pin':   0,  'name':   'PCA9535'},
+            'BME280':       {'pin':   0,  'name':   'BME280'},
+            'BME280B':      {'pin':   0,  'name':   'BME280'},
+            'AM2320':       {'pin':   0,  'name':   'AM2320'},
+            'TSL2561':      {'pin':   0,  'name':   'TSL2561'},
+            'DS18B20-1':    {'pin':  35,  'name':   'DS18B20'},
+            'DS18B20-2':    {'pin':  35,  'name':   'DS18B20'},
+            'DS18B20-3':    {'pin':  35,  'name':   'DS18B20'},
+            'DS18B20-4':    {'pin':  35,  'name':   'DS18B20'},
+            'DS18B20-5':    {'pin':  35,  'name':   'DS18B20'},
+            'DS18B20-6':    {'pin':  35,  'name':   'DS18B20'},
+            'DS18B20-6':    {'pin':  35,  'name':   'DS18B20'},
+            'TEMP_ATMEGA':  {'pin':  37,  'name':   'TEMP_ATMEGA'},
+            'DS18B20-6':    {'pin':  35,  'name':   'DS18B20'},
         },
 
-        2: {  # Board DL485BOXx
+        2: {  # DL485B
             'IO1':          {'pin':  23,  'name':      'IO1',       'function': ['I', 'O', 'A']},
             'IO2':          {'pin':  24,  'name':      'IO2',       'function': ['I', 'O', 'A']},
             'IO3':          {'pin':  25,  'name':      'IO3',       'function': ['I', 'O', 'A']},
@@ -240,7 +240,7 @@ class Bus:
         },
 
 
-        3: {  # Board DL485PCB  #
+        3: {  # DL485P
             'SDA':          {'pin':  27},
             'SCL':          {'pin':  28},
             'PD7':          {'pin':  11},
@@ -271,9 +271,7 @@ class Bus:
 
         },
 
-
-
-        4: {  # Board DL485Reset
+        4: {  # Board DL485R
             'IO1':          {'pin':  15,   'name':     'IO1',       'function': ['I', 'O', 'A']},
             'IO2':          {'pin':  16,  'name':      'IO2',       'function': ['I', 'O', 'A']},
             'IO3':          {'pin':  25,  'name':      'IO3',       'function': ['I', 'O', 'A']},
