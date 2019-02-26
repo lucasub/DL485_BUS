@@ -134,6 +134,9 @@ class Bus:
         'SC': 'SCK',
 
     }
+
+    # Function PIN map: I=input, O=output, P=pwm, SDA=sda, VCC=VCC, GND=GND, X=xtal, PROG=prog_button, LED_TX=led TX,
+    #                  LED_RX=led RX, MO=MOSI, MI=MISO, SC=Serial clock, TX_BUS=BUS, AT=Atemega temp, 
     mapmicro = {  # MAP PIN Atmega328P QFN32PIN
          1: {'name': 'PD3',         'iomicro':    3,    'function': ['I', 'O', 'P']},
          2: {'name': 'PD4',         'iomicro':    4,    'function': ['I', 'O']},
@@ -167,10 +170,10 @@ class Bus:
         30: {'name': 'PD0',         'iomicro':    0,    'function': []},
         31: {'name': 'PD1',         'iomicro':    1,    'function': ['TX_BUS']},
         32: {'name': 'PD2',         'iomicro':    2,    'function': ['']},
-        33: {'name': 'BME280',      'iomicro':   18,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        34: {'name': 'BME280',      'iomicro':   18,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        35: {'name': 'DS18B20',     'iomicro':    3,    'function': {'D': 1, 'A': 0, 'PWM': 1, 'IN': 1, 'OUT': 1, 'SDA': 0, 'SCL': 0}},
-        37: {'name': 'TEMP_ATMEGA', 'iomicro':   25,    'function': ['ATMEGA temperature'] },
+        33: {'name': 'BME280',      'iomicro':   18,    'function': []},
+        34: {'name': 'BME280',      'iomicro':   18,    'function': []},
+        35: {'name': 'DS18B20',     'iomicro':    3,    'function': []},
+        37: {'name': 'TEMP_ATMEGA', 'iomicro':   25,    'function': ['AT']},
         38: {'name': 'AM2320',      'iomicro':   18,    'function': ['AM2320']},
         41: {'name': 'VIRT1',       'iomicro':   40,    'function': ['VIRTUAL1']},
         42: {'name': 'VIRT2',       'iomicro':   40,    'function': ['VIRTUAL2']},
@@ -216,27 +219,27 @@ class Bus:
         },
 
         2: {  # DL485B
-            'IO1':          {'pin':  23,  'name':      'IO1',       'function': ['I', 'O', 'A']},
-            'IO2':          {'pin':  24,  'name':      'IO2',       'function': ['I', 'O', 'A']},
-            'IO3':          {'pin':  25,  'name':      'IO3',       'function': ['I', 'O', 'A']},
-            'IO4':          {'pin':  26,  'name':      'IO4',       'function': ['I', 'O', 'A']},
-            'OUT1':         {'pin':   3,  'name':      'RELE1',     'function': ['O']},
-            'OUT2':         {'pin':   2,  'name':      'RELE2',     'function': ['O']},
-            'OUT3':         {'pin':   1,  'name':      'RELE3',     'function': ['O']},
-            'VIN':          {'pin':  22,  'name':      'VIN',       'function': ['VIN']},
-            'SDA':          {'pin':  27,  'name':      'SDA',       'function': ['SDA']},
-            'SCL':          {'pin':  28,  'name':      'SCL',       'function': ['SCL']},
-            'PCA9535':      {'pin':   0,  'name':      'PCA9535'},
-            'BME280A':      {'pin':   0,  'name':      'BME280'},
-            'BME280B':      {'pin':   0,  'name':      'BME280'},
-            'TSL2561':      {'pin':   0,  'name':      'TSL2561'},
-            'DS18B20':      {'pin':  35,  'name':      'DS18B20'},
-            'TEMP_ATMEGA':  {'pin':  37,  'name' :     'TEMP_ATMEGA'},
-            'VIRT1':        {'pin':  41,  'name' :     'VIRT1'},
-            'VIRT2':        {'pin':  42,  'name' :     'VIRT2'},
-            'VIRT3':        {'pin':  43,  'name' :     'VIRT3'},
-            'VIRT4':        {'pin':  44,  'name' :     'VIRT4'},
-            'VIRT5':        {'pin':  45,  'name' :     'VIRT5'},
+            'IO1':          {'pin':  23,  'name':    'IO1',       'function': ['I', 'O', 'A']},
+            'IO2':          {'pin':  24,  'name':    'IO2',       'function': ['I', 'O', 'A']},
+            'IO3':          {'pin':  25,  'name':    'IO3',       'function': ['I', 'O', 'A']},
+            'IO4':          {'pin':  26,  'name':    'IO4',       'function': ['I', 'O', 'A']},
+            'OUT1':         {'pin':   3,  'name':    'RELE1',     'function': ['O']},
+            'OUT2':         {'pin':   2,  'name':    'RELE2',     'function': ['O']},
+            'OUT3':         {'pin':   1,  'name':    'RELE3',     'function': ['O']},
+            'VIN':          {'pin':  22,  'name':    'VIN',       'function': ['VIN']},
+            'SDA':          {'pin':  27,  'name':    'SDA',       'function': ['SDA']},
+            'SCL':          {'pin':  28,  'name':    'SCL',       'function': ['SCL']},
+            'PCA9535':      {'pin':   0,  'name':    'PCA9535'},
+            'BME280A':      {'pin':   0,  'name':    'BME280'},
+            'BME280B':      {'pin':   0,  'name':    'BME280'},
+            'TSL2561':      {'pin':   0,  'name':    'TSL2561'},
+            'DS18B20':      {'pin':  35,  'name':    'DS18B20'},
+            'TEMP_ATMEGA':  {'pin':  37,  'name':    'TEMP_ATMEGA'},
+            'VIRT1':        {'pin':  41,  'name':    'VIRT1'},
+            'VIRT2':        {'pin':  42,  'name':    'VIRT2'},
+            'VIRT3':        {'pin':  43,  'name':    'VIRT3'},
+            'VIRT4':        {'pin':  44,  'name':    'VIRT4'},
+            'VIRT5':        {'pin':  45,  'name':    'VIRT5'},
         },
 
 
@@ -268,7 +271,6 @@ class Bus:
             'BME280B':      {'pin':   0},
             'AM2320':       {'pin':   0},
             'TSL2561':      {'pin':   0},
-
         },
 
         4: {  # Board DL485R
@@ -302,7 +304,6 @@ class Bus:
         self.appcrc = []  # Per calcolo CRC
         self.INITCRC = 0x55
         self.crcric = self.INITCRC
-        # self.inSerial = 0
         self.crctrasm = 0x55
         self.BOARD_ADDRESS = 0
         self.config = {}  # Configuration dict
@@ -376,8 +377,6 @@ class Bus:
                             'function': self.config[b][bb]['function'] if 'function' in self.config[b][bb] else 0,
                             'plc_linked_board_id_io_logic': self.config[b][bb]['plc_linked_board_id_io_logic'] if 'plc_linked_board_id_io_logic' in self.config[b][bb] else [],
                             'default_startup_filter_value': int(self.config[b][bb]['default_startup_filter_value']) if 'default_startup_filter_value' in self.config[b][bb] else 0,
-
-
                         }
 
                         plc_linked_board_id_io_logic = self.config[b][bb]['plc_linked_board_id_io_logic'] if 'plc_linked_board_id_io_logic' in self.config[b][bb] else [],
@@ -429,7 +428,7 @@ class Bus:
 
     def voltageLimit(self, board_id, io_logic, value):
         """
-
+        Funzione che sotto una certa tensione, Raspberry PI viene spento (batteria scarica)
         """
         poweroff_voltage = 0 if not 'poweroff_voltage' in self.config.get('GENERAL') else float(self.config.get('GENERAL')['poweroff_voltage'])  # Read if need shutdown below the  voltage limit
         if poweroff_voltage:
@@ -918,10 +917,9 @@ class Bus:
 
     def getBME280(self, value):
         """
-        From bytes to value Temp, Hum, Press
+        From bytes to value Temp, Hum, Press of BME280
         """
         calib = [101, 109, 65, 103, 50, 0, 54, 146, 12, 214, 208, 11, 9, 32, 56, 255, 249, 255, 172, 38, 10, 216, 189, 16] + [75] + [90, 1, 0, 22, 4, 0, 30]
-
 
         dig_T1 = calib[1] * 256 + calib[0]
         dig_T2 = calib[3] * 256 + calib[2]
@@ -1165,7 +1163,7 @@ class Bus:
                         # Ogni uscita con funzione associata ad ingressi analogici puo' avere al massimo 2 ingressi
 
                         """
-                        OFFSET 8: codice funzione
+                        OFFSET 8: codice funzione PLC
                         """
                         plc_function =  {
                             'disable': 0,
@@ -1589,7 +1587,7 @@ if __name__ == '__main__':
             # print(RXtrama)
 
             if RXtrama:  # Se arrivata una trama copmleta (PING e trame piu lunghe)
-
+                # print(RXtrama)
                 # if len(RXtrama) == 1: print(RXtrama)
 
                 if RXtrama[0] == b.BOARD_ADDRESS - 1:  # test su address ricevuto, e' ora di trasmettere
