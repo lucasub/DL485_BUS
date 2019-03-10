@@ -1575,7 +1575,7 @@ if __name__ == '__main__':
     while 1:
         nowtime = int(time.time())  # seleziona la parte intera dei secondi
         RXbyte = ser.read() #legge uno o piu caratteri del buffer seriale
-        # print(RXbyte)
+        #print(RXbyte)
         if not RXbyte:  # Monitor serial
             # time.sleep(0.001)
             continue  # seriale senza caratteri
