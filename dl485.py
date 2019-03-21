@@ -13,6 +13,7 @@ import logging
 import math
 import json
 import re
+import curses
 
 class Log:
     def __init__(self, file='log.txt', logstate=0):
@@ -306,6 +307,7 @@ class Bus:
         self.crcric = self.INITCRC
         self.crctrasm = 0x55
         self.BOARD_ADDRESS = 0
+        self.MAX_BOARD_ADDRESS = 63
         self.config = {}  # Configuration dict
         self.status = {}  # Stauts of all IO Board
         self.buffricnapp = []  # Contiene i primi 7 byte per calolare il resto
@@ -361,6 +363,11 @@ class Bus:
                             'device_name': device_name,
                             'Rvcc': 1 if not 'Rvcc' in self.config[b][bb] else int(self.config[b][bb]['Rvcc']),
                             'Rgnd': 10000 if not 'Rgnd' in self.config[b][bb] else int(self.config[b][bb]['Rgnd']),
+                            'offset_altitude': 0 if not 'offset_altitude' in self.config[b][bb] else int(self.config[b][bb]['offset_altitude']),  # OFFSET altitudine
+                            'offset_t': 0 if not 'offset_t' in self.config[b][bb] else int(self.config[b][bb]['offset_t']),  # OFFSET temperature
+                            'offset_h': 0 if not 'offset_h' in self.config[b][bb] else int(self.config[b][bb]['offset_h']),  # OFFSET humidity
+                            'offset_p': 0 if not 'offset_p' in self.config[b][bb] else int(self.config[b][bb]['offset_p']),  # OFFSET pression
+                            'offset_l': 0 if not 'offset_l' in self.config[b][bb] else int(self.config[b][bb]['offset_l']),  # OFFSET luminosity 
                             'description': self.config[b][bb]['description'] if 'description' in self.config[b][bb] else 'NO description',
                             'direction': self.config[b][bb]['direction'] if 'direction' in self.config[b][bb] else 'other',
                             'dtype': self.config[b][bb]['dtype'] if 'dtype' in self.config[b][bb] else 'Switch',
@@ -472,7 +479,7 @@ class Bus:
                         crc = self.calcCrcDS(x, crc)
                     if crc == value[8]:
                         value = ((value[1] << 8) + value[0]) * 0.0625
-                        return round(value, 1)
+                        return round(value + self.mapiotype[board_id][io_logic]['offset_t'], 1)
                     else:
                         print("Errore CRC DS")
                         return None
@@ -511,7 +518,8 @@ class Bus:
 
             elif self.mapiotype[board_id][io_logic]['io_type'] == 'temp_atmega':
                 value = (value[0] + (value[1] * 256)) - 270 + 25
-                return round(value, 1)
+                return round(value + self.mapiotype[board_id][io_logic]['offset_t'], 1)
+                # return round(value, 1)
 
             elif self.mapiotype[board_id][io_logic]['io_type'] == 'analog' or self.mapiotype[board_id][io_logic]['io_type'] == 'virtual':
                 Rvcc =  self.mapiotype[board_id][io_logic]['Rvcc']
@@ -564,6 +572,7 @@ class Bus:
         """
         Show to screen the IO status
         """
+
         print("\n", "-" * 83, "STATUS IO", "-" * 83)
         print(" ID Name        BoardType  IO:", end='')
         for i in range(1, 31):  # estremo superiore viene escluso
@@ -577,6 +586,7 @@ class Bus:
                 print("{:>5}".format(str(i)), end='')
             print()
         print("-" * 83, "END STATUS", "-" * 83, "\n")
+
 
     def int2hex(self, msg):
         """
@@ -654,17 +664,19 @@ class Bus:
                 return []
 
         elif inSerial == 0:  # Errore 1
+            inSerial_err = inSerial
             self.flagerrore = 1
             self.labinitric()
             inSerial = 0
-            print("ERR 1 Tre 0 ricevuti")
+            print("ERR 1 Tre 0 ricevuti", inSerial_err)
             return []
 
         elif inSerial == 0x38:  # Errore 2
+            inSerial_err = inSerial
             self.flagerrore = 2
             self.labinitric()
             inSerial = 0
-            print("ERR 2 Tre 1 ricevuti")
+            print("ERR 2 Tre 1 ricevuti", inSerial_err)
             return []
 
         else:  # carattere normale
@@ -717,7 +729,6 @@ class Bus:
         os.system("nohup sudo /home/pi/domocontrol/shutdown.sh -h now &")  # Poweroff Domoticz and then raspberry
         # os.system("nohup sudo shutdown -h now &")
 
-
     def boardReboot(self, board_id):
         """
         Command to board REBOOT (0 for all board in the BUS)
@@ -726,9 +737,15 @@ class Bus:
 
     def getTypeBoard(self, board_id):
         """
-        Ritorna: Tipo Board, Versione board, Versione software
+        Ritorna: Tipo Board, Versione board, Data software: Day, Month, Year, configurazione software interna
         """
         return [self.BOARD_ADDRESS, self.code['CR_GET_TIPO_BOARD'], board_id] # Get board type
+
+    def setMaxBoardAddress(self, max_board_address):
+        """
+        Setta il numero massimo di boards presenti nella rete. Serve per velocizzare il loop
+        """
+        return [self.BOARD_ADDRESS, self.code['CR_WR_EE'], 0, 6, 0, max_board_address] # Max Board Address
 
     def readEE(self, board_id, startaddressLs, startaddressMs, nbyte):
         """
@@ -742,6 +759,14 @@ class Bus:
         """
         msg = [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, startaddressLs, startaddressMs] + data # Read EE
         return msg
+    
+    def readIO(self, board_id, io_logic):
+        """
+        Read IO status
+        """
+        data = [self.BOARD_ADDRESS, self.CR_RD_IN, board_id, io_logic, 0]
+        # print("ReadIO:", data)
+        return data # Read EE
 
     def writeIO(self, board_id, io_logic, data, ms=0):
         """
@@ -819,14 +844,6 @@ class Bus:
         data = [self.BOARD_ADDRESS, self.CR_RD_IN, board_id, io_logic, byteopzioni] + data
         # print("WriteI2C:", data)
         return data
-
-    def readIO(self, board_id, io_logic):
-        """
-        Read IO status
-        """
-        data = [self.BOARD_ADDRESS, self.CR_RD_IN, board_id, io_logic, 0]
-        # print("ReadIO:", data)
-        return data # Read EE
 
     def initIO(self, board_id, io_logic):
         """
@@ -1316,10 +1333,13 @@ class Bus:
                                         plc_time_unit_app = 0
                                     elif plc_time_unit == 2.5:
                                         plc_time_unit_app = 0xC0
-
+                                    
                                     plc.append((plc_mode_timer & 0x3F) | plc_time_unit_app)
 
                                     plc_timer_n_transitions = 0 if not 'plc_timer_n_transitions' in board.get(b) else int(board.get(b)['plc_timer_n_transitions'])
+                                    if plc_timer_n_transitions > 255:
+                                        print("ERRORE CONFIGURATION: plc_timer_n_transitions 0...255")
+                                        sys.exit()
                                     plc.append(plc_timer_n_transitions)
 
                                     plc_time_on = 0 if not 'plc_time_on' in board.get(b) else int(board.get(b)['plc_time_on'])
@@ -1511,6 +1531,7 @@ class Bus:
                 # msg.append(self.boardReboot(idbus))
         # msg.append(self.getTypeBoard(5))
         # print("RESET TOTALE")
+        msg.append(self.setMaxBoardAddress(self.MAX_BOARD_ADDRESS))
         msg.append(self.boardReboot(0))
         pprint(msg)
         # if(msg[])
@@ -1548,13 +1569,14 @@ if __name__ == '__main__':
     bus_baudrate = b.config.get('GENERAL')['bus_baudrate']  # Legge la velocità del BUS
     bus_port = b.config.get('GENERAL')['bus_port']  # Legge la porta del BUS di Raspberry PI
     b.BOARD_ADDRESS = int(b.config.get('GENERAL')['board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
+    b.MAX_BOARD_ADDRESS = int(b.config.get('GENERAL')['max_board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
     print("BUS_BAUDRATE:%s, BUS_PORT:%s, BOARD_ADDRESS:%s" %(bus_baudrate, bus_port, b.BOARD_ADDRESS))
 
     ser = b.ser(bus_port, bus_baudrate)  # Setup serial
     TXmsg = []  # Vengono inserite le trame da trasmettere
     b.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo board attive)
     board_ready = {}  # dizionario delle board rilevate sul bus che viene aggiornato periodicamente
-    TIME_PRINT_LOG = 8  # intervallo di tempo in secondi per la stampèa periodica del log a schermo
+    TIME_PRINT_LOG = 4  # intervallo di tempo in secondi per la stampèa periodica del log a schermo
     ping = b.ping()  # init variabile di appoggio con ping di questo nodo
     
     """ Reset parametri SCHEDE """
@@ -1567,11 +1589,13 @@ if __name__ == '__main__':
     message_conf_app = b.sendConfiguration()  # Set configuration of boards
     TXmsg = message_conf_app  # Configurazione
 
-
     oldtime = int(time.time()) - 10  # init oldtime per stampe dizionario con i/o per stampa subito al primo loop
-   
-
+    
     """ LOOP """
+    while int(time.time()) - oldtime < 12:
+        """ Svuta il buffer della seriale1 """
+        res = ser.read()        
+        
     while 1:
         nowtime = int(time.time())  # seleziona la parte intera dei secondi
         RXbyte = ser.read() #legge uno o piu caratteri del buffer seriale
@@ -1579,6 +1603,9 @@ if __name__ == '__main__':
         if not RXbyte:  # Monitor serial
             # time.sleep(0.001)
             continue  # seriale senza caratteri
+        else:
+            pass
+            # print(RXbyte)
 
         # print(RXbyte)
         for d in RXbyte:  # analizza i caratteri ricevuti
@@ -1589,17 +1616,29 @@ if __name__ == '__main__':
             if RXtrama:  # Se arrivata una trama copmleta (PING e trame piu lunghe)
                 # print(RXtrama)
                 # if len(RXtrama) == 1: print(RXtrama)
-
+                
                 if RXtrama[0] == b.BOARD_ADDRESS - 1:  # test su address ricevuto, e' ora di trasmettere
+                    # if num > 0:
+                    #     num -= 1
+                    #     continue
+                    # num = 2
                     # print("TXmsg", TXmsg)
                     if len(TXmsg): #se qualcosa da trasmettere
                         # print("Trama to TX: ", len(TXmsg))
                         msg = TXmsg.pop(0)  # prende dalla lista la prima trama da trasmettere
                         log.write("{:<12} TX                    {:<18} {} {}".format(nowtime, str(b.int2hex(msg)), '', ''))
-                        msg = b.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui 
+                        msg1 = b.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui 
                         ##  ***** fare solo append del crc, quindi moficare la funzione calccrctx
-                        msg = b.encodeMsgCalcCrcTx(msg) # restituisce il messaggio codificato e completo di crc
-                        ser.write(bytes(msg))  # invia alla seriale
+                        msg2 = b.encodeMsgCalcCrcTx(msg1) # restituisce il messaggio codificato e completo di crc
+                        # print("VA IN TX:", msg2)
+                        ser.write(bytes(msg2))  # invia alla seriale
+                        
+                        
+                        if len(msg) > 1 and msg[1] == 12:
+                            print(msg, msg1, msg2, b.int2hex(msg2))
+                            # sys.exit()
+
+                RXtrama[0] &= 0x3F  # Trasforma la trama di nodo occupato in libero (serve solo per la trasmissione) 
 
                 b.labinitric()  # Reset buffer ricezione e init crc ricezione per prossimo pacchetto da ricevere
                 board_ready[RXtrama[0]] = nowtime  # Aggiorna la data di quando è stato ricevuto la trama del nodo, serve per dizionario delle board rilevate sul bus
@@ -1609,24 +1648,41 @@ if __name__ == '__main__':
                         try:
                             value = b.calculate(RXtrama[0], RXtrama[2], RXtrama[3:])  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
                             b.status[RXtrama[0]]['io'][RXtrama[2] - 1] = value
-                            log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama), ''))
+                            log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama), RXtrama))
                         except:
-                            print("\t\t\t\t\t\tRXtrama ERRATA", RXtrama)
-                            print("\t\t\t\t\t\tERROR: board_id:%s or io_logic:%s NOT EXSIST in the status dict" %(RXtrama[0], RXtrama[2]))
+                            # print("B")
+                            # print("\t\t\t\t\t\tRXtrama ERRATA", RXtrama)
 
+                            log.write("{:<12} RX {:<18} {} {}  NOT EXSIST in the status dict".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama), RXtrama))
+
+                            # print("\t\t\t\t\t\tERROR: board_id:%s or io_logic:%s NOT EXSIST in the status dict" %(RXtrama[0], RXtrama[2]))
 
                     elif RXtrama[1] & 32:
-                            apprx=RXtrama[1]-32
-                            if apprx in b.code:
-                                err = ''
-                                if apprx == 29:
-                                # log.write("EEEEEEEEEEEEEEEEEEEEEEERRROR", RXtrama)
-                                    err = b.error[RXtrama[2]] if RXtrama[2] in b.error else 'ERRORE NON DEFINITO'
-                                log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[apprx], b.int2hex(RXtrama), err))
+                        apprx=RXtrama[1]-32
+                        if apprx in b.code:
+                            # print("D")
+                            err = ''
+                            if apprx == 29:
+                                """
+                                Comando di errore ritornato: ID SCHEDA, COMANDO ERRORE (2D), COMANDO ARRIVATO (255 se non disponibile), IO Logico (255 se non disponibile), Tipo errore
+                                """
+                                err = b.error[RXtrama[2]] if RXtrama[2] in b.error else 'ERRORE NON DEFINITO'
+                            log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[apprx], b.int2hex(RXtrama), err))
 
             if nowtime - oldtime > TIME_PRINT_LOG:
                 TXmsg.append(ping)  # Not remove. Is neccesary to reset shutdown counter
                 oldtime = nowtime  # Not remove
+
+                # TXmsg.append(b.getTypeBoard(0)) # Richiede il tipo Board con la versione del software
+                # TXmsg.append(b.readEE(1, 32, 0, 10))  # Legge EEPROM a partire dall'indirizzo 32 0
+                # TXmsg.append(b.readEE(1, 6, 0, 2))  # Legge EEPROM a partire dall'indirizzo 32 0
+                # TXmsg.append(b.writeEE(1, 255, 3, [15]))
+                # TXmsg.append(b.writeEE(1, 64, 0, [15]))
+                # TXmsg.append(b.writeEE(1, 64, 0, [15]))
+                # TXmsg.append(b.writeEE(1, 74, 0, [0, 0, 0]))
+                # TXmsg.append(b.boardReboot(0)) # Comando per reboot board
+                # TXmsg.append(b.writeIO(1, 3, [0])) # Comando per reboot board
+                
 
                 # Routine che aggiorna le BOARD presenti sul BUS
                 board_to_remove = []
@@ -1643,8 +1699,8 @@ if __name__ == '__main__':
                 # log.write("TXcount:",TXcount, "indiceTXtrasm:", indiceTXtrasm, "TXboard:", TXboard, "TXtimeout:", TXtimeout, "TXcode:", TXcode)
 
                 # Stampa i valore di tutti gli IO
-                # pprint(b.status)
-                b.printStatus()  # Print status of IO
+                b.printStatus()
+                
 
             # log.write("T", nowtime)
             # try:
