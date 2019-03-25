@@ -1276,22 +1276,47 @@ class Bus:
                                 # print("POWER_ON data:", byte8, value_dac_in, plc)
 
                             else:  # Funzione PLC
-                                plc_xor_input = 0 if not 'plc_xor_input' in board.get(b) else int(board.get(b)['plc_xor_input'])
-                                plc.append(plc_xor_input)  # OFFSET 31: BYTE con NEGAZIONE ingressi
+                                plc_xor_input = 0
+                                plc_linked_board_id_io_logic = [] if not 'plc_linked_board_id_io_logic' in board.get(b) else board.get(b)['plc_linked_board_id_io_logic']
+                                if plc_linked_board_id_io_logic:
+                                    list_plc_linked_board_id_io_logic = []
+                                    for plc_bio in plc_linked_board_id_io_logic:
+                                        plc_bio = plc_bio.split("-")
+                                        if plc_bio[0][0] == '!':
+                                            plc_bio[0] = plc_bio[0][1:]
+                                            plc_xor_input = plc_xor_input * 2 + 1
+                                        else:
+                                            plc_xor_input = plc_xor_input * 2
+                                        
+                                        list_plc_linked_board_id_io_logic.append(int(plc_bio[0]))
+                                        list_plc_linked_board_id_io_logic.append(int(plc_bio[1]))
+                                else:
+                                    print("BOARD_ID and IO_LOGIC not defined on CONFIGURATION File")
+
+                                plc_xor_input_old = 0 if not 'plc_xor_input' in board.get(b) else int(board.get(b)['plc_xor_input'])
+                                if plc_xor_input_old:
+                                    print("""NON USARE la Funzione: plc_xor_input. Per negare gli ingressi, mettere il carattere ! prima dell'board_id. 
+                                    Es:  "plc_linked_board_id_io_logic": ["!18-3", "17-3"]""")
+                                    sys.exit()
+                                
+                                plc.append(plc_xor_input)  # OFFSET 31: BYTE con NEGAZIONE ingressi. Mettere davanti a plc_linked_board_id_io_logic il carattere ! per negare gli ingresso
 
                                 plc_preset_input = 0 if not 'plc_preset_input' in board.get(b) else int(board.get(b)['plc_preset_input'])
                                 plc.append(plc_preset_input)  # OFFSET 30: BYTE PRESET valore default prima che arrivino i dati dalla rete
 
-                                plc_linked_board_id_io_logic = [] if not 'plc_linked_board_id_io_logic' in board.get(b) else board.get(b)['plc_linked_board_id_io_logic']
+                                
                                 plc.append(len(plc_linked_board_id_io_logic))  # OFFSET 29: Numero ingressi per la funzione PLC
-                                if plc_linked_board_id_io_logic:
-                                    for plc_bio in plc_linked_board_id_io_logic:
-                                        plc_bio = plc_bio.split("-")
-                                        plc.append(int(plc_bio[0]))  # OFFSET 28: BOARD_ID
-                                        plc.append(int(plc_bio[1]))  # OFFSET 27: IO_LOGICO
-
-                                else:
-                                    print("BOARD_ID and IO_LOGIC not defined on CONFIGURATION File")
+                                
+                                print("list_plc_linked_board_id_io_logic", list_plc_linked_board_id_io_logic)
+                                plc += list_plc_linked_board_id_io_logic
+                                
+                                # if plc_linked_board_id_io_logic:
+                                #     for plc_bio in plc_linked_board_id_io_logic:
+                                #         plc_bio = plc_bio.split("-")
+                                #         plc.append(int(plc_bio[0]))  # OFFSET 28: BOARD_ID
+                                #         plc.append(int(plc_bio[1]))  # OFFSET 27: IO_LOGICO
+                                # else:
+                                #     print("BOARD_ID and IO_LOGIC not defined on CONFIGURATION File")
                                 
                                 if sbyte8 in ["timer", "ntimer", "autostart_timer", "nautostart_timer"]:
                                     # Se timer, dopo elenco di BOARD_ID e IO_LOGIC, seguono questi parametri:
@@ -1447,6 +1472,9 @@ class Bus:
                                     powermeter_k = 0 if not 'powermeter_k' in board.get(b) else int(board.get(b)['powermeter_k'])
                                     plc.append(powermeter_k & 255)
                                     plc.append(powermeter_k >> 8)
+
+                                elif sbyte8 == 'odd' or sbyte8 == 'even' or sbyte8 == 'toggle_off' or sbyte8 == 'toggle_on' or sbyte8 == 'toggle_on_off'  :
+                                    pass
 
 
                                 else:
@@ -1626,6 +1654,7 @@ if __name__ == '__main__':
                     if len(TXmsg): #se qualcosa da trasmettere
                         # print("Trama to TX: ", len(TXmsg))
                         msg = TXmsg.pop(0)  # prende dalla lista la prima trama da trasmettere
+                        # print("MSG===>>>>", msg)
                         log.write("{:<12} TX                    {:<18} {} {}".format(nowtime, str(b.int2hex(msg)), '', ''))
                         msg1 = b.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui 
                         ##  ***** fare solo append del crc, quindi moficare la funzione calccrctx
@@ -1693,8 +1722,9 @@ if __name__ == '__main__':
                 for k in board_to_remove:
                     del board_ready[k]
                 # b.BOARD_ADDRESS = max(list(board_ready.keys())) + 1
-
-                log.write("{:<12} BOARD_READY           {:<18} ".format(int(nowtime), str(list(board_ready.keys()))))
+                br = list(board_ready.keys())
+                br.sort()
+                log.write("{:<12} BOARD_READY           {:<18} ".format(int(nowtime), str(br)))
                 # log.write("{:<12} BOARD_READY           {:<18},   lenTx:{}, lenTxCrc:{}, ".format(int(nowtime), str(list(board_ready.keys())), len(TXmsg), len(TXmsgCrc) ))
                 # log.write("TXcount:",TXcount, "indiceTXtrasm:", indiceTXtrasm, "TXboard:", TXboard, "TXtimeout:", TXtimeout, "TXcode:", TXcode)
 
