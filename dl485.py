@@ -382,6 +382,7 @@ class Bus:
                             'only_fronte_on': int(self.config[b][bb]['only_fronte_on']) if 'only_fronte_on' in self.config[b][bb] else 0,
                             'only_fronte_off': int(self.config[b][bb]['only_fronte_off']) if 'only_fronte_off' in self.config[b][bb] else 0,
                             'function': self.config[b][bb]['function'] if 'function' in self.config[b][bb] else 0,
+                            'plc_function': self.config[b][bb]['plc_function'] if 'plc_function' in self.config[b][bb] else 'disable',
                             'plc_linked_board_id_io_logic': self.config[b][bb]['plc_linked_board_id_io_logic'] if 'plc_linked_board_id_io_logic' in self.config[b][bb] else [],
                             'default_startup_filter_value': int(self.config[b][bb]['default_startup_filter_value']) if 'default_startup_filter_value' in self.config[b][bb] else 0,
                         }
@@ -1614,8 +1615,10 @@ if __name__ == '__main__':
     # TXmsg = msg
 
     """ Configurazione SCHEDE in base al file in config_file_name """
+    reset = b.resetEE(0, 0)
+    # TXmsg += reset
     message_conf_app = b.sendConfiguration()  # Set configuration of boards
-    TXmsg = message_conf_app  # Configurazione
+    TXmsg += message_conf_app  # Mette la configurazione in coda da inviare
 
     oldtime = int(time.time()) - 10  # init oldtime per stampe dizionario con i/o per stampa subito al primo loop
     
@@ -1627,7 +1630,7 @@ if __name__ == '__main__':
     while 1:
         nowtime = int(time.time())  # seleziona la parte intera dei secondi
         RXbyte = ser.read() #legge uno o piu caratteri del buffer seriale
-        #print(RXbyte)
+        # print(RXbyte)
         if not RXbyte:  # Monitor serial
             # time.sleep(0.001)
             continue  # seriale senza caratteri

@@ -127,7 +127,7 @@
             "io_logic": 10,
             "io_type": "i2c",
             "time_refresh": 50,
-            "enable": 0,
+            "enable": 1,
             "device_name": "AM2320",
             "address": "0xB8",
             "name": "AM2320",
@@ -212,12 +212,12 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "plc_function": "disable",
-            "plc_mode_timer": 12,
-            "plc_time_unit": 0.1, // Tempi in secondi (Impostare tra 0.01, 0.1, 1 e 2.5 secondi)
-            "plc_timer_n_transitions": 0, // 10 transizioni prima di finire. 0 per infinito
-            "plc_time_on": 10, 
-            "plc_time_off": 400,
+            // "plc_function": "disable",
+            // "plc_mode_timer": 12,
+            // "plc_time_unit": 0.1, // Tempi in secondi (Impostare tra 0.01, 0.1, 1 e 2.5 secondi)
+            // "plc_timer_n_transitions": 0, // 10 transizioni prima di finire. 0 per infinito
+            // "plc_time_on": 10, 
+            // "plc_time_off": 400,
             "enable": 1,
             "name": "RELE1",
             "description": "Uscita rele1",
@@ -235,12 +235,12 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "plc_function": "disable",
-            "plc_mode_timer": 0,
-            "plc_time_unit": 0.1, // Tempi in secondi (Impostare tra 0.01, 0.1, 1 e 2.5 secondi)
-            "plc_timer_n_transitions": 0, // 10 transizioni prima di finire. 0 per infinito
-            "plc_time_on": 10, 
-            "plc_time_off": 10,
+            // "plc_function": "disable",
+            // "plc_mode_timer": 0,
+            // "plc_time_unit": 0.1, // Tempi in secondi (Impostare tra 0.01, 0.1, 1 e 2.5 secondi)
+            // "plc_timer_n_transitions": 0, // 10 transizioni prima di finire. 0 per infinito
+            // "plc_time_on": 10, 
+            // "plc_time_off": 10,
             "enable": 1,
             "name": "RELE2",
             "description": "Uscita rele2",
@@ -255,7 +255,7 @@
         {
             "name": "Board 11",
             "boardtype": 2,
-            "enable": 0
+            "enable": 1
         },
 
         "VIN":
@@ -269,7 +269,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 0,
+            "enable": 1,
             "Rvcc": 12000,
             "Rgnd": 470,
             "name": "VIN",
@@ -283,7 +283,7 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 0,
+            "enable": 1,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
@@ -366,7 +366,7 @@
         {
             "name": "Board 12",
             "boardtype": 2,
-            "enable": 0
+            "enable": 1
         },
 
         "VIN":
@@ -380,7 +380,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 0,
+            "enable": 1,
             "Rvcc": 12000,
             "Rgnd": 470,
             "name": "VIN",
@@ -394,7 +394,7 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 0,
+            "enable": 1,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
@@ -477,7 +477,7 @@
         {
             "name": "Board 13",
             "boardtype": 2,
-            "enable": 0
+            "enable": 1
         },
 
         "VIN":
@@ -491,7 +491,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 0,
+            "enable": 1,
             "Rvcc": 12000,
             "Rgnd": 470,
             "name": "VIN",
@@ -505,7 +505,7 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 0,
+            "enable": 1,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
@@ -588,7 +588,7 @@
         {
             "name": "Board 14",
             "boardtype": 2,
-            "enable": 0
+            "enable": 1
         },
 
         "VIN":
@@ -602,7 +602,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 0,
+            "enable": 1,
             "Rvcc": 12000,
             "Rgnd": 470,
             "name": "VIN",
@@ -616,7 +616,7 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 0,
+            "enable": 1,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
@@ -699,7 +699,7 @@
         {
             "name": "Board 15",
             "boardtype": 2,
-            "enable": 0
+            "enable": 1
         },
 
         "VIN":
@@ -713,7 +713,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 0,
+            "enable": 1,
             "Rvcc": 12000,
             "Rgnd": 470,
             "name": "VIN",
@@ -727,7 +727,7 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 0,
+            "enable": 1,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
@@ -810,7 +810,7 @@
         {
             "name": "Board 16",
             "boardtype": 2,
-            "enable": 0
+            "enable": 1
         },
 
         "VIN":
@@ -824,7 +824,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 0,
+            "enable": 1,
             "Rvcc": 12000,
             "Rgnd": 470,
             "name": "VIN",
@@ -838,7 +838,7 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 0,
+            "enable": 1,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
@@ -855,12 +855,12 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "plc_function": "autostart_timer",
-            "plc_mode_timer": 0,
-            "plc_time_unit": 0.01, // Tempi in secondi (Impostare tra 0.01, 0.1, 1 e 2.5 secondi)
-            "plc_timer_n_transitions": 0, // 10 transizioni prima di finire. 0 per infinito
-            "plc_time_on": 50, 
-            "plc_time_off": 50,
+            // "plc_function": "autostart_timer",
+            // "plc_mode_timer": 0,
+            // "plc_time_unit": 0.01, // Tempi in secondi (Impostare tra 0.01, 0.1, 1 e 2.5 secondi)
+            // "plc_timer_n_transitions": 0, // 10 transizioni prima di finire. 0 per infinito
+            // "plc_time_on": 50, 
+            // "plc_time_off": 50,
             "enable": 1,
             "name": "RELE1",
             "description": "Uscita rele1",
@@ -878,12 +878,12 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "plc_function": "autostart_timer",
-            "plc_mode_timer": 0,
-            "plc_time_unit": 0.01, // Tempi in secondi (Impostare tra 0.01, 0.1, 1 e 2.5 secondi)
-            "plc_timer_n_transitions": 0, // 10 transizioni prima di finire. 0 per infinito
-            "plc_time_on": 100, 
-            "plc_time_off": 100,
+            // "plc_function": "autostart_timer",
+            // "plc_mode_timer": 0,
+            // "plc_time_unit": 0.01, // Tempi in secondi (Impostare tra 0.01, 0.1, 1 e 2.5 secondi)
+            // "plc_timer_n_transitions": 0, // 10 transizioni prima di finire. 0 per infinito
+            // "plc_time_on": 100, 
+            // "plc_time_off": 100,
             "enable": 1,
             "name": "RELE2",
             "description": "Uscita rele2",
@@ -901,12 +901,12 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "plc_function": "autostart_timer",
-            "plc_mode_timer": 0,
-            "plc_time_unit": 0.01, // Tempi in secondi (Impostare tra 0.01, 0.1, 1 e 2.5 secondi)
-            "plc_timer_n_transitions": 0, // 10 transizioni prima di finire. 0 per infinito
-            "plc_time_on": 200, 
-            "plc_time_off": 200,
+            // "plc_function": "autostart_timer",
+            // "plc_mode_timer": 0,
+            // "plc_time_unit": 0.01, // Tempi in secondi (Impostare tra 0.01, 0.1, 1 e 2.5 secondi)
+            // "plc_timer_n_transitions": 0, // 10 transizioni prima di finire. 0 per infinito
+            // "plc_time_on": 200, 
+            // "plc_time_off": 200,
             "enable": 1,
             "name": "RELE3",
             "description": "Uscita rele3",
@@ -935,7 +935,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 0,
+            "enable": 1,
             "Rvcc": 12000,
             "Rgnd": 470,
             "name": "VIN",
@@ -949,7 +949,7 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 0,
+            "enable": 1,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
@@ -1112,7 +1112,7 @@
             "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "enable": 0,
+            "enable": 1,
             "Rvcc": 12000,
             "Rgnd": 470,
             "name": "VIN",
@@ -1126,7 +1126,7 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 0,
+            "enable": 1,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
