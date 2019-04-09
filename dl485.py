@@ -1269,7 +1269,7 @@ class Bus:
                             plc = []
 
                             message_conf_app.append(plc_function[sbyte8])
-
+                            list_plc_linked_board_id_io_logic = []
                             if sbyte8 == 'power_on':
                                 # print("plc_params", plc_params, float(plc_params[3]), int(plc_params[4]), int(plc_params[5]))
                                 value_dac_in = self.ADC_value(float(plc_params[3]), int(plc_params[4]), int(plc_params[5]))
@@ -1280,7 +1280,7 @@ class Bus:
                                 plc_xor_input = 0
                                 plc_linked_board_id_io_logic = [] if not 'plc_linked_board_id_io_logic' in board.get(b) else board.get(b)['plc_linked_board_id_io_logic']
                                 if plc_linked_board_id_io_logic:
-                                    list_plc_linked_board_id_io_logic = []
+                                    
                                     for plc_bio in plc_linked_board_id_io_logic:
                                         plc_bio = plc_bio.split("-")
                                         if plc_bio[0][0] == '!':
@@ -1308,7 +1308,7 @@ class Bus:
                                 
                                 plc.append(len(plc_linked_board_id_io_logic))  # OFFSET 29: Numero ingressi per la funzione PLC
                                 
-                                print("list_plc_linked_board_id_io_logic", list_plc_linked_board_id_io_logic)
+                                # print("list_plc_linked_board_id_io_logic", list_plc_linked_board_id_io_logic)
                                 plc += list_plc_linked_board_id_io_logic
                                 
                                 # if plc_linked_board_id_io_logic:
@@ -1481,9 +1481,6 @@ class Bus:
                                 else:
                                     log.write("{:<12} TX                    {:<18} {} {}".format(nowtime, str(b.int2hex(msg)), '', 'FUNZIONE PLC NON TROVATA'))    
                                     sys.exit()
-
-
-
 
                             plclen = len(plc)
                             print("CONFIGURAZIONE PLC =======>>>>>: ", plc)
