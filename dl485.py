@@ -605,7 +605,7 @@ class Bus:
         """
         Convert list data from INT to HEX
         """
-        return ['{:02X} '.format(a) for a in msg]
+        return ['{:02X}'.format(a) for a in msg]
 
     def ser(self, port='/dev/ttyAMA0', baudrate=9600):
         """
@@ -760,16 +760,24 @@ class Bus:
         """
         return [self.BOARD_ADDRESS, self.code['CR_WR_EE'], 0, 6, 0, max_board_address] # Max Board Address
 
-    def calcAddressLsMs(self, address):
-        LS = address & 127
-        MS = address >> 7
+    # def calcAddressLsMs7(self, address):
+    #     LS = address & 127
+    #     MS = address >> 7
+    #     return LS, MS
+
+    def calcAddressLsMs8(self, address):
+        """
+        scompone word in due byte
+        """            
+        LS = address & 255
+        MS = address >> 8
         return LS, MS
 
     def readEEadd(self, board_id, address, nbyte):
         """
         Read bytes of EEPROM
         """
-        LS, MS = self.calcAddressLsMs(address)
+        LS, MS = self.calcAddressLsMs8(address)
         return [self.BOARD_ADDRESS, self.code['CR_RD_EE'], board_id, LS, MS, nbyte] # Read EE
 
     def readEEnIOoffset(self, board_id, io_logic, offset, nbyte):
@@ -783,7 +791,7 @@ class Bus:
         """
         Write EEPROM bytes
         """
-        LS, MS = self.calcAddressLsMs(address)
+        LS, MS = self.calcAddressLsMs8(address)
         msg = [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, LS, MS] + data # Read EE
         return msg
 
@@ -1105,7 +1113,7 @@ class Bus:
                         else:
                             byte0 = 0
 
-                        eels, eems=self.calcAddressLsMs(io_logic * 32)
+                        eels, eems = self.calcAddressLsMs8(io_logic * 32)
                         byte1 = 1 if boards.get(board).get('direction') == 'output' else 0
 
                         io_type = boards.get(board).get('io_type')
@@ -1145,14 +1153,13 @@ class Bus:
                         elif direction == 'output':
                             default_startup_value = int(boards.get(board)['default_startup_value']) if 'default_startup_value' in boards[board] else 0
                             default_startup_value = default_startup_value
-                            byte2 = default_startup_value & 255
-                            byte3 = default_startup_value >> 8
+                            # byte2 = default_startup_value & 255
+                            # byte3 = default_startup_value >> 8
+                            byte2, byte3 = self.calcAddressLsMs8(default_startup_value)
                         elif io_type == 'i2c' or io_type == 'onewire' or io_type == 'onewire_test':
-                            byte2 = 0
-                            byte3 = 0
+                            byte2 = byte3 = 0
                         else:
-                            byte2 = 0
-                            byte3 = 0
+                            byte2 = byte3 = 0
                             print("ERROR: DIRECTION su configurazione non riconosciuto. IO: %s" %board)
                             # continue
 
@@ -1167,8 +1174,9 @@ class Bus:
                         inverted = 0 if 'inverted' not in boards.get(board) else int(boards.get(board)['inverted'])
                         if inverted:  # Invert OUTPUT. Se inverted, lo stato ON in uscita di un rele si ha con lo stato zero.
                             byte4 |= 128
-                        byte5 = int(boards.get(board)['time_refresh']) & 255  # Byte 5: rinfresco periodico ls in decimi di secondo
-                        byte6 = int(boards.get(board)['time_refresh']) >> 8  # Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
+                        # byte5 = int(boards.get(board)['time_refresh']) & 255  # Byte 5: rinfresco periodico ls in decimi di secondo
+                        # byte6 = int(boards.get(board)['time_refresh']) >> 8  # Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
+                        byte5, byte6 = self.calcAddressLsMs8(int(boards.get(board)['time_refresh']))# Byte 5: rinfresco periodico ls in decimi di secondo, Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
                         # print("RINFRESCHI", byte5, byte6)
 
                         if io_type == 'analog' or io_type == 'digital':
@@ -1304,7 +1312,8 @@ class Bus:
                             if sbyte8 == 'power_on':
                                 # print("plc_params", plc_params, float(plc_params[3]), int(plc_params[4]), int(plc_params[5]))
                                 value_dac_in = self.ADC_value(float(plc_params[3]), int(plc_params[4]), int(plc_params[5]))
-                                plc.extend((int(plc_params[0]), int(plc_params[1]) & 255, int(plc_params[1]) >> 8, int(plc_params[2]) & 255, int(plc_params[2]) >> 8, value_dac_in & 255, value_dac_in >> 8 ))
+#                                plc.extend((int(plc_params[0]), int(plc_params[1]) & 255, int(plc_params[1]) >> 8, int(plc_params[2]) & 255, int(plc_params[2]) >> 8, value_dac_in & 255, value_dac_in >> 8 ))
+                                plc += [int(plc_params[0])] + list(self.calcAddressLsMs8(int(plc_params[1]))) + list(self.calcAddressLsMs8(int(plc_params[2]))) + list(self.calcAddressLsMs8(value_dac_in))
                                 # print("POWER_ON data:", byte8, value_dac_in, plc)
 
                             else:  # Funzione PLC
@@ -1400,12 +1409,14 @@ class Bus:
                                     plc.append(plc_timer_n_transitions)
 
                                     plc_time_on = 0 if not 'plc_time_on' in boards.get(board) else int(boards.get(board)['plc_time_on'])
-                                    plc.append(plc_time_on & 255)
-                                    plc.append(plc_time_on >> 8)
+                                    # plc.append(plc_time_on & 255)
+                                    # plc.append(plc_time_on >> 8)
+                                    plc += list(self.calcAddressLsMs8(plc_time_on))
 
                                     plc_time_off = 0 if not 'plc_time_off' in boards.get(board) else int(boards.get(board)['plc_time_off'])
-                                    plc.append(plc_time_off & 255)
-                                    plc.append(plc_time_off >> 8)
+                                    # plc.append(plc_time_off & 255)
+                                    # plc.append(plc_time_off >> 8)
+                                    plc += list(self.calcAddressLsMs8(plc_time_off))
 
                                 elif sbyte8 in ["equal", "nequal"]:
 
@@ -1424,12 +1435,14 @@ class Bus:
                                     plc.append(0) # Numero massimo di coomutazioni (ignorato)
 
                                     plc_delay_on_off = 0 if not 'plc_delay_on_off' in boards.get(board) else int(boards.get(board)['plc_delay_on_off'])
-                                    plc.append(plc_delay_on_off & 0xff)
-                                    plc.append(plc_delay_on_off >> 8)
+                                    # plc.append(plc_delay_on_off & 0xff)
+                                    # plc.append(plc_delay_on_off >> 8)
+                                    plc += list(self.calcAddressLsMs8(plc_delay_on_off))
 
                                     plc_delay_off_on = 0 if not 'plc_delay_off_on' in boards.get(board) else int(boards.get(board)['plc_delay_off_on'])
-                                    plc.append(plc_delay_off_on & 0xff)
-                                    plc.append(plc_delay_off_on >> 8)
+                                    # plc.append(plc_delay_off_on & 0xff)
+                                    # plc.append(plc_delay_off_on >> 8)
+                                    plc += list(self.calcAddressLsMs8(plc_delay_off_on))
 
                                 elif sbyte8 in ['test_nio_>_n', 'ntest_nio_>_n', 'test_nio_into_n', 'ntest_nio_into_n', 'test_schmitt_nio', 'ntest_schmitt_nio']:
                                     plc_params_val = int(plc_params)
@@ -1437,25 +1450,30 @@ class Bus:
 
                                 elif sbyte8 in ['analog_in_=_n', 'nanalog_in_=_n', 'analog_in_>_n', 'nanalog_in_>_n', 'analog_in_>=_n', 'nanalog_in_>=_n']:
                                     plc_params_val = int(plc_params)
-                                    plc.append(plc_params_val & 255)
-                                    plc.append(plc_params_val >> 8)
+                                    # plc.append(plc_params_val & 255)
+                                    # plc.append(plc_params_val >> 8)
+                                    plc += list(self.calcAddressLsMs8(plc_params_val))
 
                                 elif sbyte8 in ['analog_in_schmitt_n','nanalog_in_schmitt_n']:
                                     plc_params_val = list(plc_params)
-                                    plc.append(plc_params_val[0] & 255)
-                                    plc.append(plc_params_val[0] >> 8)
-                                    plc.append(plc_params_val[1] & 255)
-                                    plc.append(plc_params_val[1] >> 8)
+                                    # plc.append(plc_params_val[0] & 255)
+                                    # plc.append(plc_params_val[0] >> 8)
+                                    plc += list(self.calcAddressLsMs8(plc_params_val[0]))
+                                    # plc.append(plc_params_val[1] & 255)
+                                    # plc.append(plc_params_val[1] >> 8)
+                                    plc += list(self.calcAddressLsMs8(plc_params_val[1]))
 
                                 elif sbyte8 in ['if_analog_in1_=_analog_in2', 'nif_analog_in1_=_analog_in2', 'if_analog_in1_>_analog_in2', 'nif_analog_in1_>_analog_in2', 'if_analog_in1_>=_analog_in2', 'nif_analog_in1_>=_analog_in2']:
                                     pass
 
                                 elif sbyte8 in ['if_analog_in1_-_analog_in2_schmitt_value','nif_analog_in1_-_analog_in2_schmitt_value']:
                                     plc_params_val = list(plc_params)
-                                    plc.append(plc_params_val[0] & 255)
-                                    plc.append(plc_params_val[0] >> 8)
-                                    plc.append(plc_params_val[1] & 255)
-                                    plc.append(plc_params_val[1] >> 8)
+                                    # plc.append(plc_params_val[0] & 255)
+                                    # plc.append(plc_params_val[0] >> 8)
+                                    plc += list(self.calcAddressLsMs8(plc_params_val[0]))
+                                    # plc.append(plc_params_val[1] & 255)
+                                    # plc.append(plc_params_val[1] >> 8)
+                                    plc += list(self.calcAddressLsMs8(plc_params_val[1]))
 
                                 elif sbyte8 == 'last_change':
                                     pass
@@ -1466,8 +1484,9 @@ class Bus:
                                 elif sbyte8 in ['analog_in_+_n', 'analog_in_-_n', 'analog_in_*_n', 'analog_in_/_n', 'analog_in_%_n', 'analog_in_min_n', 'analog_in_max_n']:
 
                                     plc_params_val = int(plc_params)
-                                    plc.append(plc_params_val & 255)
-                                    plc.append(plc_params_val >> 8)
+                                    # plc.append(plc_params_val & 255)
+                                    # plc.append(plc_params_val >> 8)
+                                    plc += list(self.calcAddressLsMs8(plc_params_val))
 
                                 elif sbyte8 in ['analog_in1_+_analog_in2', 'analog_in1_-_analog_in2', 'analog_in1_*_analog_in2', 'analog_in1_/_analog_in2', \
                                                 'analog_in1_/_analog_in2', 'analog_in1_%_analog_in2', 'analog_in1_min_analog_in2', 'analog_in1_max_analog_in2']:
@@ -1479,8 +1498,9 @@ class Bus:
                                     counter_filter = 0 if not 'counter_filter' in boards.get(board) else int(boards.get(board)['counter_filter'])
                                     plc.append(counter_filter)
                                     counter_timeout = 0 if not 'counter_timeout' in boards.get(board) else int(boards.get(board)['counter_timeout'])
-                                    plc.append(counter_timeout & 255)
-                                    plc.append(counter_timeout >> 8)
+                                    # plc.append(counter_timeout & 255)
+                                    # plc.append(counter_timeout >> 8)
+                                    plc += list(self.calcAddressLsMs8(counter_timeout))
 
                                 elif sbyte8 == 'time_meter':
                                     counter_mode = 0 if not 'counter_mode' in boards.get(board) else int(boards.get(board)['counter_mode'])
@@ -1488,8 +1508,9 @@ class Bus:
                                     counter_filter = 0 if not 'counter_filter' in boards.get(board) else int(boards.get(board)['counter_filter'])
                                     plc.append(counter_filter)
                                     counter_timeout = 0 if not 'counter_timeout' in boards.get(board) else int(boards.get(board)['counter_timeout'])
-                                    plc.append(counter_timeout & 255)
-                                    plc.append(counter_timeout >> 8)
+                                    # plc.append(counter_timeout & 255)
+                                    # plc.append(counter_timeout >> 8)
+                                    plc += list(self.calcAddressLsMs8(counter_timeout))
 
                                 elif sbyte8 == 'powermeter':
                                     counter_mode = 0 if not 'counter_mode' in boards.get(board) else int(boards.get(board)['counter_mode'])
@@ -1497,13 +1518,16 @@ class Bus:
                                     counter_filter = 0 if not 'counter_filter' in boards.get(board) else int(boards.get(board)['counter_filter'])
                                     plc.append(counter_filter)
                                     counter_timeout = 0 if not 'counter_timeout' in boards.get(board) else int(boards.get(board)['counter_timeout'])
-                                    plc.append(counter_timeout & 255)
-                                    plc.append(counter_timeout >> 8)
+                                    # plc.append(counter_timeout & 255)
+                                    # plc.append(counter_timeout >> 8)
+                                    plc += list(self.calcAddressLsMs8(counter_timeout))
                                     counter_min_period_time = 0 if not 'counter_min_period_time' in boards.get(board) else int(boards.get(board)['counter_min_period_time'])
                                     plc.append(counter_min_period_time)
                                     powermeter_k = 0 if not 'powermeter_k' in boards.get(board) else int(boards.get(board)['powermeter_k'])
-                                    plc.append(powermeter_k & 255)
-                                    plc.append(powermeter_k >> 8)
+                                    # plc.append(powermeter_k & 255)
+                                    # plc.append(powermeter_k >> 8)
+                                    #plc += [powermeter_k & 255, powermeter_k >> 8]
+                                    plc += list(self.calcAddressLsMs8(powermeter_k))
 
                                 elif sbyte8 == 'odd' or sbyte8 == 'even' or sbyte8 == 'toggle_off' or sbyte8 == 'toggle_on' or sbyte8 == 'toggle_on_off'  :
                                     pass
@@ -1623,7 +1647,7 @@ class Bus:
                 # msg.append(self.boardReboot(idbus))
         # msg.append(self.getTypeBoard(5))
         # print("RESET TOTALE")
-        msg.append(self.setMaxBoardAddress(self.MAX_BOARD_ADDRESS))
+        # msg.append(self.setMaxBoardAddress(self.MAX_BOARD_ADDRESS))
         msg.append(self.boardReboot(0))
         pprint(msg)
         # if(msg[])
@@ -1680,7 +1704,7 @@ if __name__ == '__main__':
     """ Configurazione SCHEDE in base al file in config_file_name """
     reset = b.resetEE(0, 0)
     # TXmsg += reset
-    message_conf_app = b.sendConfiguration()  # Set configuration of boards
+    message_conf_app = b.sendConfiguration()  # Set configuration of boardsx
     TXmsg += message_conf_app  # Mette la configurazione in coda da inviare
 
     oldtime = int(time.time()) - 10  # init oldtime per stampe dizionario con i/o per stampa subito al primo loop
@@ -1689,7 +1713,11 @@ if __name__ == '__main__':
     while int(time.time()) - oldtime < 12:
         """ Svuta il buffer della seriale1 """
         res = ser.read()        
-        
+
+    CHECKTrama = [] # Lista dove memorizzare la stringa appena trasmessa per fare il confronto successivamente
+    WAIT_FEEDBACK = 0
+    TIME_FEEDBACK = 0
+
     while 1:
         nowtime = int(time.time())  # seleziona la parte intera dei secondi
         RXbyte = ser.read() #legge uno o piu caratteri del buffer seriale
@@ -1707,20 +1735,21 @@ if __name__ == '__main__':
             RXtrama = b.readSerial(d)  # accumula i vari caratteri e restituisce il pacchetto finito quando trova il carattere di fine pacchetto
             # print(RXtrama)
 
-            if RXtrama:  # Se arrivata una trama copmleta (PING e trame piu lunghe)
-                # print(RXtrama)
-                # if len(RXtrama) == 1: print(RXtrama)
-                
+            if RXtrama:  # Se arrivata una trama completa (PING e trame piu lunghe)
+
+                if WAIT_FEEDBACK and nowtime - TIME_FEEDBACK > 2:
+                    WAIT_FEEDBACK = 0
+                    TIME_FEEDBACK = nowtime
+
                 if RXtrama[0] == b.BOARD_ADDRESS - 1:  # test su address ricevuto, e' ora di trasmettere
-                    # if num > 0:
-                    #     num -= 1
-                    #     continue
-                    # num = 2
-                    # print("TXmsg", TXmsg)
-                    if len(TXmsg): #se qualcosa da trasmettere
-                        # print("Trama to TX: ", len(TXmsg))
+                    if len(TXmsg) and not WAIT_FEEDBACK: #se qualcosa da trasmettere
+                        
                         msg = TXmsg.pop(0)  # prende dalla lista la prima trama da trasmettere
-                        # print("MSG===>>>>", msg)
+                        
+                        if len(msg) > 2 and msg[1] == 6: # WRITE EE 
+                            CHECKTrama = msg
+                            WAIT_FEEDBACK = 1
+
                         log.write("{:<12} TX                    {:<18} {} {}".format(nowtime, str(b.int2hex(msg)), '', ''))
                         msg1 = b.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui 
                         ##  ***** fare solo append del crc, quindi moficare la funzione calccrctx
@@ -1728,10 +1757,10 @@ if __name__ == '__main__':
                         # print("VA IN TX:", msg2)
                         ser.write(bytes(msg2))  # invia alla seriale
                         
-                        
-                        if len(msg) > 1 and msg[1] == 12:
-                            print(msg, msg1, msg2, b.int2hex(msg2))
+                        # if len(msg) > 1 and msg[1] == 12:
+                        #     print(msg, msg1, msg2, b.int2hex(msg2))
                             # sys.exit()
+                    
 
                 RXtrama[0] &= 0x3F  # Trasforma la trama di nodo occupato in libero (serve solo per la trasmissione) 
 
@@ -1740,14 +1769,18 @@ if __name__ == '__main__':
 
                 if len(RXtrama) > 1:  # Analizza solo comunicazioni valide (senza PING)
                     # print(b.code['COMUNICA_IO'], b.code['CR_WR_OUT'])
-                    if RXtrama[1] in [b.code['COMUNICA_IO'], b.code['CR_WR_OUT']]:  # COMUNICA_IO / Scrive valore USCITAù
+                    
+                    if RXtrama[1] == 0x26: ## CR_WR_EE <<<==============================
+                        print("WAIT_FEEDBACK", WAIT_FEEDBACK, RXtrama[2:], CHECKTrama[5:])
+                        if RXtrama[2:] == CHECKTrama[5:]:
+                            WAIT_FEEDBACK = 0
+
+
+                    if RXtrama[1] in [b.code['COMUNICA_IO'], b.code['CR_WR_OUT']]:  # COMUNICA_IO / Scrive valore USCITA
                         try:
-                            # print("qua")
-                            # print(RXtrama)
                             value = b.calculate(RXtrama[0], RXtrama[2], RXtrama[3:])  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
-                            # print(value)
                             b.status[RXtrama[0]]['io'][RXtrama[2] - 1] = value
-                            log.write("{:<12} RX {:<18} {} {} **".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama), RXtrama))
+                            log.write("{:<12} RX {:<18} {} {} {}".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama), RXtrama, WAIT_FEEDBACK))
                         except:
                             # print("B")
                             # print("\t\t\t\t\t\tRXtrama ERRATA", RXtrama)

@@ -117,7 +117,7 @@
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 600,
-            "enable": 0,
+            "enable": 1,
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
@@ -168,7 +168,7 @@
             "io_logic": 7,
             "io_type": "i2c",
             "time_refresh": 10,
-            "enable": 1,
+            "enable": 0,
             "device_name": "TSL2561",
             "address": "0x72",
             "name": "TSL2561",
@@ -176,106 +176,6 @@
             "dtype": "Light"
         }
 
-    },
-
-
-    "BOARD11":
-    {
-        "GENERAL":
-        {
-            "name": "APP1",
-            "boardtype": 3,
-            "enable": 0
-        },
-
-        "VIN":
-        {
-            "io_logic": 1,
-            "direction": "input",
-            "io_type": "analog",
-            "time_refresh": 600,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "Rvcc": 12000,
-            "Rgnd": 470,
-            "name": "VIN",
-            "description": "Tensione ingresso Board 4",
-            "dtype": "Voltage"
-        },
-
-        "TEMP_ATMEGA":
-        {
-            "io_logic": 2,
-            "direction": "input",
-            "io_type": "temp_atmega",
-            "time_refresh": 600,
-            "enable": 1,
-            "name": "TEMP_ATMEGA",
-            "description": "Temperatura Board ATMEGA328PB",
-            "dtype": "Temperature"
-        },
-                
-        "PD3":
-        {
-            "io_logic": 3,
-            "io_type": "onewire",
-            "device_name": "DS18B20",
-            "time_refresh": 30,
-            "enable": 1,
-            "name": "TEM1",
-            "description": "Sensore Temperatura 1",
-            "dtype": "Temperature"
-        },
-
-        "PD4":
-        {
-            "io_logic": 4,
-            "io_type": "onewire",
-            "device_name": "DS18B20",
-            "time_refresh": 30,
-            "enable": 1,
-            "name": "TEM2",
-            "description": "Sensore Temperatura 2",
-            "dtype": "Temperature"
-        },
-                
-        "PE0":
-        {
-            "io_logic": 5,
-            "io_type": "onewire",
-            "device_name": "DS18B20",
-            "time_refresh": 30,
-            "enable": 1,
-            "name": "TEM3",
-            "description": "Sensore Temperatura 3",
-            "dtype": "Temperature"
-        },
-        
-        "BME280":
-        {
-            "io_logic": 6,
-            "io_type": "i2c",
-            "time_refresh": 30,
-            "enable": 1,
-            "device_name": "BME280",
-            "address": "0xEC",
-            "name": "BME280",
-            "description": "Sensore T+U+B bagno",
-            "dtype": "Temp+Hum+Baro"
-        },
-        
-        "TSL2561":
-        {
-            "io_logic": 7,
-            "io_type": "i2c",
-            "time_refresh": 30,
-            "enable": 1,
-            "device_name": "TSL2561",
-            "address": "0x72",
-            "name": "TSL2561",
-            "description": "Sensore Luminosità",
-            "dtype": "Light"
-        }
-    }
+    }   
 }
+ 
