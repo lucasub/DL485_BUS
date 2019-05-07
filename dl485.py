@@ -38,7 +38,6 @@ ERRORI DA CORREGGERE:
 quando IO disabilitato, non inserire sui dizionari della configurazione
 """
 
-
 class Bus:
     code = {  # Dict with all COMAND
         0: 'INPUT',
@@ -57,6 +56,7 @@ class Bus:
         13: 'ERRORE',  # Errore generico
         14: 'COMUNICA_IO',  # Mitt. COmando comunica IO, N. ingresso, valore inresso
         15: 'I2C ACK',  # Mitt. COmando comunica IO, N. ingresso, valore inresso
+        16: 'CLEARIO_REBOOT', #cancella area io e fa reboot
 
         'INPUT': 0,
         'OUTPUT': 1,
@@ -74,16 +74,16 @@ class Bus:
         'ERRORE': 13,  # Errore generico
         'COMUNICA_IO': 14,  # Mitt. COmando comunica IO, N. ingresso, valore inresso
         'I2C ACK': 15,  # Mitt. COmando comunica IO, N. ingresso, valore inresso
+        'CLEARIO_REBOOT': 16
     }
 
     disable_io = 0x3e
     enable_io = 0xff
 
     error = {  # Dict with ERROR type
-        0: "Errore inizializzazione / timeout I2C",
         1: "Errore 3 zeri",
         2: "Errore 3 uni",
-        3: "Pacchetto ricevuto troppo lungo",
+        3: "Errore CRC",
         4: "Pacchetto sentito uguale a se stesso",
         5: "Indirizzo mittente fuori range",  # da 0 a 24
         6: "Manca indirizzo destinatario",
@@ -94,23 +94,24 @@ class Bus:
         11: "Manca Byte residui",
         12: "Troppi Byte dati",
         13: "Errore comando a zero parametri",
-        14: "Errore comando a 1 parametro sconosciuto",
-        15: "Errore comando a 2 parametri sconosciuto",
-        16: "Errore comando a 3 parametri sconosciuto",
-        17: "Errore comando a 4 parametri sconosciuto",
+        14: "Errore comando a 1 parametro",
+        15: "Errore comando a 2 parametri",
+        16: "Errore comando a 3 parametri",
+        17: "Errore comando a 4 parametri",
         18: "Errore comando n parametri non previsto ",
-        19: "Errore CRC",
+        19: "Pacchetto ricevuto troppo lungo",
         20: "I2C occupata",
         21: "I2C Timeout",
         22: "OneWire Occupata",
-
+        23: "Ricevuto pacchetto nullo",
         24: "OneWire Occupata",
         25: "Lettura numero ingreso fuori range",
         26: "Dimensione pacchetto non conforme",
-        27: "Lettura EE oltre limite indirizzo",
+        27: "Accesso EE oltre limite indirizzo",
         28: "Scrittura numero uscita fuori range",
         29: "Numero parametro fuori range",
         30: "Nodo occupato da ordine precedente",
+        31: "Accesso EE sotto spazio EE IO",
     }
 
     i2c_const = {  # Const I2C
@@ -477,12 +478,17 @@ class Bus:
                 Analog Input
             Digital:
                 Digital input
+            PowerMeter
+            
         """
-        # print("CALCULATE: board_id:%s, io_logic:%s, value:%s, io_type:%s" %(board_id, io_logic, value, self.mapiotype[board_id][io_logic]['io_type']))
+        # print("CALCULATE: board_id:%s, io_logic:%s, value:%s, io_type:%s, PLC_FUNCTION:%s" %(board_id, io_logic, value, self.mapiotype[board_id][io_logic]['io_type'], self.mapiotype[board_id][io_logic]['plc_function']))
         if board_id in self.mapiotype and io_logic in self.mapiotype[board_id]:
             
             type_io = self.mapiotype[board_id][io_logic]['io_type']
-            # print()
+            
+            plc_function = self.mapiotype[board_id][io_logic]['plc_function']
+            # print(type_io, plc_function)
+            
             
             if type_io == 'onewire':
                 if self.mapiotype[board_id][io_logic]['device_name'] == 'DS18B20':
@@ -496,6 +502,10 @@ class Bus:
                     else:
                         print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
                         return None
+
+            elif type_io == 'digital' and plc_function == 'powermeter' :
+                # print(plc_function, value)
+                return value[0] + (value[1] * 256)
 
             elif type_io == 'i2c':
                 # print(self.mapiotype[board_id][io_logic]['io_type'], self.mapiotype[board_id][io_logic]['device_name'] )
@@ -746,7 +756,13 @@ class Bus:
         """
         Command to board REBOOT (0 for all board in the BUS)
         """
-        return [self.BOARD_ADDRESS, self.code['CR_REBOOT'], board_id] # Fa reboor scheda
+        return [self.BOARD_ADDRESS, self.code['CR_REBOOT'], board_id] # Fa reboot scheda
+
+    def clearIO_boardReboot(self, board_id):
+        """
+        Command to board REBOOT (0 for all board in the BUS)
+        """
+        return [self.BOARD_ADDRESS, self.code['CLEARIO_REBOOT'], board_id] # cancella prog io e fa reboot scheda
 
     def getTypeBoard(self, board_id):
         """
@@ -1083,6 +1099,7 @@ class Bus:
             if "BOARD" in bb:  # Seleziona le BOARD
                 boards = self.config.get(bb)
                 idbus = int(bb[5:])
+                msg.append(self.clearIO_boardReboot(idbus))
                 for board in boards:
                     boardenable = int(boards.get('GENERAL')['enable'])
                     boardtype = int(boards.get('GENERAL')['boardtype'])
@@ -1098,11 +1115,8 @@ class Bus:
                         write_ee = [] if not 'write_ee' in boards[board] else boards.get(board)['write_ee']  # write_ee
                         enable = 0 if not 'enable' in boards[board] else int(boards.get(board)['enable'])  # Enable
                         # print("IO ABILITATI %s: %s" %(enable, io_logic))
-
-                        if not enable:  # Non fa configurazione se enable = 0
-                            # print("IO disabilitati:",io_logic)
-                            continue
-
+                        if not enable: continue 
+                        
                         if io_logic >= 30:
                             print("Configurazione boards ERROR: io_logic non può essere superiore a 29. IO_logic=%s", io_logic)
                             continue
@@ -1119,6 +1133,7 @@ class Bus:
                         io_type = boards.get(board).get('io_type')
                         device_name = boards.get(board).get('device_name')
                         # print("-----", io_type)
+                        if not enable: io_type = 'disable' # Non fa configurazione se enable = 0
                         if io_type == 'analog' or io_type == 'temp_atmega':
                             byte1 |= 0b10
                         elif io_type == 'digital':
@@ -1133,7 +1148,7 @@ class Bus:
                         elif io_type == 'virtual':
                             byte1 |= 0b1100
                         elif io_type == 'disable':
-                            byte1 |= 0b00100
+                            byte1 |= 0b00000
                         else:
                             print("Configurazione boards: ERROR: io_type non riconosciuto. IO: %s" %board, io_type, bb)
                             continue
@@ -1187,8 +1202,8 @@ class Bus:
                         message_conf_app.append(self.BOARD_ADDRESS)  # Mio indirizzo IDBUS
                         message_conf_app.append(self.code['CR_WR_EE'])  # Comando scrittura EEPROM, 4 per leggere
                         message_conf_app.append(idbus)  # IDBUS Board destinazione
-                        message_conf_app.append(eels)  # Indorizzo scrittura EE ls
-                        message_conf_app.append(eems)  # Indorizzo scrittura EE ms
+                        message_conf_app.append(eels)  # Indirizzo scrittura EE ls
+                        message_conf_app.append(eems)  # Indirizzo scrittura EE ms
                         message_conf_app.append(byte0)  # Port fisico
                         message_conf_app.append(byte1)  # Definizione input / output
                         message_conf_app.append(byte2)  # Valore default LS
@@ -1199,6 +1214,7 @@ class Bus:
                         message_conf_app.append(byte7)  # Byte 7:  Filtro
 
                        # print("TRAMA CONFIGURAZIONE:             ", message_conf_app)
+                    
                         msg.append(message_conf_app)
                         # msg.append(self.initIO(idbus, io_logic))  # iNIt io
 
@@ -1298,10 +1314,11 @@ class Bus:
                         sbyte8 = 'disable' if not 'plc_function' in boards.get(board) or boards.get(board)['plc_function'] == 'disable' else boards.get(board)['plc_function']
                         # print("PLC_FUNCTION:************************", plc_function[byte8], byte8)
 
-                        if sbyte8 == "disable":
-                            message_conf_app.append(plc_function[sbyte8])
+                        if sbyte8 == "disable" or not enable:
+                            # print("PLC DISABILITATO", io_logic, plc_function[sbyte8])
+                            message_conf_app.append(0)
 
-                        else:  ## byte8 != "disable":
+                        else:  # byte8 != "disable":
                             # if inverted:
                                 # plc_function[byte8] ^= 0x80
                             plc_params = 0 if not 'plc_params' in boards.get(board) else boards.get(board)['plc_params']
@@ -1714,53 +1731,66 @@ if __name__ == '__main__':
         """ Svuta il buffer della seriale1 """
         res = ser.read()        
 
-    CHECKTrama = [] # Lista dove memorizzare la stringa appena trasmessa per fare il confronto successivamente
-    WAIT_FEEDBACK = 0
-    TIME_FEEDBACK = 0
-
+    BUFF_MSG_TX = {} # dizionario dei messaggi trasmessi indicizzato secondo indirizzo destinatario
+    NLOOPTIMEOUT = 4  # numero di giri del loop dopo i quali si ritrasmettera il messaggio
+    
     while 1:
         nowtime = int(time.time())  # seleziona la parte intera dei secondi
-        RXbyte = ser.read() #legge uno o piu caratteri del buffer seriale
-        # print(RXbyte)
-        if not RXbyte:  # Monitor serial
+        RXbytes = ser.read() #legge uno o piu caratteri del buffer seriale
+        # print(RXbytes)
+        if not RXbytes:  # Monitor serial
             # time.sleep(0.001)
             continue  # seriale senza caratteri
-        else:
-            pass
-            # print(RXbyte)
 
-        # print(RXbyte)
-        for d in RXbyte:  # analizza i caratteri ricevuti
+        # print(RXbytes)
+        for d in RXbytes:  # analizza i caratteri ricevuti
             # print(d)
             RXtrama = b.readSerial(d)  # accumula i vari caratteri e restituisce il pacchetto finito quando trova il carattere di fine pacchetto
             # print(RXtrama)
 
             if RXtrama:  # Se arrivata una trama completa (PING e trame piu lunghe)
 
-                if WAIT_FEEDBACK and nowtime - TIME_FEEDBACK > 2:
-                    WAIT_FEEDBACK = 0
-                    TIME_FEEDBACK = nowtime
-
                 if RXtrama[0] == b.BOARD_ADDRESS - 1:  # test su address ricevuto, e' ora di trasmettere
-                    if len(TXmsg) and not WAIT_FEEDBACK: #se qualcosa da trasmettere
-                        
-                        msg = TXmsg.pop(0)  # prende dalla lista la prima trama da trasmettere
-                        
-                        if len(msg) > 2 and msg[1] == 6: # WRITE EE 
-                            CHECKTrama = msg
-                            WAIT_FEEDBACK = 1
+                    for x in BUFF_MSG_TX:  ## aggiornamento timeout
+                        ##print(BUFF_MSG_TX[x][1])
+                        if BUFF_MSG_TX[x][1]: BUFF_MSG_TX[x][1] -= 1
 
-                        log.write("{:<12} TX                    {:<18} {} {}".format(nowtime, str(b.int2hex(msg)), '', ''))
-                        msg1 = b.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui 
-                        ##  ***** fare solo append del crc, quindi moficare la funzione calccrctx
-                        msg2 = b.encodeMsgCalcCrcTx(msg1) # restituisce il messaggio codificato e completo di crc
-                        # print("VA IN TX:", msg2)
-                        ser.write(bytes(msg2))  # invia alla seriale
+                    for x in BUFF_MSG_TX: ##cerca msg in timeout, fatto in un secondo ciclo for perchè questa modifica il dizionario e crea un errore se si continua la ricerca dopo la modifica
+                        if not BUFF_MSG_TX[x][1]:  ## trovato messaggio in timeout
+                                print("TIMEOUTMSG:",BUFF_MSG_TX[x][0])
+                                TXmsg.insert(0,BUFF_MSG_TX[x][0])  ## lo mette al primo posto nella lista di trasmissione
+                                # print(TXmsg)
+                                del BUFF_MSG_TX[x] ## lo cancella per poterlo reinserire tutto perche non c'è il goto
+                                break  ## esce dal for
                         
-                        # if len(msg) > 1 and msg[1] == 12:
-                        #     print(msg, msg1, msg2, b.int2hex(msg2))
-                            # sys.exit()
-                    
+                    if len(TXmsg): #se qualcosa da trasmettere
+                        
+                        msg = TXmsg.pop(0)  # prende dalla lista la prima trama da trasmettere (msg piu vecchio)
+                        ##print(msg, msg[2], BUFF_MSG_TX)
+                        if (len(msg)>1): print("****FORSE TRASMETTE: %s            %s" %(len(TXmsg), b.int2hex(msg)), end='')
+                        if (len(msg)>1) and (msg[1]==b.code['CR_REBOOT']):  # il comando reboot va trasmesso alla fine della configurazione
+                                if len(BUFF_MSG_TX):
+                                    print(" REBOOT RIMESSO IN LISTA X ATTESA DIZIONARIO VUOTO")
+                                    TXmsg.append(msg)  #lo rimetto in fondo alla lista perchè attesa dizionario vuoto
+                                else:   
+                                        print(" OKTRASM REBOOT")
+                                        log.write("{:<12} TX                    {:<18} {} {}".format(nowtime, str(b.int2hex(msg)), '', ''))
+                                        msg1 = b.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui 
+                                        msg2 = b.encodeMsgCalcCrcTx(msg1) # restituisce il messaggio codificato e completo di crc
+                                        ser.write(bytes(msg2))  # invia alla seriale
+                        else:
+                                                 
+                                if (len(msg)>1) and (msg[2] in BUFF_MSG_TX):
+                                        print(" RIMESSO IN LISTA X ATTESA FEEDBACK")
+                                        TXmsg.insert(0, msg)  #attesa feedback dallo stesso nodo: lo rimetto in lista al primo posto perchè deve stare prima di reboot 
+                                else:
+                                        if (len(msg)>1):print(" OKTRASM, ATTESA FEEDBACK")
+                                        log.write("{:<12} TX                    {:<18} {} {}".format(nowtime, str(b.int2hex(msg)), '', ''))
+                                        msg1 = b.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui 
+                                        msg2 = b.encodeMsgCalcCrcTx(msg1) # restituisce il messaggio codificato e completo di crc
+                                        ser.write(bytes(msg2))  # invia alla seriale
+                                        if (len(msg)>1) and (msg[1]==6):  # inserisce solo se comando writeEE
+                                                BUFF_MSG_TX[msg[2]] = [msg,NLOOPTIMEOUT+len(msg)]  # inserisce in dizionario messaggio originale per controllo feedback
 
                 RXtrama[0] &= 0x3F  # Trasforma la trama di nodo occupato in libero (serve solo per la trasmissione) 
 
@@ -1770,38 +1800,49 @@ if __name__ == '__main__':
                 if len(RXtrama) > 1:  # Analizza solo comunicazioni valide (senza PING)
                     # print(b.code['COMUNICA_IO'], b.code['CR_WR_OUT'])
                     
-                    if RXtrama[1] == 0x26: ## CR_WR_EE <<<==============================
-                        print("WAIT_FEEDBACK", WAIT_FEEDBACK, RXtrama[2:], CHECKTrama[5:])
-                        if RXtrama[2:] == CHECKTrama[5:]:
-                            WAIT_FEEDBACK = 0
+                    if RXtrama[1] == 0x26: # CR_WR_EE <<<==============================
+                        print("VERIFICA_FEEDBACK, TRAMA RIC:", b.int2hex(RXtrama), end='')
+                        if RXtrama[0] in BUFF_MSG_TX:
+                                msgapp = BUFF_MSG_TX[RXtrama[0]][0]
+                                #  print(", TROVATO STESSO INDIRIZZO", msgapp, ", VERIFICA CONTENUTO...", end='')
+                                #  siccome sono salvati in dizionario soltanto i comandi di scrittura e2 si evita di verificare
+                                #  se feedback sia feedback di scrittura e2
+                                if msgapp[3:] == RXtrama[2:]:
+                                        print(" VERIFICA OK")
+                                        del BUFF_MSG_TX[RXtrama[0]]
+                                else: print(" ERR VERIFICA BUFF=", msgapp[3:]," TRAMARIC=", RXtrama[2:])        
+                        else:
+                                print(" ERR RICEVUTO FEEDBACK DI MSG MAI INVIATO")
 
 
                     if RXtrama[1] in [b.code['COMUNICA_IO'], b.code['CR_WR_OUT']]:  # COMUNICA_IO / Scrive valore USCITA
-                        try:
+                        # try:
+                            
                             value = b.calculate(RXtrama[0], RXtrama[2], RXtrama[3:])  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
                             b.status[RXtrama[0]]['io'][RXtrama[2] - 1] = value
-                            log.write("{:<12} RX {:<18} {} {} {}".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama), RXtrama, WAIT_FEEDBACK))
-                        except:
+                            
+                            log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama), RXtrama))
+                        # except:
                             # print("B")
                             # print("\t\t\t\t\t\tRXtrama ERRATA", RXtrama)
 
-                            log.write("{:<12} RX {:<18} {} {}  NOT EXSIST in the status dict".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama), RXtrama))
+                            # log.write("{:<12} RX {:<18} {} {}  NON ESISTE in status dict".format(nowtime, b.code[RXtrama[1]], b.int2hex(RXtrama), RXtrama))
 
                             # print("\t\t\t\t\t\tERROR: board_id:%s or io_logic:%s NOT EXSIST in the status dict" %(RXtrama[0], RXtrama[2]))
                     
                     elif RXtrama[1] & 32:
-                        apprx=RXtrama[1]-32
+                        apprx=RXtrama[1]-32 # ricava comando associato a questa risposta
                         if apprx in b.code:
-                            # print("D")
+                            print("D")
                             err = ''
-                            if apprx == 29:
+                            if apprx == 0x2D-32:
                                 """
                                 Comando di errore ritornato: ID SCHEDA, COMANDO ERRORE (2D), COMANDO ARRIVATO (255 se non disponibile), IO Logico (255 se non disponibile), Tipo errore
                                 """
-                                err = b.error[RXtrama[2]] if RXtrama[2] in b.error else 'ERRORE NON DEFINITO'
+                                err = b.error[RXtrama[4]] if RXtrama[4] in b.error else 'ERRORE NON DEFINITO'
                             log.write("{:<12} RX {:<18} {} {}".format(nowtime, b.code[apprx], b.int2hex(RXtrama), err))
-
-            if nowtime - oldtime > TIME_PRINT_LOG:
+                 
+            if (not len(TXmsg)) and (nowtime - oldtime > TIME_PRINT_LOG):
                 TXmsg.append(ping)  # Not remove. Is neccesary to reset shutdown counter
                 oldtime = nowtime  # Not remove
 
