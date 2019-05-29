@@ -67,13 +67,15 @@
 
         "DL485M": 1,
         "DL485B": 2,
-        "DL485P": 3,
+        "DL485Pold": 3, //scheda tipo 3 vecchia sostituita con 5
         "DL485R": 4,
+        "DL485P": 5,
 
         "1": "DL485M",
-        "2": "DL485B",
-        "3": "DL485P",
-        "4": "DL485R"
+        "2": "DL485B", 
+        "3": "DL485Pold",
+        "4": "DL485R",
+        "5": "DL485P"
     },
 
     # Configurazione generale del BUS
@@ -132,7 +134,7 @@
             "enable": 0,           
             "name": "Corrente",
             "description": "Misura corrente",
-            "dtype": "switch"
+            "dtype": "Switch"
         },
 
         "PB1":
@@ -149,7 +151,7 @@
             "enable": 1,
             "name": "FOTO R",
             "description": "Foto Resistenza",
-            "dtype": "switch"
+            "dtype": "Switch"
         },
 
         "PC0":
@@ -166,7 +168,7 @@
             "timeout_counter": 65535, // escluso
             "name": "Wattora",
             "description": "WATT per ORA",
-            "dtype": "switch"
+            "dtype": "Switch"
         },
 
         "PC1": {
@@ -560,7 +562,7 @@
             "timeout_counter": 65535, // escluso
             "name": "Wattora",
             "description": "WATT per ORA",
-            "dtype": "switch"
+            "dtype": "Switch"
         },
 
         "PD1":{
@@ -605,14 +607,14 @@
             "description": "time_meter",
             "dtype": "Switch"
         }
-    }
+    },
 
     "BOARD5":{  //board di prova per fare video
         // Configurazione generale della BOARD
         "GENERAL":{
             "name": "BUS", // Nome della BOARD
-            "boardtype": 3, // Tipo di Board: Vedi TYPEB
-            "enable": 0 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
+            "boardtype": 5, // Tipo di Board: Vedi TYPEB
+            "enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
         },
 
         // Tensione alimentazione BOARD
@@ -623,14 +625,14 @@
             "time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
             "Rgnd": 470, // Valore resistenza posta tra IO e 0V.
-            "enable": 0, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "name": "Vin", // Nome che verrà riportato su DOMOTICZ
             "description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Voltage" // Tipo dispositivo Domoticz
         },
 
         "TEMP_ATMEGA":{
-            "io_logic": 1,
+            "io_logic": 2,
             "direction": "input",
             "io_type": "temp_atmega",
             "time_refresh": 200,
@@ -640,73 +642,172 @@
             "dtype": "Temperature"
         }, 
         
-        // 4 ingressi digitali 2,3,4,5   
+        // 4 ingressi digitali 3,4,5,6   
         "PD5":{
-            "io_logic": 2,
-            "direction": "input",
-            "io_type": "digital",
-            "pullup": 1,
-            "time_refresh": 65535,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "filter": 20,
-            "inverted": 1,
-            "enable": 1,
-            "name": "FOTO R",
-            "description": "close",
-            "dtype": "switch"
-        },
-
-        "PE2":{
             "io_logic": 3,
             "direction": "input",
             "io_type": "digital",
-            "pullup": 1,
-            "time_refresh": 65535,
+            "pullup": 3,
+            "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
             "filter": 20,
             "inverted": 1,
             "enable": 1,
-            "name": "FOTO R",
-            "description": "open",
-            "dtype": "switch"
+            "name": "FINESTRA1",
+            "description": "finestra 1",
+            "dtype": "Switch"
         },
 
-        "PB1":{
+        "PE2":{
             "io_logic": 4,
             "direction": "input",
             "io_type": "digital",
-            "pullup": 1,
-            "time_refresh": 65535,
+            "pullup": 3,
+            "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
             "filter": 20,
             "inverted": 1,
             "enable": 1,
-            "name": "FOTO R",
-            "description": "toggle",
-            "dtype": "switch"
+            "name": "FINESTRA2",
+            "description": "finestra 2",
+            "dtype": "Switch"
         },
 
-        "SCK":{
+        "PB1":{
             "io_logic": 5,
             "direction": "input",
             "io_type": "digital",
             "pullup": 1,
-            "time_refresh": 65535,
+            "time_refresh": 600,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
             "filter": 20,
             "inverted": 1,
             "enable": 1,
-            "name": "FOTO R",
-            "description": "timer",
-            "dtype": "switch"
+            "name": "PULSLUCESALOTTO",
+            "description": "PULS LUCE SALOTTO",
+            "dtype": "Switch"
         },
 
-        "BME280":{
+        "PB4":{
             "io_logic": 6,
+            "direction": "input",
+            "io_type": "digital",
+            "pullup": 1,
+            "time_refresh": 600,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "filter": 20,
+            "inverted": 1,
+            "enable": 1,
+            "name": "PULSLUCECORRIDOIO",
+            "description": "puls luce corridoio",
+            "dtype": "Switch"
+        },
+
+            // uscite digitali
+        "PE1":{
+            "io_logic": 7,
+            "direction": "output",
+            "io_type": "digital",
+            "time_refresh": 200,
+            "enable": 1,       
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "plc_function": "equal",
+            "plc_linked_board_id_io_logic": ["5-3"],
+            "name": "FINAPE",
+            "description": "LED FINESTRA1 APERTA",
+            "dtype": "Switch"
+        },
+
+        "PD3":{
+            "io_logic": 8,
+            "direction": "output",
+            "io_type": "digital",
+            "time_refresh": 200,
+            "enable": 1,      
+            "default_startup_value": 1, 
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "plc_function": "or",
+            "plc_linked_board_id_io_logic": ["5-3","5-4"],
+            "name": "ORFINAPE",
+            "description": "OR FINESTRE APERTE",
+            "dtype": "Switch"
+        },
+
+        "PD6":{
+            "io_logic": 9,
+            "direction": "output",
+            "io_type": "digital",
+            "time_refresh": 200,
+            "enable": 1,       
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "plc_function": "equal",
+            "plc_linked_board_id_io_logic": ["!5-8"], //inverte ingresso
+            "plc_delay_on_off": 100,
+            "plc_delay_off_on": 200,
+            "name": "ABILCOND",
+            "description": "ABILITA CONDIZIONATORE",
+            "dtype": "Switch"
+        },
+
+        "PB2":{
+            "io_logic": 10,
+            "direction": "output",
+            "io_type": "digital",
+            "time_refresh": 200,
+            "enable": 1,       
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "plc_function": "equal",
+            "plc_linked_board_id_io_logic": ["5-4"],
+            "name": "FINAPE",
+            "description": "LED FINESTRA2 APERTA",
+            "dtype": "Switch"
+        },
+
+        "PB5":{
+            "io_logic": 11,
+            "direction": "output",
+            "io_type": "digital",
+            "time_refresh": 200,
+            "enable": 1,       
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "plc_function": "toggle_on",
+            "plc_linked_board_id_io_logic": ["5-5"],
+            "name": "LUCESALOTTO",
+            "description": "LUCE SALOTTO",
+            "dtype": "Switch"
+        },
+
+        "PB3":{
+            "io_logic": 12,
+            "direction": "output",
+            "io_type": "digital",
+            "time_refresh": 200,
+            "enable": 1,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "plc_function": "timer",
+            "plc_mode_timer": 177, //128+49 innesca su fronte ON e spegne se timer innescato
+            //"plc_mode_timer": 129, // Timer innescato su fronte ON e con impostazione del tempo in secondi
+            "plc_timer_n_transitions": 2,
+            "plc_time_on": 4, // 4 secondi per tempo a ON
+            "plc_time_off": 0,       
+            "plc_linked_board_id_io_logic": ["5-6"],
+            "name": "LUCECORRIDOIO",
+            "description": "LUCE CORRIDOIO",
+            "dtype": "Switch"
+        },
+        
+        "BME280":{
+            "io_logic": 13,
             "io_type": "i2c",
             "time_refresh": 600,
             "enable": 1,
@@ -717,9 +818,8 @@
             "dtype": "Temp+Hum+Baro"
         },
 
-        "TSL2561":
-        {
-            "io_logic": 7,
+        "TSL2561":{
+            "io_logic": 14,
             "io_type": "i2c",
             "time_refresh": 50,
             "enable": 1,
@@ -730,102 +830,40 @@
             "dtype": "Light"
         },
 
-        "PC0":
-        {
-            "io_logic": 8,
+        "PC0":{
+            "io_logic": 15,
             "io_type": "onewire",
             "pullup": 1,
             "time_refresh": 50,
             "enable": 1,
             "device_name": "DS18B20",
-            "write_ee" : [],
             "name": "DS18B20",
             "description": "Sensore Temperatura",
             "dtype": "Temperature"
         },
 
-        "PC1":
-        {
-            "io_logic": 9,
+        "PC1":{
+            "io_logic": 16,
             "io_type": "onewire",
             "pullup": 1,
             "time_refresh": 50,
             "enable": 1,
             "device_name": "DS18B20",
-            "write_ee" : [],
             "name": "DS18B20",
             "description": "Sensore Temperatura",
             "dtype": "Temperature"
         },
 
-        "PC2":
-        {
-            "io_logic": 10,
+        "PC2":{
+            "io_logic": 17,
             "io_type": "onewire",
             "pullup": 1,
             "time_refresh": 50,
             "enable": 1,
             "device_name": "DS18B20",
-            "write_ee" : [],
             "name": "DS18B20",
             "description": "Sensore Temperatura",
             "dtype": "Temperature"
-        },
-
-        "PE1":{
-            "io_logic": 12,
-            "direction": "output",
-            "io_type": "digital",
-            "time_refresh": 200,
-            "enable": 1,       
-            "plc_function": "counter_up",
-            "plc_linked_board_id_io_logic": ["3-11"],
-            "name": "Wattora",
-            "description": "WATT per ORA",
-            "dtype": "switch"
-        },
-
-        "PD1":{
-            "io_logic": 13,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 0,
-            "inverted": 1,
-            "filter": 10,
-            "time_refresh": 200,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 1,
-            "plc_function": "powermeter",
-            "counter_mode": 27, // b11011 memoria del valore precendente e aggiorna dato a periodo ottenuto, azzera tempo ad ogni start a conteggio finito. Considera end come nuovo start, end su fronte ON
-            "powermeter_k": 60000, // numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
-            "counter_filter": 0, // non usato
-            "counter_timeout": 500, // 5 secondi
-            "plc_linked_board_id_io_logic": ["3-11"],
-            "name": "POWER METER",
-            "description": "POWER METER",
-            "dtype": "Switch"
-        },   
-
-        "PC3":{
-            "io_logic": 14,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 0,
-            "inverted": 1,
-            "filter": 127,
-            "time_refresh": 200,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "enable": 0,
-            "plc_function": "time_meter",
-            "counter_mode": 27, // b11011 
-            "counter_filter": 0, // non usato
-            "counter_timeout": 65535, // 5 secondi
-            "plc_linked_board_id_io_logic": ["3-11"],
-            "name": "time_meter",
-            "description": "time_meter",
-            "dtype": "Switch"
         }
     }
 }//fine file

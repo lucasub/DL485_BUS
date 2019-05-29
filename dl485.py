@@ -224,7 +224,7 @@ class Bus:
             'DS18B20-4':    {'pin':  35,  'name':   'DS18B20'},
             'DS18B20-5':    {'pin':  35,  'name':   'DS18B20'},
             'DS18B20-6':    {'pin':  35,  'name':   'DS18B20'},
-            'DS18B20-6':    {'pin':  35,  'name':   'DS18B20'},
+            'DS18B20-7':    {'pin':  35,  'name':   'DS18B20'},
             'TEMP_ATMEGA':  {'pin':  37,  'name':   'TEMP_ATMEGA'},
             'DS18B20-6':    {'pin':  35,  'name':   'DS18B20'},
         },
@@ -253,7 +253,7 @@ class Bus:
             'VIRT5':        {'pin':  45,  'name':    'VIRT5'},
         },
 
-        3: {  # DL485P V.2.2
+        5: {  # DL485P V.2.2
             'PC0':          {'pin':  23},
             'PC1':          {'pin':  24},
             'PC2':          {'pin':  25},
@@ -280,7 +280,7 @@ class Bus:
             'TSL2561':      {'pin':   0},
         },
 
-        31: {  # DL485P OLD VERIONS 2.1
+        3: {  # DL485P OLD VERIONS 2.1
             'SDA':          {'pin':  27},
             'SCL':          {'pin':  28},
             'PD7':          {'pin':  11},
@@ -378,8 +378,20 @@ class Bus:
                 self.status[idbus] = {}
                 self.status[idbus]['boardtype'] = boardtype
                 self.status[idbus]['name'] = name
-                self.status[idbus]['io'] = [0] * len(self.iomap[boardtype])
-                self.status[idbus]['boardtypename'] = self.config['TYPEB']["%s" %boardtype]
+                try:
+                    self.status[idbus]['io'] = [0] * len(self.iomap[boardtype])
+                    self.status[idbus]['boardtypename'] = self.config['TYPEB']["%s" %boardtype]
+                except:
+                    print("BOARD TYPE %s non esistente" %boardtype)
+                    sys.exit()
+
+                board_enable = 0
+                for bb in self.config[b]:
+                    if 'GENERAL' in bb:
+                        # print("-------Board_id", idbus, self.config[b][bb])
+                        board_enable = self.config[b][bb]['enable']  # Board enable
+                        # pprint(board_enable)
+
 
                 for bb in self.config[b]:
                     if not 'GENERAL' in bb:
@@ -392,8 +404,9 @@ class Bus:
 
                         inverted = int(self.config[b][bb]['inverted']) if 'inverted' in self.config[b][bb] else 0
                         default_startup_value = 0  if not 'default_startup_value' in self.config[b][bb] else int(self.config[b][bb]['default_startup_value'])
-
+                        # print("board_enable", board_enable)
                         self.mapiotype[idbus][io_logic] = {
+                            'board_enable': board_enable,
                             'io_logic': io_logic,
                             'io_type': io_type,
                             'device_name': device_name,
@@ -669,7 +682,7 @@ class Bus:
             if (a <= 255):
                 return crc
 
-    def labinitricezione(self):
+    def labinitric(self):
         """
         Reset variable when trama is received
         """
@@ -711,7 +724,7 @@ class Bus:
             
         if self.buffricnlung > 100:  # Errore 3
             self.flagerrore = 3
-            self.labinitricezione()
+            self.labinitric()
             print("ERR 3 Pacchetto troppo lungo")
             return []
 
@@ -726,11 +739,11 @@ class Bus:
             ric = self.buffricn
             if (auscrc ^ self.crcric) & 0x7f == 0:  # crc corretto e fine pacchetto veramente
 #                print("Secondo crc OK")
-                self.labinitricezione()
+                self.labinitric()
                 return(ric)
             else:
                 print("ERRORE secondo CRC, calcolato - Ricevuto", hex(self.crcric), hex(auscrc))
-                self.labinitricezione()
+                self.labinitric()
                 return []
 
         if (inSerial & 0x38) == 0x18 or (inSerial & 0x38) == 0x20:  # Fine pacchetto
@@ -760,24 +773,24 @@ class Bus:
                         self.lastfinepacc = True
                         return []
                     
-                    self.labinitricezione()
+                    self.labinitric()
 #                    print                        
                     return(ric)
 
                 else: # è un PING
 #                    print(" E' UN PING")
-                    self.labinitricezione()
+                    self.labinitric()
                     return(ric)
 
             else:
 #                print(" CRC ERRATO")
-                self.labinitricezione()
+                self.labinitric()
                 return []
 
         elif inSerial == 0:  # Errore 1
             inSerial_err = inSerial
             self.flagerrore = 1
-            self.labinitricezione()
+            self.labinitric()
             inSerial = 0
             print("ERR 1 Tre 0 ricevuti", inSerial_err)
             return []
@@ -785,7 +798,7 @@ class Bus:
         elif inSerial == 0x38:  # Errore 2
             inSerial_err = inSerial
             self.flagerrore = 2
-            self.labinitricezione()
+            self.labinitric()
             inSerial = 0
             print("ERR 2 Tre 1 ricevuti", inSerial_err)
             return []
@@ -935,7 +948,7 @@ class Bus:
         """
         Read IO status
         """
-        data = [self.BOARD_ADDRESS, self.CR_RD_IN, board_id, io_logic, 0]
+        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, io_logic, 0]
         # print("ReadIO:", data)
         return data # Read EE
 
@@ -958,7 +971,7 @@ class Bus:
         # b2: scrive BIT a ZERO
         # b3: Occupa BUS
 
-        data = [self.BOARD_ADDRESS, self.CR_WR_OUT, board_id, io_logic, byteopzioni] + data
+        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, io_logic, byteopzioni] + data
         return data # Read EE
 
     def readOneWire(self, board_id, io_logic, byteopzioni, data=[]):
@@ -972,7 +985,7 @@ class Bus:
         # b2: scrive BIT a ZERO
         # b3: Occupa BUS
 
-        data = [self.BOARD_ADDRESS, self.CR_RD_IN, board_id, io_logic, byteopzioni] + data
+        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, io_logic, byteopzioni] + data
         return data # Read EE
 
     def writeI2C(self, board_id, io_logic, byteopzioni, data):
@@ -989,7 +1002,7 @@ class Bus:
 
         # print(board_id, io_logic, byteopzioni, data)
         # data = self.get8to7(data)
-        data = [self.BOARD_ADDRESS, self.CR_WR_OUT, board_id, io_logic, byteopzioni] + data
+        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, io_logic, byteopzioni] + data
         # print("WriteI2C:", data)
         return data
 
@@ -1012,7 +1025,7 @@ class Bus:
 
         # print(board_id, io_logic, byteopzioni, data)
         # data = self.get8to7(data)
-        data = [self.BOARD_ADDRESS, self.CR_RD_IN, board_id, io_logic, byteopzioni] + data
+        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, io_logic, byteopzioni] + data
         # print("WriteI2C:", data)
         return data
 
@@ -1030,6 +1043,31 @@ class Bus:
         data = [self.BOARD_ADDRESS]
         return data
 
+    # Speed Baudate
+    speed = {
+        1: 1200,
+        2: 2400,
+        3: 4800,
+        4: 9600, # Default
+        5: 14400,
+        6: 19200,
+        7: 28800,
+        8: 38400,
+        9: 57600,
+        0: 115200, 
+
+        1200: 1,
+        2400: 2,
+        4800: 3,
+        9600: 4,
+        14400: 5,
+        19200: 6,
+        28800: 7,
+        38400: 8,
+        57600: 9,
+        115200: 0,
+    }
+
     def enableSerial(self, board_id, speed):
         """
         Enable serial from BUS. (function disabled)
@@ -1039,7 +1077,7 @@ class Bus:
         # b0: (1) Trasmissione su RS232 di cosa il nodo trasmette sul BUS
         # b1: (1) Trasmissione su RS232 di cosa il nodo riceve sul BUS
         # b2: (1) Trasmissione su RS232 dei PING
-        data = [self.BOARD_ADDRESS, self.CR_WR_EE, board_id, 4, 0, speed]
+        data = [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, 4, 0, self.speed[speed] ]
         return data
 
     def setSerialBaudrate(self, board_id, baudrate):
@@ -1056,24 +1094,14 @@ class Bus:
         9:
         10:
         """
-        data = [self.BOARD_ADDRESS, self.CR_WR_EE, board_id, 3, 0, speed[baudrate]]
+        data = [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, 3, 0, self.speed[baudrate]]
         return data
 
     def setBusBaudrate(self, board_id, baudrate):
         """
         Set baudrate of serial
-        1: 1200
-        2: 2400
-        3: 4800
-        4: 9600
-        5:
-        6:
-        7:
-        8:
-        9:
-        10:
         """
-        data = [self.BOARD_ADDRESS, self.CR_WR_EE, board_id, 2, 0, speed[baudrate]]
+        data = [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, 2, 0, self.speed[baudrate]]
         return data
 
     def setPCA9535(self, board_id):
@@ -1273,15 +1301,12 @@ class Bus:
 
                         direction = boards.get(board).get('direction', 0)
 
-
                         if direction == 'input':
                             byte2 = 0 if not 'pullup' in boards.get(board) else int(boards.get(board)['pullup'])
                             byte3 = 0
                         elif direction == 'output':
                             default_startup_value = int(boards.get(board)['default_startup_value']) if 'default_startup_value' in boards[board] else 0
                             default_startup_value = default_startup_value
-                            # byte2 = default_startup_value & 255
-                            # byte3 = default_startup_value >> 8
                             byte2, byte3 = self.calcAddressLsMs8(default_startup_value)
                         elif io_type == 'i2c' or io_type == 'onewire' or io_type == 'onewire_test':
                             byte2 = byte3 = 0
@@ -1488,6 +1513,7 @@ class Bus:
                                 # else:
                                 #     print("BOARD_ID and IO_LOGIC not defined on CONFIGURATION File")
                                 
+                                print("Funzione PLC:", sbyte8)
                                 if sbyte8 in ["timer", "ntimer", "autostart_timer", "nautostart_timer"]:
                                     # Se timer, dopo elenco di BOARD_ID e IO_LOGIC, seguono questi parametri:
                                     # Modo TIMER:   b1:b0
@@ -1658,12 +1684,12 @@ class Bus:
                                     #plc += [powermeter_k & 255, powermeter_k >> 8]
                                     plc += list(self.calcAddressLsMs8(powermeter_k))
 
-                                elif sbyte8 == 'odd' or sbyte8 == 'even' or sbyte8 == 'toggle_off' or sbyte8 == 'toggle_on' or sbyte8 == 'toggle_on_off'  :
+                                elif sbyte8 == 'or' or sbyte8 == 'odd' or sbyte8 == 'even' or sbyte8 == 'toggle_off' or sbyte8 == 'toggle_on' or sbyte8 == 'toggle_on_off'  :
                                     pass
 
 
                                 else:
-                                    log.write("{:<12} TX                     {:<18} {} {}".format(nowtime, str(board.int2hex(msg)), '', 'FUNZIONE PLC NON TROVATA'))    
+                                    log.write('FUNZIONE PLC NON TROVATA: %s' %sbyte8)    
                                     sys.exit()
 
                             plclen = len(plc)
@@ -1924,7 +1950,7 @@ if __name__ == '__main__':
 
                 RXtrama[0] &= 0x3F  # Trasforma la trama di nodo occupato in libero (serve solo per la trasmissione) 
 
-                b.labinitricezione()  # Reset buffer ricezione e init crc ricezione per prossimo pacchetto da ricevere
+                b.labinitric()  # Reset buffer ricezione e init crc ricezione per prossimo pacchetto da ricevere
                 board_ready[RXtrama[0]] = nowtime  # Aggiorna la data di quando è stato ricevuto la trama del nodo, serve per dizionario delle boards rilevate sul bus
 
                 if len(RXtrama) > 1:  # Analizza solo comunicazioni valide (senza PING)
