@@ -215,8 +215,7 @@
         },
              
 
-        "PD3":
-        {
+        "PD3":{
             "io_logic": 3,
             "io_type": "onewire",
             "pullup": 1,
@@ -229,8 +228,7 @@
             "dtype": "Temperature"
         },
 
-        "PD4":
-        {
+        "PD4":{
             "io_logic": 4,
             "io_type": "onewire",
             "pullup": 1,
@@ -243,8 +241,7 @@
             "dtype": "Temperature"
         },
 
-        "BME280":
-        {
+        "BME280":{
             "io_logic": 6,
             "io_type": "i2c",
             "time_refresh": 600,
@@ -256,8 +253,7 @@
             "dtype": "Temp+Hum+Baro"
         },
 
-        "TSL2561":
-        {
+        "TSL2561":{
             "io_logic": 7,
             "io_type": "i2c",
             "time_refresh": 600,
@@ -269,8 +265,7 @@
             "dtype": "Light"
         },
         
-        "AM2320":
-        {
+        "AM2320":{
             "io_logic": 8,
             "io_type": "i2c",
             "time_refresh": 30,
@@ -290,7 +285,7 @@
         "GENERAL":{
             "name": "BUS", // Nome della BOARD
             "boardtype": 2, // Tipo di Board: Vedi TYPEB
-            "enable": 0 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
+            "enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
         },
 
         // Tensione alimentazione BOARD
@@ -375,9 +370,7 @@
             "powermeter_k": 60000, // numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
             "counter_filter": 0, // non usato
             "counter_timeout": 6000, // in centesimi
-            "plc_linked_board_id_io_logic": [
-                "3-4"
-            ],
+            "plc_linked_board_id_io_logic": ["3-4"],
             "name": "POWER METER",
             "description": "POWER METER",
             "dtype": "Switch"
@@ -399,9 +392,7 @@
             "powermeter_k": 60000, // numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
             "counter_filter": 0, // non usato
             "counter_timeout": 1000, // in centesimi
-            "plc_linked_board_id_io_logic": [
-                "3-4"
-            ],
+            "plc_linked_board_id_io_logic": ["3-4"],
             "name": "POWER METER",
             "description": "POWER METER",
             "dtype": "Switch"
@@ -419,19 +410,18 @@
             "description": "Sensore T+U bagno",
             "dtype": "Temp+Hum"
         }
-    },
+    }, //fine board
 
-    // Definizione della BOARD con ID n.3. Sul BUS ogni Board deve avere un ID univoco
-    "BOARD3":{
+    // Definizione della BOARD con ID n.6. Nel BUS ogni Board deve avere un ID univoco
+    "BOARD6":{
         // Configurazione generale della BOARD
         "GENERAL":{
             "name": "BUS", // Nome della BOARD
-            "boardtype": 3, // Tipo di Board: Vedi TYPEB
-            "enable": 0 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
+            "boardtype": 5, // Tipo di Board: Vedi TYPEB
+            "enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
         },
 
-        // Tensione alimentazione BOARD
-        "VIN":{
+        "VIN":{// Tensione alimentazione BOARD
             "io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "direction": "input", // Valori: input, output. Direzione dell' IO
             "io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
@@ -470,7 +460,7 @@
             "io_logic": 6,
             "io_type": "i2c",
             "time_refresh": 600,
-            "enable": 1,
+            "enable": 0,
             "device_name": "BME280",
             "address": "0xEC",
             "name": "BME280",
@@ -478,12 +468,11 @@
             "dtype": "Temp+Hum+Baro"
         },
 
-        "TSL2561":
-        {
+        "TSL2561":{
             "io_logic": 7,
             "io_type": "i2c",
             "time_refresh": 50,
-            "enable": 1,
+            "enable": 0,
             "device_name": "TSL2561",
             "address": "0x72",
             "name": "TSL2561",
@@ -491,27 +480,25 @@
             "dtype": "Light"
         },
 
-        "PC0":
-        {
+        "PC0":{
             "io_logic": 8,
             "io_type": "onewire",
             "pullup": 1,
             "time_refresh": 50,
             "enable": 1,
             "device_name": "DS18B20",
-            "write_ee" : [],
+//            "write_ee" : [],
             "name": "DS18B20",
             "description": "Sensore Temperatura",
             "dtype": "Temperature"
         },
 
-        "PC1":
-        {
+        "PC1":{
             "io_logic": 9,
             "io_type": "onewire",
             "pullup": 1,
             "time_refresh": 50,
-            "enable": 1,
+            "enable": 0,
             "device_name": "DS18B20",
             "write_ee" : [],
             "name": "DS18B20",
@@ -519,15 +506,14 @@
             "dtype": "Temperature"
         },
 
-        "PC2":
-        {
+        "PC2":{
             "io_logic": 10,
             "io_type": "onewire",
             "pullup": 1,
             "time_refresh": 50,
-            "enable": 1,
+            "enable": 0,
             "device_name": "DS18B20",
-            "write_ee" : [],
+//            "write_ee" : [],
             "name": "DS18B20",
             "description": "Sensore Temperatura",
             "dtype": "Temperature"
@@ -556,7 +542,7 @@
             "time_refresh": 200,
             "enable": 1,       
             "plc_function": "counter_up",
-            "plc_linked_board_id_io_logic": ["3-11"],
+            "plc_linked_board_id_io_logic": ["6-11"],
             "counter_mode": 0,
             "counter_filter": 0, // non usato
             "timeout_counter": 65535, // escluso
@@ -581,7 +567,7 @@
             "powermeter_k": 60000, // numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
             "counter_filter": 0, // non usato
             "counter_timeout": 500, // 5 secondi
-            "plc_linked_board_id_io_logic": ["3-11"],
+            "plc_linked_board_id_io_logic": ["6-11"],
             "name": "POWER METER",
             "description": "POWER METER",
             "dtype": "Switch"
@@ -602,23 +588,22 @@
             "counter_mode": 27, // b11011 
             "counter_filter": 0, // non usato
             "counter_timeout": 65535, // 5 secondi
-            "plc_linked_board_id_io_logic": ["3-11"],
+            "plc_linked_board_id_io_logic": ["6-11"],
             "name": "time_meter",
             "description": "time_meter",
             "dtype": "Switch"
         }
     },
 
-    "BOARD5":{  //board di prova per fare video
+    "BOARD5":{  //board di prova per video
         // Configurazione generale della BOARD
         "GENERAL":{
             "name": "BUS", // Nome della BOARD
             "boardtype": 5, // Tipo di Board: Vedi TYPEB
-            "enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
+            "enable": 0 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
         },
 
-        // Tensione alimentazione BOARD
-        "VIN":{
+        "VIN":{// Tensione alimentazione BOARD
             "io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "direction": "input", // Valori: input, output. Direzione dell' IO
             "io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
@@ -707,7 +692,7 @@
             "dtype": "Switch"
         },
 
-            // uscite digitali
+        // uscite digitali
         "PE1":{
             "io_logic": 7,
             "direction": "output",
@@ -794,9 +779,9 @@
             "enable": 1,
             "n_refresh_on": 1,
             "n_refresh_off": 1,
-            "plc_function": "timer",
-            "plc_mode_timer": 177, //128+49 innesca su fronte ON e spegne se timer innescato
-            //"plc_mode_timer": 129, // Timer innescato su fronte ON e con impostazione del tempo in secondi
+            "plc_function": "timer", //timer
+            "plc_time_unit":1, //imposta unita di tempo timer in secondi
+            "plc_mode_timer": 49, //128+49 innesca su fronte ON e spegne se timer innescato
             "plc_timer_n_transitions": 2,
             "plc_time_on": 4, // 4 secondi per tempo a ON
             "plc_time_off": 0,       
@@ -806,6 +791,7 @@
             "dtype": "Switch"
         },
         
+        // sensori i2c   
         "BME280":{
             "io_logic": 13,
             "io_type": "i2c",
@@ -829,7 +815,8 @@
             "description": "Sensore Luminosità",
             "dtype": "Light"
         },
-
+        
+        // sensori 1wire
         "PC0":{
             "io_logic": 15,
             "io_type": "onewire",
@@ -865,6 +852,6 @@
             "description": "Sensore Temperatura",
             "dtype": "Temperature"
         }
-    }
+    }//fine board 5
 }//fine file
  

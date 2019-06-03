@@ -336,7 +336,6 @@ class Bus:
 
     def __init__(self):
         self.buffricnlung = 1  # Lenght RX buffer
-        self.flagerrore = 0  # Flag errore
         self.buffricn = []  # Buffer RX trama
         self.appcrc = []  # Per calcolo CRC
         self.INITCRC = 0x55
@@ -723,9 +722,8 @@ class Bus:
 #        else: print("ByRicSer: ",hex(inSerial))
             
         if self.buffricnlung > 100:  # Errore 3
-            self.flagerrore = 3
-            self.labinitric()
             print("ERR 3 Pacchetto troppo lungo")
+            self.labinitric()
             return []
 
         if self.lastfinepacc == True:
@@ -774,7 +772,6 @@ class Bus:
                         return []
                     
                     self.labinitric()
-#                    print                        
                     return(ric)
 
                 else: # è un PING
@@ -788,19 +785,13 @@ class Bus:
                 return []
 
         elif inSerial == 0:  # Errore 1
-            inSerial_err = inSerial
-            self.flagerrore = 1
+            print("ERR 1 Tre 0 ricevuti", inSerial)
             self.labinitric()
-            inSerial = 0
-            print("ERR 1 Tre 0 ricevuti", inSerial_err)
             return []
 
         elif inSerial == 0x38:  # Errore 2
-            inSerial_err = inSerial
-            self.flagerrore = 2
+            print("ERR 2 Tre 1 ricevuti", inSerial)
             self.labinitric()
-            inSerial = 0
-            print("ERR 2 Tre 1 ricevuti", inSerial_err)
             return []
 
         else:  # carattere normale
@@ -1873,7 +1864,6 @@ if __name__ == '__main__':
     NLOOPTIMEOUT = 4  # numero di giri del loop dopo i quali si ritrasmettera il messaggio
     
     while 1:
-        nowtime = int(time.time())  # seleziona la parte intera dei secondi
         RXbytes = ser.read() #legge uno o piu caratteri del buffer seriale
         
         if not RXbytes:  # Monitor serial
@@ -1888,6 +1878,7 @@ if __name__ == '__main__':
             # print(RXtrama)
 
             if RXtrama:  # Se arrivata una trama completa (PING e trame piu lunghe)
+                nowtime = int(time.time())  # seleziona la parte intera dei secondi
                 # print(RXtrama)
 
                 if RXtrama[0] == b.BOARD_ADDRESS - 1:  # test su address ricevuto, e' ora di trasmettere
@@ -1950,7 +1941,7 @@ if __name__ == '__main__':
 
                 RXtrama[0] &= 0x3F  # Trasforma la trama di nodo occupato in libero (serve solo per la trasmissione) 
 
-                b.labinitric()  # Reset buffer ricezione e init crc ricezione per prossimo pacchetto da ricevere
+#                b.labinitric()  # Reset buffer ricezione e init crc ricezione per prossimo pacchetto da ricevere
                 board_ready[RXtrama[0]] = nowtime  # Aggiorna la data di quando è stato ricevuto la trama del nodo, serve per dizionario delle boards rilevate sul bus
 
                 if len(RXtrama) > 1:  # Analizza solo comunicazioni valide (senza PING)
