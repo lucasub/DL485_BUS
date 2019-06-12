@@ -348,8 +348,9 @@ class Bus:
         self.buffricnapp = []  # Contiene i primi 7 byte per poi completarli con i bit residui (b7)
         self.mapiotype = {}  # Tipi di IO disponibili
         self.mapproc = {}  # Procedure associate agli ingressi verso le uscite
-        self.poweroff_voltage_n = 0  # Time to make shutdown for unvervoltage limit
-        self.poweroff_voltage_limit = 10
+        self.poweroff_voltage_setup = 10  # Time to make shutdown for unvervoltage limit
+        self.poweroff_voltage_counter = self.poweroff_voltage_setup 
+        self.poweron_linked = 0
         self.getJsonConfig(config_file_name)
         self.BOARD_ADDRESS = int(self.config['GENERAL']['board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
         self.MAX_BOARD_ADDRESS = int(self.config.get('GENERAL')['max_board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
@@ -451,17 +452,34 @@ class Bus:
                             'default_startup_filter_value': int(self.config[b][bb]['default_startup_filter_value']) if 'default_startup_filter_value' in self.config[b][bb] else 0,
                             'kmul': self.config[b][bb]['kmul'] if 'kmul' in self.config[b][bb] else 1,
                             'kadd': self.config[b][bb]['kadd'] if 'kadd' in self.config[b][bb] else 0,
+                            'power_on_timeout' : int(self.config[b][bb]['power_on_timeout']) if 'power_on_timeout' in self.config[b][bb] else 0,
+                            'power_on_tminoff' : int(self.config[b][bb]['power_on_tminoff']) if 'power_on_tminoff' in self.config[b][bb] else 0,
+                            'power_on_voltage_off' : float(self.config[b][bb]['power_on_voltage_off']) if 'power_on_voltage_off' in self.config[b][bb] else 0,
+                            'power_on_voltage_on' : float(self.config[b][bb]['power_on_voltage_on']) if 'power_on_voltage_on' in self.config[b][bb] else 0,
+                            'power_on_timeout' : int(self.config[b][bb]['power_on_timeout']) if 'power_on_timeout' in self.config[b][bb] else 0,
                         }
 
-                        plc_linked_board_id_io_logic = self.config[b][bb]['plc_linked_board_id_io_logic'] if 'plc_linked_board_id_io_logic' in self.config[b][bb] else [],
-                        linked_proc = self.config[b][bb]['linked_proc'] if 'linked_proc' in self.config[b][bb] else [],
 
-                        if plc_linked_board_id_io_logic:
-                            for x in plc_linked_board_id_io_logic[0]:
-                                if not x in self.mapproc:
-                                    self.mapproc[x] = {}
-                                self.mapproc[x]["%s-%s" %(idbus, io_logic)] = {'linked_proc': linked_proc[0]}
 
+                       
+                        if self.mapiotype[idbus][io_logic]['plc_linked_board_id_io_logic']:
+                            app=[]
+                            for x in self.mapiotype[idbus][io_logic]['plc_linked_board_id_io_logic']:
+                                xx=x.split("-")
+                                if "*" in xx[0]: 
+                                    xx[0] = idbus
+                                app1 = '%s-%s' %(xx[0], xx[1])
+                                app.append(app1)
+                                if app1 not in self.mapproc:
+                                    self.mapproc[app1] = {}
+                                    
+                                self.mapproc[app1] = {'board_id': idbus, 'io_logic': io_logic}
+                                
+                            self.mapiotype[idbus][io_logic]['plc_linked_board_id_io_logic'] = app
+                            
+
+        pprint(self.mapproc)
+        
     def make_inverted(self, board_id, io_logic, value):
         """
         Invert IO value. To use if not PLC function on board
@@ -494,8 +512,8 @@ class Bus:
         Dato il valore della tensione e le resistenze del partitore, ricavo la tensione in ingresso ADC del micro
         """
         try:
-            value = VIN / (Rvcc + Rgnd) * Rgnd *930
-            return int(value)
+            value = VIN / (Rvcc + Rgnd) * Rgnd * 930.0
+            return round(value)
         except:
             print("ERROR ADC_value", VIN, Rvcc, Rgnd)
             return 0
@@ -504,6 +522,12 @@ class Bus:
         """
         Funzione che sotto una certa tensione, Raspberry PI viene spento (batteria scarica)
         """
+
+
+
+
+
+
         poweroff_voltage = 0 if not 'poweroff_voltage' in self.config.get('GENERAL') else float(self.config.get('GENERAL')['poweroff_voltage'])  # Read if need shutdown below the  voltage limit
         if poweroff_voltage:
             poweroff_board_id = 0 if not 'poweroff_board_id' in self.config.get('GENERAL') else int(self.config.get('GENERAL')['poweroff_board_id'])  # Read board_id to for shutdown voltage limit
@@ -626,10 +650,25 @@ class Bus:
             elif type_io == 'analog' or self.mapiotype[board_id][io_logic]['io_type'] == 'virtual':
                 Rvcc =  self.mapiotype[board_id][io_logic]['Rvcc']
                 Rgnd =  self.mapiotype[board_id][io_logic]['Rgnd']
-                # print(Rvcc, Rgnd, value)
+                print(Rvcc, Rgnd, value)
                 try:
                     # print("\t\t\t\t\t\t\t\t\t\t\t\tANALOG", value[0] + (value[1] * 256))
                     value = round((value[0] + (value[1] * 256)) * (Rvcc + Rgnd) / (Rgnd * 930), 1)
+                    print("*************")
+                    print (self.mapproc['%s-%s' %(board_id,io_logic)])
+                    print("*************")
+                    
+                    appboardid=self.mapproc['%s-%s' %(board_id,io_logic)]['board_id']
+                    appiologic=self.mapproc['%s-%s' %(board_id,io_logic)]['io_logic']
+                    appfuncplc=self.mapiotype[appboardid][appiologic]['plc_function']
+                    if appfuncplc=='power_on':
+                        vmin=self.mapiotype[appboardid][appiologic]['power_on_voltage_off']
+                        print(appboardid,appiologic,vmin,value)
+                        if value>=vmin:
+                            self.poweroff_voltage_counter = self.poweroff_voltage_setup
+                        elif self.poweroff_voltage_counter>1: self.poweroff_voltage_counter -= 1
+                        else: print("SPENTO")  #self.shutdownRequest()
+                        print("count=",self.poweroff_voltage_counter)
                 except:
                     print("Analog Error: Value:", value)
                     return 0
@@ -1489,12 +1528,22 @@ class Bus:
 
                             message_conf_app.append(plc_function[sbyte8])
                             list_plc_linked_board_id_io_logic = []
+                            
                             if sbyte8 == 'power_on':
-                                # print("plc_params", plc_params, float(plc_params[3]), int(plc_params[4]), int(plc_params[5]))
-                                value_dac_in = self.ADC_value(float(plc_params[3]), int(plc_params[4]), int(plc_params[5]))
-#                                plc.extend((int(plc_params[0]), int(plc_params[1]) & 255, int(plc_params[1]) >> 8, int(plc_params[2]) & 255, int(plc_params[2]) >> 8, value_dac_in & 255, value_dac_in >> 8 ))
-                                plc += [int(plc_params[0])] + list(self.calcAddressLsMs8(int(plc_params[1]))) + list(self.calcAddressLsMs8(int(plc_params[2]))) + list(self.calcAddressLsMs8(value_dac_in))
+                                
+                                bio_linked = self.mapiotype[idbus][io_logic]['plc_linked_board_id_io_logic'][0].split("-")
+                                
+                                Rgnd = self.mapiotype[int(bio_linked[0])][int(bio_linked[1])]['Rgnd']
+                                Rvcc = self.mapiotype[int(bio_linked[0])][int(bio_linked[1])]['Rvcc']
+                                power_on_voltage_on = self.mapiotype[idbus][io_logic]['power_on_voltage_on']
+                                
+                                value_dac_in = self.ADC_value(float(power_on_voltage_on), Rvcc, Rgnd)
+                                # self.poweron_linked=1111
+                                
+                                
+                                plc += [int(bio_linked[1])] + list(self.calcAddressLsMs8(int(self.mapiotype[idbus][io_logic]['power_on_timeout']))) + list(self.calcAddressLsMs8(int(self.mapiotype[idbus][io_logic]['power_on_timeout']))) + list(self.calcAddressLsMs8(value_dac_in))
                                 # print("POWER_ON data:", byte8, value_dac_in, plc)
+                                
 
                             else:  # Funzione PLC
                                 plc_xor_input = 0
@@ -1904,10 +1953,10 @@ class Bus:
                             print("******CON BYTE RESIDUI*******", self.int2hex(msg1))
                         else: # è un ping non aggiunge i residui
                             msg1 = msg
-#                            print ("TXPING:", int2hex(msg));
+                            # print("TXPING:", self.int2hex(msg))
                         msg2 = self.encodeMsgCalcCrcTx(msg1) # restituisce il messaggio codificato e completo di crc (1 o 2 crc in base al flag crcdoppio)
 #                        if self.crcdoppio == 1: print("******CON AGGIUNTO 2°CRC*****", self.int2hex(msg2)) #test per stampe debug con secondo crc
-                            
+                        # print("*****", msg2)                            
                         self.send_data_serial(self.Connection, msg2)  # invia alla seriale
                         if (len(msg)>1) and (msg[1]==6):  # inserisce solo se comando writeEE
                             self.BUFF_MSG_TX[msg[2]] = [msg, self.NLOOPTIMEOUT+len(msg)]  # inserisce in dizionario messaggio originale per controllo feedback
@@ -2030,7 +2079,9 @@ if __name__ == '__main__':
 
     while 1:
         RXbytes = b.Connection.read() #legge uno o piu caratteri del buffer seriale
+        
         if not RXbytes: continue  # seriale senza caratteri non entra nel for sotto
+        # print("=====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", RXbytes, hex(ord(RXbytes)))
 
         for d in RXbytes:  # analizza i caratteri ricevuti
             b.RXtrama = b.readSerial(d)  # accumula i vari caratteri e restituisce il pacchetto finito quando trova il carattere di fine pacchetto
