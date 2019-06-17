@@ -59,7 +59,7 @@
 
 {//inizio file
     
-    "TYPEB":{//Tipi di Board disponibili. Non toccare
+    "TYPEB":{//riassunto dati per campo boardtype, Tipi di Board disponibili. Non toccare
 
         "DL485M": 1,
         "DL485B": 2,
@@ -73,210 +73,298 @@
         "4": "DL485R",
         "5": "DL485P"
     },
-    "GENERAL":{// Configurazione generale del BUS
+    
+    "GENERAL_NET":{// Configurazione generale del BUS
         "bus_port": "/dev/ttyAMA0", # Porta seriale Raspberry PI
         "bus_baudrate": 19200, // Velocità BUS e seriale
         "max_board_address": 24, // Numero massimo di Board presenti sul BUS
         "board_address": 2 // ID assegnato a Raspberry. Deve avere l'ID della scheda collegata alla seriale di Raspberry PI +1
     },
+    
     "BOARD1":{//da finire
-        "GENERAL":{// Configurazione generale della BOARD
+        "GENERAL_BOARD":{// Configurazione generale della BOARD
             "enable": 1, // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
             "name": "SCHEDA MASTER", // Nome della BOARD
-            "boardtype": 4 // Tipo di Board: Vedi TYPEB
+            "board_type": 1 // Tipo di Board: Vedi TYPEB
         },
 
         "VIN":{// Tensione alimentazione BOARD
             "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
-            "io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
-            "direction": "input", // Valori: input, output. Direzione dell' IO
-            "io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
-            "time_refresh": 30, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            "Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
-            "Rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            "logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINR1R2",
+            "rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            "rgnd": 470, // Valore resistenza posta tra IO e 0V.
             "name": "Vin", // Nome che verrà riportato su DOMOTICZ
-            "description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
-            "dtype": "Voltage" // Tipo dispositivo Domoticz
+            "description": "Tensione alimentazione scheda" // Descrizione che verrà riportato su DOMOTICZ
         },
 
         "TEMP_ATMEGA":{
             "enable": 1,
-            "io_logic": 2,
-            "direction": "input",
-            "io_type": "temp_atmega",
-            "time_refresh": 30,
+            "logic_io": 2,
+            "time_refresh": 600,
+            "device_type": "TEMP_ATMEGA",
             "name": "TEMP_ATMEGA",
-            "description": "Temperatura Board ATMEGA328PB",
-            "dtype": "Temperature"
+            "description": "Temperatura Board ATMEGA328PB"
+        }, 
+        
+    "OUT1":
+    {
+        "enable": 1,
+        "logic_io": 3,
+        "device_type": "DIGITAL_OUT",
+        "default_startup_value": 0,
+        "inverted": 0,
+        "filter": 127,
+        "time_refresh": 16383,
+        "n_refresh_on": 1,
+        "n_refresh_off": 1,
+        "plc_function": "power_on",
+        "plc_linked_board_id_logic_io" :["*-1"],
+        "power_on_timeout": 150,   //3000: 300 secondi di assenza seriale prima di spegnere
+        "power_on_tminoff": 30, //30: 3 secondi di tempo minimo off rasperry
+        "power_on_voltage_off": 11.4, //11.4: soglia tensione bassa, si comanda spegnimento raspberry
+        "power_on_voltage_on": 12.8, //12.8: soglia alta, si comanda accensione se raspberry era spento
+        "name": "BUS OUT RESET",
+        "description": "BUS Uscita RELE RESET RASPBERRY",
+        "dtype": "Switch"
+    }
+        
+    },//fine board
+
+  // Definizione della BOARD con ID n.3. Sul BUS ogni Board deve avere un ID univoco
+  "BOARD5":{  // EX5
+    // Configurazione generale della BOARD
+    "GENERAL_BOARD":{
+        "name": "SCHEDA CONTATORE", // Nome della BOARD
+        "board_type": 5, // Tipo di Board: Vedi TYPEB
+        "enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
+    },
+
+    // Tensione alimentazione BOARD
+
+    "VIN":{// Tensione alimentazione BOARD
+        "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+        "logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+        "time_refresh": 60, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+        "device_type": "VINR1R2",
+        "rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+        "rgnd": 470, // Valore resistenza posta tra IO e 0V.
+        "name": "Vin", // Nome che verrà riportato su DOMOTICZ
+        "description": "Tensione alimentazione scheda" // Descrizione che verrà riportato su DOMOTICZ
+    },
+
+    "TEMP_ATMEGA":{
+        "enable": 1,
+        "logic_io": 2,
+        "time_refresh": 600,
+        "device_type": "TEMP_ATMEGA",
+        "name": "TEMP_ATMEGA",
+        "description": "Temperatura Board ATMEGA328PB"
+    },
+    
+    "PE2":{ // Tensione analogica rilavata dal TA
+        "enable": 1,     
+        "logic_io": 10,
+        "device_type": "VINKMKA",
+        "kmul": 1,
+        "kadd": 0,
+        "time_refresh": 300,      
+        "name": "Corrente",
+        "description": "Misura corrente",
+        "dtype": "Custom Sensor"
+    },
+
+    "PB1":{ // Fotoresistenza Counter
+        "enable": 1,
+        "logic_io": 11,
+        "device_type": "DIGITAL_IN_PULLUP",
+        "time_refresh": 300,
+        "n_refresh_on": 1,
+        "n_refresh_off": 1,
+        "filter": 5,
+        "inverted": 1,
+        "name": "FOTO R",
+        "description": "Counter Incremental",
+        "dtype": "Counter Incremental"
+    },
+
+    "PC0":{
+        "enable": 1,
+        "logic_io": 12,
+        "device_type": "DIGITAL_OUT",
+        "time_refresh": 200,       
+        "plc_function": "counter_up",
+        "plc_linked_board_id_logic_io": ["*-11"],
+        "counter_mode": 0,
+        "counter_filter": 0, // non usato
+        "timeout_counter": 65535, // escluso
+        "name": "WATTORA",
+        "description": "WATT per ORA",
+        "dtype": "kWh"
+    },
+
+    "PC1":{
+        "enable": 1,
+        "logic_io": 13,
+        "device_type": "DIGITAL_OUT",
+        "default_startup_value": 0,
+        "inverted": 1,
+        "filter": 10,
+        "time_refresh": 200,
+        "n_refresh_on": 1,
+        "n_refresh_off": 1,
+        "plc_function": "powermeter",
+        "counter_mode": 27, // b11011 memoria del valore precendente e aggiorna dato a periodo ottenuto, azzera tempo ad ogni start a conteggio finito. Considera end come nuovo start, end su fronte ON
+        "powermeter_k": 60000, // numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
+        "kmul": 6,
+        "kadd": 0,
+        "counter_filter": 0, // non usato
+        "counter_timeout": 500, // 5 secondi
+        "plc_linked_board_id_logic_io": ["*-11"],
+        "name": "POWER METER",
+        "description": "POWER METER",
+        "dtype": "kWh"
+    },   
+
+    "PC2":{
+        "enable": 1,
+        "logic_io": 14,
+        "device_type": "DIGITAL_OUT",
+        "default_startup_value": 0,
+        "inverted": 1,
+        "filter": 127,
+        "time_refresh": 200,
+        "n_refresh_on": 1,
+        "n_refresh_off": 1,
+        "plc_function": "time_meter",
+        "counter_mode": 27, // b11011 
+        "counter_filter": 0, // non usato
+        "counter_timeout": 65535, // 5 secondi
+        "plc_linked_board_id_logic_io": ["*-11"],
+        "name": "time_meter",
+        "description": "time_meter",
+        "dtype": "Current/Ampere"
+    },
+         
+    "PB2":{
+        "enable": 1,
+        "logic_io": 3,
+        "device_type": "DS18B20",
+        "pullup": 1,
+        "time_refresh": 600,
+        "write_ee" : [],
+        "name": "DS18B20",
+        "description": "Sensore Temperatura",
+        "dtype": "Temperature"
+    },
+
+    "PD4":{
+        "enable": 0,
+        "logic_io": 4,
+        "device_type": "DS18B20",
+        "pullup": 1,
+        "time_refresh": 600,
+        "write_ee" : [],
+        "name": "DS18B20",
+        "description": "Sensore Temperatura",
+        "dtype": "Temperature"
+    },
+
+    "BME280":{
+        "enable": 0,
+        "logic_io": 6,
+        "device_type": "BME280",
+        "time_refresh": 600,
+        "address": "0xEC",
+        "name": "BME280",
+        "description": "Sensore T+U+B bagno",
+        "dtype": "Temp+Hum+Baro"
+    },
+
+    "TSL2561":{
+        "enable": 0,
+        "logic_io": 7,
+        "device_type": "TSL2561",
+        "time_refresh": 600,
+        "address": "0x72",
+        "name": "TSL2561",
+        "description": "Sensore Luminosità",
+        "dtype": "Light"
+    },
+    
+    "AM2320":{
+        "enable": 0,
+        "logic_io": 8,
+        "device_type": "AM2320",
+        "time_refresh": 30,
+        "address": "0xB8",
+        "name": "AM2320",
+        "description": "Sensore T+U bagno",
+        "dtype": "Temp+Hum"
+    }
+
+},
+
+    
+    "BOARD7":{//da provare e duplicare con board 5
+        "GENERAL_BOARD":{// Configurazione generale della BOARD
+            "name": "BUS", // Nome della BOARD
+            "board_type": 5, // Tipo di Board: Vedi TYPEB
+            "enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
         },
 
-       "OUT1":
-        {
+        "VIN":{// Tensione alimentazione BOARD
+            "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINR1R2",
+            "rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            "rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            "name": "Vin", // Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione alimentazione scheda" // Descrizione che verrà riportato su DOMOTICZ
+        },
+
+        "TEMP_ATMEGA":{
             "enable": 1,
-            "io_logic": 3,
-            "direction": "output",
-            "io_type": "digital",
-            "default_startup_value": 0,
-            "inverted": 0,
-            "filter": 127,
-            "time_refresh": 16383,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "plc_function": "power_on",
-            "plc_linked_board_id_io_logic" :["*-1"],
-            "power_on_timeout": 150,   //3000: 300 secondi di assenza seriale prima di spegnere
-            "power_on_tminoff": 30, //30: 3 secondi di tempo minimo off rasperry
-            "power_on_voltage_off": 11.4, //11.4: soglia tensione bassa, si comanda spegnimento raspberry
-            "power_on_voltage_on": 12.8, //12.8: soglia alta, si comanda accensione se raspberry era spento
-            "name": "BUS OUT RESET",
-            "description": "BUS Uscita RELE RESET RASPBERRY",
-            "dtype": "Switch"
-        }
+            "logic_io": 2,
+            "time_refresh": 600,
+            "device_type": "TEMP_ATMEGA",
+            "name": "TEMP_ATMEGA",
+            "description": "Temperatura Board ATMEGA328PB"
+        }, 
         
+        "PC0":{//1wire
+            "enable": 1,
+            "logic_io": 3,
+            "time_refresh": 60,
+            "device_type": "DS18B20",
+            "name": "DS18B20",
+            "description": "Sensore Temperatura"
+        },
+
+        "PC1":{//1wire
+            "enable": 1,
+            "logic_io": 4,
+            "time_refresh": 60,
+            "device_type": "DS18B20",
+            "name": "DS18B20",
+            "description": "Sensore Temperatura",
+            "dtype": "Temperature"
+        },
+        "PY1":{//uscita di python
+            "enable": 0,
+            "logic_io": 4,
+            "device_type": "PSICROMETER",
+            "plc_function": "humidity2t",
+            "plc_linked_board_id_logic_io" :["*-3","*-4"],
+            "description": "Umidita bulbo secco/umido"
+        }
+
     }//fine board
     
-    //"BOARD3":{//da provare e duplicare con board 5
-        //"GENERAL":{// Configurazione generale della BOARD
-            //"name": "BUS", // Nome della BOARD
-            //"boardtype": 1, // Tipo di Board: Vedi TYPEB
-            //"enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
-        //},
-
-        //"VIN":{// Tensione alimentazione BOARD
-            //"enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
-            //"io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
-            //"direction": "input", // Valori: input, output. Direzione dell' IO
-            //"io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
-            //"time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            //"Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
-            //"Rgnd": 470, // Valore resistenza posta tra IO e 0V.
-            //"name": "Vin", // Nome che verrà riportato su DOMOTICZ
-            //"description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
-            //"dtype": "Voltage" // Tipo dispositivo Domoticz
-        //},
-
-        //"TEMP_ATMEGA":{
-            //"enable": 1,
-            //"io_logic": 2,
-            //"direction": "input",
-            //"io_type": "temp_atmega",
-            //"time_refresh": 600,
-            //"name": "TEMP_ATMEGA",
-            //"description": "Temperatura Board ATMEGA328PB",
-            //"dtype": "Temperature"
-        //}, 
-        
-        //"PD4":{//1wire
-            //"enable": 1,
-            //"io_logic": 3,
-            //"io_type": "onewire",
-            //"pullup": 1,
-            //"time_refresh": 600,
-            //"device_name": "DS18B20",
-            //"name": "DS18B20",
-            //"description": "Sensore Temperatura",
-            //"dtype": "Temperature"
-        //},
-
-        //"PE0":{//1wire
-            //"enable": 1,
-            //"io_logic": 4,
-            //"io_type": "onewire",
-            //"pullup": 1,
-            //"time_refresh": 600,
-            //"device_name": "DS18B20",
-            //"name": "DS18B20",
-            //"description": "Sensore Temperatura",
-            //"dtype": "Temperature"
-        //},
-
-        //"PE1":{//1wire
-            //"enable": 1,
-            //"io_logic": 5,
-            //"io_type": "onewire",
-            //"pullup": 1,
-            //"time_refresh": 600,
-            //"device_name": "DS18B20",
-            //"name": "DS18B20",
-            //"description": "Sensore Temperatura",
-            //"dtype": "Temperature"
-        //},
-
-        //"PB0":{//1wire
-            //"enable": 1,
-            //"io_logic": 6,
-            //"io_type": "onewire",
-            //"pullup": 1,
-            //"time_refresh": 600,
-            //"device_name": "DS18B20",
-            //"name": "DS18B20",
-            //"description": "Sensore Temperatura",
-            //"dtype": "Temperature"
-        //},
-
-        //"PB1":{//1wire
-            //"enable": 1,
-            //"io_logic": 7,
-            //"io_type": "onewire",
-            //"pullup": 1,
-            //"time_refresh": 600,
-            //"device_name": "DS18B20",
-            //"name": "DS18B20",
-            //"description": "Sensore Temperatura",
-            //"dtype": "Temperature"
-        //},
-
-        //"PB5":{//1wire
-            //"enable": 1,
-            //"io_logic": 8,
-            //"io_type": "onewire",
-            //"pullup": 1,
-            //"time_refresh": 600,
-            //"device_name": "DS18B20",
-            //"name": "DS18B20",
-            //"description": "Sensore Temperatura",
-            //"dtype": "Temperature"
-        //},
-
-        //"PB4":{//1wire
-            //"enable": 1,
-            //"io_logic": 9,
-            //"io_type": "onewire",
-            //"pullup": 1,
-            //"time_refresh": 600,
-            //"device_name": "DS18B20",
-            //"name": "DS18B20",
-            //"description": "Sensore Temperatura",
-            //"dtype": "Temperature"
-        //},
-
-        //"PD3":{//1wire
-            //"enable": 1,
-            //"io_logic": 10,
-            //"io_type": "onewire",
-            //"pullup": 1,
-            //"time_refresh": 60,
-            //"device_name": "DS18B20",
-            //"name": "DS18B20",
-            //"description": "Sensore Temperatura",
-            //"dtype": "Temperature"
-        //},
-
-        //"AM2320":{
-            //"enable": 1,
-            //"io_logic": 13,
-            //"io_type": "i2c",
-            //"time_refresh": 30,
-            //"device_name": "AM2320",
-            //"address": "0xB8",
-            //"name": "AM2320",
-            //"description": "Sensore T+U bagno",
-            //"dtype": "Temp+Hum"
-        //}
-    //},//fine board
-    
     //"BOARD11":{//da provare e moltiplicare duplicare su board 12 13 14 15
-        //"GENERAL":{// Configurazione generale della BOARD
+        //"GENERAL_BOARD":{// Configurazione generale della BOARD
             //"name": "BUS", // Nome della BOARD
             //"boardtype": 5, // Tipo di Board: Vedi TYPEB
             //"enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
@@ -284,12 +372,12 @@
 
         //"VIN":{// Tensione alimentazione BOARD
             //"enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
-            //"io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            //"logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             //"direction": "input", // Valori: input, output. Direzione dell' IO
             //"io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
             //"time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            //"Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
-            //"Rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            //"rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            //"rgnd": 470, // Valore resistenza posta tra IO e 0V.
             //"name": "Vin", // Nome che verrà riportato su DOMOTICZ
             //"description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
             //"dtype": "Voltage" // Tipo dispositivo Domoticz
@@ -297,7 +385,7 @@
 
         //"TEMP_ATMEGA":{
             //"enable": 1,
-            //"io_logic": 2,
+            //"logic_io": 2,
             //"direction": "input",
             //"io_type": "temp_atmega",
             //"time_refresh": 600,
@@ -308,7 +396,7 @@
         
         //"PD5":{//1wire
             //"enable": 1,
-            //"io_logic": 3,
+            //"logic_io": 3,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -320,7 +408,7 @@
 
         //"PE2":{//1wire
             //"enable": 1,
-            //"io_logic": 4,
+            //"logic_io": 4,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -332,7 +420,7 @@
 
         //"PE1":{//1wire
             //"enable": 1,
-            //"io_logic": 5,
+            //"logic_io": 5,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -344,7 +432,7 @@
 
         //"PD6":{//1wire
             //"enable": 1,
-            //"io_logic": 6,
+            //"logic_io": 6,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -356,7 +444,7 @@
 
         //"PB2":{//1wire
             //"enable": 1,
-            //"io_logic": 7,
+            //"logic_io": 7,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -368,7 +456,7 @@
 
         //"PB1":{//1wire
             //"enable": 1,
-            //"io_logic": 8,
+            //"logic_io": 8,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -380,7 +468,7 @@
 
         //"BME280":{//i2c
             //"enable": 1,
-            //"io_logic": 11,
+            //"logic_io": 11,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "BME280",
@@ -392,7 +480,7 @@
 
         //"TSL2561":{//i2c
             //"enable": 1,
-            //"io_logic": 12,
+            //"logic_io": 12,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "TSL2561",
@@ -404,7 +492,7 @@
     //},//fine board
 
     //"BOARD12":{//da provare e moltiplicare duplicare su board 12 13 14 15
-        //"GENERAL":{// Configurazione generale della BOARD
+        //"GENERAL_BOARD":{// Configurazione generale della BOARD
             //"name": "BUS", // Nome della BOARD
             //"boardtype": 5, // Tipo di Board: Vedi TYPEB
             //"enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
@@ -412,12 +500,12 @@
 
         //"VIN":{// Tensione alimentazione BOARD
             //"enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
-            //"io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            //"logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             //"direction": "input", // Valori: input, output. Direzione dell' IO
             //"io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
             //"time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            //"Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
-            //"Rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            //"rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            //"rgnd": 470, // Valore resistenza posta tra IO e 0V.
             //"name": "Vin", // Nome che verrà riportato su DOMOTICZ
             //"description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
             //"dtype": "Voltage" // Tipo dispositivo Domoticz
@@ -425,7 +513,7 @@
 
         //"TEMP_ATMEGA":{
             //"enable": 1,
-            //"io_logic": 2,
+            //"logic_io": 2,
             //"direction": "input",
             //"io_type": "temp_atmega",
             //"time_refresh": 600,
@@ -436,7 +524,7 @@
         
         //"PD5":{//1wire
             //"enable": 1,
-            //"io_logic": 3,
+            //"logic_io": 3,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -448,7 +536,7 @@
 
         //"PE2":{//1wire
             //"enable": 1,
-            //"io_logic": 4,
+            //"logic_io": 4,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -460,7 +548,7 @@
 
         //"PE1":{//1wire
             //"enable": 1,
-            //"io_logic": 5,
+            //"logic_io": 5,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -472,7 +560,7 @@
 
         //"PD6":{//1wire
             //"enable": 1,
-            //"io_logic": 6,
+            //"logic_io": 6,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -484,7 +572,7 @@
 
         //"PB2":{//1wire
             //"enable": 1,
-            //"io_logic": 7,
+            //"logic_io": 7,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -496,7 +584,7 @@
 
         //"PB1":{//1wire
             //"enable": 1,
-            //"io_logic": 8,
+            //"logic_io": 8,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -508,7 +596,7 @@
 
         //"BME280":{//i2c
             //"enable": 1,
-            //"io_logic": 11,
+            //"logic_io": 11,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "BME280",
@@ -520,7 +608,7 @@
 
         //"TSL2561":{//i2c
             //"enable": 1,
-            //"io_logic": 12,
+            //"logic_io": 12,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "TSL2561",
@@ -532,7 +620,7 @@
     //},//fine board
 
     //"BOARD13":{//da provare e moltiplicare duplicare su board 12 13 14 15
-        //"GENERAL":{// Configurazione generale della BOARD
+        //"GENERAL_BOARD":{// Configurazione generale della BOARD
             //"name": "BUS", // Nome della BOARD
             //"boardtype": 5, // Tipo di Board: Vedi TYPEB
             //"enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
@@ -540,12 +628,12 @@
 
         //"VIN":{// Tensione alimentazione BOARD
             //"enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
-            //"io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            //"logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             //"direction": "input", // Valori: input, output. Direzione dell' IO
             //"io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
             //"time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            //"Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
-            //"Rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            //"rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            //"rgnd": 470, // Valore resistenza posta tra IO e 0V.
             //"name": "Vin", // Nome che verrà riportato su DOMOTICZ
             //"description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
             //"dtype": "Voltage" // Tipo dispositivo Domoticz
@@ -553,7 +641,7 @@
 
         //"TEMP_ATMEGA":{
             //"enable": 1,
-            //"io_logic": 2,
+            //"logic_io": 2,
             //"direction": "input",
             //"io_type": "temp_atmega",
             //"time_refresh": 600,
@@ -564,7 +652,7 @@
         
         //"PD5":{//1wire
             //"enable": 1,
-            //"io_logic": 3,
+            //"logic_io": 3,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -576,7 +664,7 @@
 
         //"PE2":{//1wire
             //"enable": 1,
-            //"io_logic": 4,
+            //"logic_io": 4,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -588,7 +676,7 @@
 
         //"PE1":{//1wire
             //"enable": 1,
-            //"io_logic": 5,
+            //"logic_io": 5,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -600,7 +688,7 @@
 
         //"PD6":{//1wire
             //"enable": 1,
-            //"io_logic": 6,
+            //"logic_io": 6,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -612,7 +700,7 @@
 
         //"PB2":{//1wire
             //"enable": 1,
-            //"io_logic": 7,
+            //"logic_io": 7,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -624,7 +712,7 @@
 
         //"PB1":{//1wire
             //"enable": 1,
-            //"io_logic": 8,
+            //"logic_io": 8,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -636,7 +724,7 @@
 
         //"BME280":{//i2c
             //"enable": 1,
-            //"io_logic": 11,
+            //"logic_io": 11,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "BME280",
@@ -648,7 +736,7 @@
 
         //"TSL2561":{//i2c
             //"enable": 1,
-            //"io_logic": 12,
+            //"logic_io": 12,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "TSL2561",
@@ -660,7 +748,7 @@
     //},//fine board
 
     //"BOARD14":{//da provare e moltiplicare duplicare su board 12 13 14 15
-        //"GENERAL":{// Configurazione generale della BOARD
+        //"GENERAL_BOARD":{// Configurazione generale della BOARD
             //"name": "BUS", // Nome della BOARD
             //"boardtype": 5, // Tipo di Board: Vedi TYPEB
             //"enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
@@ -668,12 +756,12 @@
 
         //"VIN":{// Tensione alimentazione BOARD
             //"enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
-            //"io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            //"logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             //"direction": "input", // Valori: input, output. Direzione dell' IO
             //"io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
             //"time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            //"Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
-            //"Rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            //"rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            //"rgnd": 470, // Valore resistenza posta tra IO e 0V.
             //"name": "Vin", // Nome che verrà riportato su DOMOTICZ
             //"description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
             //"dtype": "Voltage" // Tipo dispositivo Domoticz
@@ -681,7 +769,7 @@
 
         //"TEMP_ATMEGA":{
             //"enable": 1,
-            //"io_logic": 2,
+            //"logic_io": 2,
             //"direction": "input",
             //"io_type": "temp_atmega",
             //"time_refresh": 600,
@@ -692,7 +780,7 @@
         
         //"PD5":{//1wire
             //"enable": 1,
-            //"io_logic": 3,
+            //"logic_io": 3,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -704,7 +792,7 @@
 
         //"PE2":{//1wire
             //"enable": 1,
-            //"io_logic": 4,
+            //"logic_io": 4,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -716,7 +804,7 @@
 
         //"PE1":{//1wire
             //"enable": 1,
-            //"io_logic": 5,
+            //"logic_io": 5,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -728,7 +816,7 @@
 
         //"PD6":{//1wire
             //"enable": 1,
-            //"io_logic": 6,
+            //"logic_io": 6,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -740,7 +828,7 @@
 
         //"PB2":{//1wire
             //"enable": 1,
-            //"io_logic": 7,
+            //"logic_io": 7,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -752,7 +840,7 @@
 
         //"PB1":{//1wire
             //"enable": 1,
-            //"io_logic": 8,
+            //"logic_io": 8,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -764,7 +852,7 @@
 
         //"BME280":{//i2c
             //"enable": 1,
-            //"io_logic": 11,
+            //"logic_io": 11,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "BME280",
@@ -776,7 +864,7 @@
 
         //"TSL2561":{//i2c
             //"enable": 1,
-            //"io_logic": 12,
+            //"logic_io": 12,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "TSL2561",
@@ -788,7 +876,7 @@
     //},//fine board
 
     //"BOARD15":{//da provare e moltiplicare duplicare su board 12 13 14 15
-        //"GENERAL":{// Configurazione generale della BOARD
+        //"GENERAL_BOARD":{// Configurazione generale della BOARD
             //"name": "BUS", // Nome della BOARD
             //"boardtype": 5, // Tipo di Board: Vedi TYPEB
             //"enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
@@ -796,12 +884,12 @@
 
         //"VIN":{// Tensione alimentazione BOARD
             //"enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
-            //"io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            //"logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             //"direction": "input", // Valori: input, output. Direzione dell' IO
             //"io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
             //"time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            //"Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
-            //"Rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            //"rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            //"rgnd": 470, // Valore resistenza posta tra IO e 0V.
             //"name": "Vin", // Nome che verrà riportato su DOMOTICZ
             //"description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
             //"dtype": "Voltage" // Tipo dispositivo Domoticz
@@ -809,7 +897,7 @@
 
         //"TEMP_ATMEGA":{
             //"enable": 1,
-            //"io_logic": 2,
+            //"logic_io": 2,
             //"direction": "input",
             //"io_type": "temp_atmega",
             //"time_refresh": 600,
@@ -820,7 +908,7 @@
         
         //"PD5":{//1wire
             //"enable": 1,
-            //"io_logic": 3,
+            //"logic_io": 3,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -832,7 +920,7 @@
 
         //"PE2":{//1wire
             //"enable": 1,
-            //"io_logic": 4,
+            //"logic_io": 4,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -844,7 +932,7 @@
 
         //"PE1":{//1wire
             //"enable": 1,
-            //"io_logic": 5,
+            //"logic_io": 5,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -856,7 +944,7 @@
 
         //"PD6":{//1wire
             //"enable": 1,
-            //"io_logic": 6,
+            //"logic_io": 6,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -868,7 +956,7 @@
 
         //"PB2":{//1wire
             //"enable": 1,
-            //"io_logic": 7,
+            //"logic_io": 7,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -880,7 +968,7 @@
 
         //"PB1":{//1wire
             //"enable": 1,
-            //"io_logic": 8,
+            //"logic_io": 8,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -892,7 +980,7 @@
 
         //"BME280":{//i2c
             //"enable": 1,
-            //"io_logic": 11,
+            //"logic_io": 11,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "BME280",
@@ -904,7 +992,7 @@
 
         //"TSL2561":{//i2c
             //"enable": 1,
-            //"io_logic": 12,
+            //"logic_io": 12,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "TSL2561",
@@ -916,7 +1004,7 @@
     //},//fine board
 
     //"BOARD16":{//da provare e moltiplicare duplicare su board 12 13 14 15
-        //"GENERAL":{// Configurazione generale della BOARD
+        //"GENERAL_BOARD":{// Configurazione generale della BOARD
             //"name": "BUS", // Nome della BOARD
             //"boardtype": 5, // Tipo di Board: Vedi TYPEB
             //"enable": 1 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
@@ -924,12 +1012,12 @@
 
         //"VIN":{// Tensione alimentazione BOARD
             //"enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
-            //"io_logic": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            //"logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             //"direction": "input", // Valori: input, output. Direzione dell' IO
             //"io_type": "analog", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
             //"time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            //"Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
-            //"Rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            //"rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            //"rgnd": 470, // Valore resistenza posta tra IO e 0V.
             //"name": "Vin", // Nome che verrà riportato su DOMOTICZ
             //"description": "Tensione alimentazione scheda", // Descrizione che verrà riportato su DOMOTICZ
             //"dtype": "Voltage" // Tipo dispositivo Domoticz
@@ -937,7 +1025,7 @@
 
         //"TEMP_ATMEGA":{
             //"enable": 1,
-            //"io_logic": 2,
+            //"logic_io": 2,
             //"direction": "input",
             //"io_type": "temp_atmega",
             //"time_refresh": 600,
@@ -948,7 +1036,7 @@
         
         //"PD5":{//1wire
             //"enable": 1,
-            //"io_logic": 3,
+            //"logic_io": 3,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -960,7 +1048,7 @@
 
         //"PE2":{//1wire
             //"enable": 1,
-            //"io_logic": 4,
+            //"logic_io": 4,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -972,7 +1060,7 @@
 
         //"PE1":{//1wire
             //"enable": 1,
-            //"io_logic": 5,
+            //"logic_io": 5,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -984,7 +1072,7 @@
 
         //"PD6":{//1wire
             //"enable": 1,
-            //"io_logic": 6,
+            //"logic_io": 6,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -996,7 +1084,7 @@
 
         //"PB2":{//1wire
             //"enable": 1,
-            //"io_logic": 7,
+            //"logic_io": 7,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -1008,7 +1096,7 @@
 
         //"PB1":{//1wire
             //"enable": 1,
-            //"io_logic": 8,
+            //"logic_io": 8,
             //"io_type": "onewire",
             //"pullup": 1,
             //"time_refresh": 60,
@@ -1020,7 +1108,7 @@
 
         //"BME280":{//i2c
             //"enable": 1,
-            //"io_logic": 11,
+            //"logic_io": 11,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "BME280",
@@ -1032,7 +1120,7 @@
 
         //"TSL2561":{//i2c
             //"enable": 1,
-            //"io_logic": 12,
+            //"logic_io": 12,
             //"io_type": "i2c",
             //"time_refresh": 60,
             //"device_name": "TSL2561",

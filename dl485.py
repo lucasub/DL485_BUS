@@ -115,6 +115,20 @@ class Bus:
         31: "Accesso EE sotto spazio EE IO",
     }
 
+    device_type_dict = {
+        'DS18B20':      {'io_type':'onewire',   'direction':'input',    'dtype':'Temperature',      'pullup':1},
+        'AM2320':       {'io_type':'i2c',       'direction':'input',    'dtype':'Temp+Hum',         'pullup':0},
+        'BME280':       {'io_type':'i2c',       'direction':'input',    'dtype':'Temp+Hum+Baro',    'pullup':0},
+        'TSL2561':      {'io_type':'i2c',       'direction':'input',    'dtype':'Light',            'pullup':0},
+        'VINR1R2':      {'io_type':'analog',    'direction':'input',    'dtype':'Voltage',          'pullup':0},
+        'VINKMKA':      {'io_type':'analog',    'direction':'input',    'dtype':'Voltage',          'pullup':0},
+        'DIGITAL_OUT':  {'io_type':'digital',   'direction':'output',   'dtype':'Switch',           'pullup':0},
+        'DIGITAL_IN':   {'io_type':'digital',   'direction':'input',    'dtype':'Switch',           'pullup':0},
+        'DIGITAL_IN_PULLUP': {'io_type':'digital',   'direction':'input',    'dtype':'Switch',           'pullup':1},
+        'PSICROMETER':  {'io_type':'',          'direction':'input',    'dtype':'Humidity',         'pullup':0},
+        'TEMP_ATMEGA':  {'io_type':'temp_atmega','direction':'input',   'dtype':'Temperature',      'pullup':0},
+    }
+
     i2c_const = {  # Const I2C
         'CONCATENA': 128,
         'NON_CONCATENA': 0,
@@ -193,7 +207,7 @@ class Bus:
         45: {'name': 'VIRT5',       'iomicro':   40,    'function': ['VIRTUAL5']},
     }
 
-    iomap = { # MAP IO of board
+    iomap = { # MAP IO of board in base al tipoboard 1,2,3,4,5
         1: {  # DL485M
             'PB0':          {'pin':  12,  'name':   'IO4'},
             'PB1':          {'pin':  13,  'name':   'IO5'},
@@ -352,11 +366,11 @@ class Bus:
         self.poweroff_voltage_counter = self.poweroff_voltage_setup 
         self.poweron_linked = 0
         self.getJsonConfig(config_file_name)
-        self.BOARD_ADDRESS = int(self.config['GENERAL']['board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
-        self.MAX_BOARD_ADDRESS = int(self.config.get('GENERAL')['max_board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
+        self.BOARD_ADDRESS = int(self.config['GENERAL_NET']['board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
+        self.MAX_BOARD_ADDRESS = int(self.config['GENERAL_NET']['max_board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
         self.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo boards attive)
-        self.bus_baudrate = int(self.config['GENERAL']['bus_baudrate'])  # Legge la velocità del BUS
-        self.bus_port = self.config['GENERAL']['bus_port']  # Legge la porta del BUS di Raspberry PI
+        self.bus_baudrate = int(self.config['GENERAL_NET']['bus_baudrate'])  # Legge la velocità del BUS
+        self.bus_port = self.config['GENERAL_NET']['bus_port']  # Legge la porta del BUS di Raspberry PI
         self.TIME_PRINT_LOG = 10  # intervallo di tempo in secondi per la stampa periodica del log a schermo
         self.nowtime = self.oldtime = 0
         self.RXtrama = []
@@ -388,108 +402,157 @@ class Bus:
         """
         for b in self.config:
             if 'BOARD' in b:
-                idbus = int(b[5:])
-                boardtype = int(self.config[b]['GENERAL']['boardtype'])
-                name = self.config[b]['GENERAL']['name']
-                self.status[idbus] = {}
-                self.status[idbus]['boardtype'] = boardtype
-                self.status[idbus]['name'] = name
+                board_id = int(b[5:])
+                board_type = int(self.config[b]['GENERAL_BOARD']['board_type'])
+                name = self.config[b]['GENERAL_BOARD']['name']
+                self.status[board_id] = {}
+                self.status[board_id]['board_type'] = board_type
+                self.status[board_id]['name'] = name
                 try:
-                    self.status[idbus]['io'] = [0] * len(self.iomap[boardtype])
-                    self.status[idbus]['boardtypename'] = self.config['TYPEB']["%s" %boardtype]
+                    self.status[board_id]['io'] = [0] * len(self.iomap[board_type])
+                    self.status[board_id]['boardtypename'] = self.config['TYPEB']["%s" %board_type]
                 except:
-                    print("BOARD TYPE %s non esistente" %boardtype)
+                    print("BOARD TYPE %s non esistente" %board_type)
                     sys.exit()
 
                 board_enable = 0
                 for bb in self.config[b]:
-                    if 'GENERAL' in bb:
-                        # print("-------Board_id", idbus, self.config[b][bb])
+                    if 'GENERAL_BOARD' in bb:
+                        # print("-------Board_id", board_id, self.config[b][bb])
+                        #pprint(self.config[b][bb])
                         board_enable = self.config[b][bb]['enable']  # Board enable
+                        board_type = self.config[b][bb]['board_type']
                         # pprint(board_enable)
 
 
                 for bb in self.config[b]:
-                    if not 'GENERAL' in bb:
-                        io_logic = int(self.config[b][bb]['io_logic'])
-                        io_type = 'other' if not 'io_type' in self.config[b][bb] else self.config[b][bb]['io_type']
-                        # print("=============== board_id:%s, io_logic:%s, io_type:%s" %(b, io_logic, io_type))
-                        device_name = '' if not 'device_name' in  self.config[b][bb] else self.config[b][bb]['device_name']
+                    #print(bb)
+                    # sys.exit()
+                    if not 'GENERAL_BOARD' in bb:
+                        enable = self.config[b][bb].get('enable', 0)
+                        if not enable: continue
+                        
+                        logic_io = int(self.config[b][bb].get('logic_io', 0))
+                        if not logic_io:
+                            print("LOGIC_IO non impostato")
+                            sys.exit()
+                        
+                        if not board_id in self.mapiotype: self.mapiotype[board_id] = {}
 
-                        if not idbus in self.mapiotype: self.mapiotype[idbus] = {}
-
-                        inverted = int(self.config[b][bb]['inverted']) if 'inverted' in self.config[b][bb] else 0
-                        default_startup_value = 0  if not 'default_startup_value' in self.config[b][bb] else int(self.config[b][bb]['default_startup_value'])
-                        # print("board_enable", board_enable)
-                        self.mapiotype[idbus][io_logic] = {
-                            'board_enable': board_enable,
-                            'io_logic': io_logic,
-                            'io_type': io_type,
-                            'device_name': device_name,
-                            'write_ee': [] if not 'write_ee' in self.config[b][bb] else self.config[b][bb]['write_ee'],
-                            'Rvcc': 1 if not 'Rvcc' in self.config[b][bb] else int(self.config[b][bb]['Rvcc']),
-                            'Rgnd': 10000 if not 'Rgnd' in self.config[b][bb] else int(self.config[b][bb]['Rgnd']),
-                            'offset_altitude': 0 if not 'offset_altitude' in self.config[b][bb] else int(self.config[b][bb]['offset_altitude']),  # OFFSET altitudine
-                            'offset_t': 0 if not 'offset_t' in self.config[b][bb] else int(self.config[b][bb]['offset_t']),  # OFFSET temperature
-                            'offset_h': 0 if not 'offset_h' in self.config[b][bb] else int(self.config[b][bb]['offset_h']),  # OFFSET humidity
-                            'offset_p': 0 if not 'offset_p' in self.config[b][bb] else int(self.config[b][bb]['offset_p']),  # OFFSET pression
-                            'description': self.config[b][bb]['description'] if 'description' in self.config[b][bb] else 'NO description',
-                            'direction': self.config[b][bb]['direction'] if 'direction' in self.config[b][bb] else 'other',
-                            'dtype': self.config[b][bb]['dtype'] if 'dtype' in self.config[b][bb] else 'Switch',
-                            'enable': int(self.config[b][bb]['enable']) if 'enable' in self.config[b][bb] else 0,
-                            'filter': int(self.config[b][bb]['filter']) if 'filter' in self.config[b][bb] else 127,
-                            'n_refresh_off': int(self.config[b][bb]['n_refresh_off']) if 'n_refresh_off' in self.config[b][bb] else 16000,
-                            'n_refresh_on': int(self.config[b][bb]['n_refresh_on']) if 'n_refresh_on' in self.config[b][bb] else 16000,
-                            'name': self.config[b][bb]['name'] if 'name' in self.config[b][bb] else 'NO Name',
-                            'time_refresh': int(self.config[b][bb]['time_refresh']) if 'time_refresh' in self.config[b][bb] else 0,
-                            'inverted': inverted,
-                            'default_startup_value': default_startup_value,
-                            'only_fronte_on': int(self.config[b][bb]['only_fronte_on']) if 'only_fronte_on' in self.config[b][bb] else 0,
-                            'only_fronte_off': int(self.config[b][bb]['only_fronte_off']) if 'only_fronte_off' in self.config[b][bb] else 0,
-                            'function': self.config[b][bb]['function'] if 'function' in self.config[b][bb] else 0,
-                            'plc_function': self.config[b][bb]['plc_function'] if 'plc_function' in self.config[b][bb] else 'disable',
-                            'plc_linked_board_id_io_logic': self.config[b][bb]['plc_linked_board_id_io_logic'] if 'plc_linked_board_id_io_logic' in self.config[b][bb] else [],
-                            'default_startup_filter_value': int(self.config[b][bb]['default_startup_filter_value']) if 'default_startup_filter_value' in self.config[b][bb] else 0,
-                            'kmul': self.config[b][bb]['kmul'] if 'kmul' in self.config[b][bb] else 1,
-                            'kadd': self.config[b][bb]['kadd'] if 'kadd' in self.config[b][bb] else 0,
-                            'power_on_timeout' : int(self.config[b][bb]['power_on_timeout']) if 'power_on_timeout' in self.config[b][bb] else 0,
-                            'power_on_tminoff' : int(self.config[b][bb]['power_on_tminoff']) if 'power_on_tminoff' in self.config[b][bb] else 0,
-                            'power_on_voltage_off' : float(self.config[b][bb]['power_on_voltage_off']) if 'power_on_voltage_off' in self.config[b][bb] else 0,
-                            'power_on_voltage_on' : float(self.config[b][bb]['power_on_voltage_on']) if 'power_on_voltage_on' in self.config[b][bb] else 0,
-                            'power_on_timeout' : int(self.config[b][bb]['power_on_timeout']) if 'power_on_timeout' in self.config[b][bb] else 0,
-                        }
-
-
-
-                       
-                        if self.mapiotype[idbus][io_logic]['plc_linked_board_id_io_logic']:
-                            app=[]
-                            for x in self.mapiotype[idbus][io_logic]['plc_linked_board_id_io_logic']:
-                                xx=x.split("-")
-                                if "*" in xx[0]: 
-                                    xx[0] = idbus
-                                app1 = '%s-%s' %(xx[0], xx[1])
-                                app.append(app1)
-                                if app1 not in self.mapproc:
-                                    self.mapproc[app1] = {}
-                                    
-                                self.mapproc[app1] = {'board_id': idbus, 'io_logic': io_logic}
-                                
-                            self.mapiotype[idbus][io_logic]['plc_linked_board_id_io_logic'] = app
+                        inverted = int(self.config[b][bb].get('inverted', 0))
+                        default_startup_value = self.config[b][bb].get('default_startup_value', 0)
+                        
+                        if 'device_type' in self.config[b][bb]:
+                            devicetype = self.config[b][bb]['device_type']
+                        else:
+                            print("DEVICE NAME NON DEFINITO IN FILE JASON: board_id: %s - logic_io: %s - io_name: %s" %(b, logic_io, bb))
+                            sys.exit()    
+                        
+                        try:
+                            pin = self.iomap[board_type][bb]['pin']
+                        except:
+                            pin = 0
+                        
+                        try:
+                            io_fisic = self.mapmicro[self.iomap[board_type][bb]['pin']]['iomicro']
+                        except:
+                            io_fisic = 99
                             
-
-        pprint(self.mapproc)
+                        if 'direction' in self.config[b][bb]:
+                            direction = self.config[b][bb]['direction']
+                        elif 'direction' in self.device_type_dict[devicetype]:
+                            direction = self.device_type_dict[devicetype]['direction']
+                        else:
+                            direction = 'input'
+                             
+                        direction_val = 1 if direction == 'output' else 0
+                            
+                        self.mapiotype[board_id][logic_io] = {
+                            'board_enable': board_enable,
+                            'board_type': board_type,
+                            'counter_filter': self.config[b][bb].get('counter_filter', 0),
+                            'counter_min_period_time': self.config[b][bb]['counter_min_period_time'] if 'counter_min_period_time' in self.config[b][bb] else 0,
+                            'counter_mode': self.config[b][bb]['counter_mode'] if 'counter_mode' in self.config[b][bb] else 0,
+                            'counter_timeout': self.config[b][bb]['counter_timeout'] if 'counter_timeout' in self.config[b][bb] else 0,
+                            'default_startup_filter_value': int(self.config[b][bb]['default_startup_filter_value']) if 'default_startup_filter_value' in self.config[b][bb] else 0,
+                            'default_startup_value': default_startup_value,
+                            'description': self.config[b][bb]['description'] if 'description' in self.config[b][bb] else 'NO description',
+                            'device_address': self.config[b][bb]['address'] if 'address' in self.config[b][bb] else [],
+                            'device_type': devicetype,
+                            'direction': direction,
+                            'direction_val': direction_val,
+                            'dtype': self.config[b][bb]['dtype'] if 'dtype' in self.config[b][bb] else self.device_type_dict[devicetype]['dtype'],
+                            'enable': enable,
+                            'filter': int(self.config[b][bb].get('filter', 127)),
+                            'function': self.config[b][bb].get('function', 0),
+                            'io_fisic': io_fisic,
+                            'logic_io': logic_io,
+                            'io_type': self.device_type_dict[devicetype]['io_type'],
+                            'inverted': inverted,
+                            'kadd': self.config[b][bb].get('kadd', 0),
+                            'kmul': self.config[b][bb].get('kmul', 1),
+                            'n_refresh_off': int(self.config[b][bb].get('n_refresh_off', 1)),
+                            'n_refresh_on': int(self.config[b][bb].get('n_refresh_on', 1)),
+                            'name': self.config[b][bb].get('name', 'NO Name'),
+                            'offset_altitude': int(self.config[b][bb].get('offset_altitude', 0)),  # OFFSET altitudine
+                            'offset_h': int(self.config[b][bb].get('offset_h', 0)),  # OFFSET humidity
+                            'offset_p': int(self.config[b][bb].get('offset_p', 0)),  # OFFSET pression
+                            'offset_t': int(self.config[b][bb].get('offset_t', 0)),  # OFFSET temperature
+                            'only_fronte_off': int(self.config[b][bb].get('only_fronte_off', 0)),
+                            'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
+                            'pin_label': bb,
+                            'pin': pin,
+                            'plc_delay_off_on': int(self.config[b][bb].get('plc_delay_off_on', 0)),     
+                            'plc_delay_on_off': int(self.config[b][bb].get('plc_delay_on_off', 0)), 
+                            'plc_function': self.config[b][bb].get('plc_function', 'disable'),
+                            'plc_linked_board_id_logic_io': self.config[b][bb].get('plc_linked_board_id_logic_io', []),
+                            'plc_params': int(self.config[b][bb].get('plc_params', 0)), 
+                            'plc_time_off': int(self.config[b][bb].get('plc_time_off', 0)), 
+                            'plc_time_on': int(self.config[b][bb].get('plc_time_on', 0)), 
+                            'plc_time_unit': float(self.config[b][bb].get('plc_time_unit', 0.01)), 
+                            'plc_timer_n_transitions': int(self.config[b][bb].get('plc_timer_n_transitions', 0)), 
+                            'plc_preset_input': int(self.config[b][bb].get('plc_preset_input', 0)), 
+                            'plc_mode_timer': int(self.config[b][bb].get('plc_mode_timer', 0)), 
+                            'plc_xor_input': int(self.config[b][bb].get('plc_xor_input', 0)), 
+                            'power_on_timeout' : int(self.config[b][bb].get('power_on_timeout',0)) ,
+                            'power_on_timeout_off' : int(self.config[b][bb].get('power_on_timeout_off', 0)),
+                            'power_on_voltage_off' : float(self.config[b][bb].get('power_on_voltage_off', 0)),
+                            'power_on_voltage_on' : float(self.config[b][bb].get('power_on_voltage_on', 0)),
+                            'powermeter_k': int(self.config[b][bb].get('powermeter_k', 0)),
+                            'pullup': self.config[b][bb].get('pullup', self.device_type_dict[devicetype].get('pullup', 0)),
+                            'rgnd': int(self.config[b][bb].get('rgnd', 100000)),
+                            'rvcc': int(self.config[b][bb].get('rvcc', 1)),
+                            'time_refresh': int(self.config[b][bb].get('time_refresh', 3000)),
+                            'write_ee': self.config[b][bb].get('write_ee', []),
+                            
+                        }
+                       
+                        app=[]
+                        for x in self.mapiotype[board_id][logic_io].get('plc_linked_board_id_logic_io', []):
+                            xx=x.split("-")
+                            if "*" in xx[0]: 
+                                xx[0] = board_id
+                            app1 = '%s-%s' %(xx[0], xx[1])
+                            app.append(app1)
+                            if app1 not in self.mapproc:
+                                self.mapproc[app1] = {}
+                                
+                            self.mapproc[app1] = {'board_id': board_id, 'logic_io': logic_io}
+                            
+                        self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io'] = app
+                            
+        # pprint(self.mapproc)
         
-    def make_inverted(self, board_id, io_logic, value):
+    def make_inverted(self, board_id, logic_io, value):
         """
         Invert IO value. To use if not PLC function on board
         """
-        if not board_id in self.mapiotype or not io_logic in self.mapiotype[board_id]:
+        if not board_id in self.mapiotype or not logic_io in self.mapiotype[board_id]:
             return 0
-        inverted = self.mapiotype[board_id][io_logic]['inverted']
+        inverted = self.mapiotype[board_id][logic_io]['inverted']
         if inverted:
             value = 1 - value & 1
-            self.status[board_id]['io'][io_logic - 1] = value  # Valore corrente IO
+            self.status[board_id]['io'][logic_io - 1] = value  # Valore corrente IO
         # print("value2", value)
         return value
 
@@ -498,56 +561,24 @@ class Bus:
         Calc CRC of DS18xxx
         """
         a = 0xff00 | b
-        # print("CRC: ", b, crc, end=" ")
         while 1:
             crc = ((((crc ^ a) & 1) * 280) ^ crc) // 2
             a = a // 2
-            # print("==>", crc, end=" ")
             if (a <= 255):
-                # print()
                 return crc
 
-    def ADC_value(self, VIN, Rvcc, Rgnd):
+    def ADC_value(self, VIN, rvcc, rgnd):
         """
         Dato il valore della tensione e le resistenze del partitore, ricavo la tensione in ingresso ADC del micro
         """
         try:
-            value = VIN / (Rvcc + Rgnd) * Rgnd * 930.0
+            value = VIN / (rvcc + rgnd) * rgnd * 930.0
             return round(value)
         except:
-            print("ERROR ADC_value", VIN, Rvcc, Rgnd)
+            print("ERROR ADC_value", VIN, rvcc, rgnd)
             return 0
 
-    def voltageLimit(self, board_id, io_logic, value):
-        """
-        Funzione che sotto una certa tensione, Raspberry PI viene spento (batteria scarica)
-        """
-
-
-
-
-
-
-        poweroff_voltage = 0 if not 'poweroff_voltage' in self.config.get('GENERAL') else float(self.config.get('GENERAL')['poweroff_voltage'])  # Read if need shutdown below the  voltage limit
-        if poweroff_voltage:
-            poweroff_board_id = 0 if not 'poweroff_board_id' in self.config.get('GENERAL') else int(self.config.get('GENERAL')['poweroff_board_id'])  # Read board_id to for shutdown voltage limit
-            poweroff_io_logic = 0 if not 'poweroff_io_logic' in self.config.get('GENERAL') else int(self.config.get('GENERAL')['poweroff_io_logic'])  # Read io_logic to for shutdown voltage limit
-            # print("poweroff ===>>>> Voff:%s  Voltage:%s, B.ID:%s, IO:%s" %(poweroff_voltage, value, poweroff_board_id, poweroff_io_logic))
-            # print("board_id:%s  io_logic:%s" %(board_id, io_logic))
-            if board_id == poweroff_board_id and io_logic == poweroff_io_logic:
-                if value < poweroff_voltage and value > 0:
-                    self.poweroff_voltage_n += 1
-                    print("************ Make SHUTDOWN OK ************* Count:%s LIMIT:%s" %(self.poweroff_voltage_n, self.poweroff_voltage_limit))
-                    if self.poweroff_voltage_n  >= 10:
-                        pass
-                        self.shutdownRequest()
-                else:
-                    if self.poweroff_voltage_n > 0:
-                        self.poweroff_voltage_n -= 1
-                    print("************ Make SHUTDOWN NO ************* Count:%s LIMIT:%s" %(self.poweroff_voltage_n, self.poweroff_voltage_limit))
-
-
-    def calculate(self, board_id, io_logic, value):
+    def calculate(self, board_id, logic_io, value):
         """
         Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso:
             Temperature:
@@ -557,28 +588,30 @@ class Bus:
                 AM2320          -> Temp + Hum
                 TSL2561         -> Light
             Voltage:
-                Analog Input
+                VINR1R2
+                VINKMKA
+                Power_on
             Digital:
                 Digital input
             PowerMeter
         """
+        #print("CALCULATE: board_id: %s, logic_io: %s, value: %s" %(board_id, logic_io, value))
 
-        # print("CALCULATE: board_id:%s, io_logic:%s, value:%s, io_type:%s, PLC_FUNCTION:%s" %(board_id, io_logic, value, self.mapiotype[board_id][io_logic]['io_type'], self.mapiotype[board_id][io_logic]['plc_function']))
-
-        if board_id in self.mapiotype and io_logic in self.mapiotype[board_id]:
-            kmul = self.mapiotype[board_id][io_logic]['kmul']
-            kadd = self.mapiotype[board_id][io_logic]['kadd']           
+        if board_id in self.mapiotype and logic_io in self.mapiotype[board_id]:
+            kmul = self.mapiotype[board_id][logic_io]['kmul']
+            kadd = self.mapiotype[board_id][logic_io]['kadd']           
 
             adjust = lambda value : (value * kmul) + kadd # Funzione che aggiusta il risultato
 
-            type_io = self.mapiotype[board_id][io_logic]['io_type']
+            type_io = self.mapiotype[board_id][logic_io]['io_type']
+            device_type = self.mapiotype[board_id][logic_io]['device_type']
+            plc_function = self.mapiotype[board_id][logic_io]['plc_function']
             
-            plc_function = self.mapiotype[board_id][io_logic]['plc_function']
-            # print(type_io, plc_function)
-            
+            print("device_type:%s - type_io:%s - kmul:%a - kadd:%s - plc_function:%s" %(device_type, type_io, kmul, kadd, plc_function))            
             
             if type_io == 'onewire':
-                if self.mapiotype[board_id][io_logic]['device_name'] == 'DS18B20':
+
+                if self.mapiotype[board_id][logic_io]['device_type'] == 'DS18B20':
                     crc = 0
                     for x in value[0:8]:
                         crc = self.calcCrcDS(x, crc)
@@ -586,7 +619,7 @@ class Bus:
                         value = ((value[1] << 8) + value[0]) * 0.0625
                         # print(value)
                         (value * kmul) + kadd
-                        return round(value + self.mapiotype[board_id][io_logic]['offset_t'], 1)
+                        return round(value + self.mapiotype[board_id][logic_io]['offset_t'], 1)
                     else:
                         print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
                         return None
@@ -599,26 +632,25 @@ class Bus:
 
             elif type_io == 'digital' and plc_function == 'time_meter' :
                 # print(plc_function, value)
-
                 return value[0] + (value[1] * 256)
                 
 
             elif type_io == 'i2c':
-                # print(self.mapiotype[board_id][io_logic]['io_type'], self.mapiotype[board_id][io_logic]['device_name'] )
-                if self.mapiotype[board_id][io_logic]['device_name'] == 'BME280':
+                # print(self.mapiotype[board_id][logic_io]['io_type'], self.mapiotype[board_id][logic_io]['device_type'] )
+                if device_type == 'BME280':
                     value = self.getBME280(value)
                     return value
-                if self.mapiotype[board_id][io_logic]['device_name'] == 'AM2320':
+                if device_type == 'AM2320':
                     # print ("VALUE=",value)
                     
-                    hum = ((value[1] * 256 + value[2]) / 10.0) + self.mapiotype[board_id][io_logic]['offset_h']
+                    hum = ((value[1] * 256 + value[2]) / 10.0) + self.mapiotype[board_id][logic_io]['offset_h']
 
-                    temp = (((value[3]&0x7F) * 256 + value[4]) / 10.0) + self.mapiotype[board_id][io_logic]['offset_t']
+                    temp = (((value[3]&0x7F) * 256 + value[4]) / 10.0) + self.mapiotype[board_id][logic_io]['offset_t']
                     if value[3] & 0x80 == 0x80: temp = -temp
                     # print("AM2320", hum, temp)
                     return [temp, hum]
 
-                if self.mapiotype[board_id][io_logic]['device_name'] == 'TSL2561':
+                if device_type == 'TSL2561':
                     # print("TSL2561 Data:", value)
                     ch0 = value[0] + (value[1] * 256)
                     ch1 = value[2] + (value[3] * 256)
@@ -644,34 +676,42 @@ class Bus:
 
             elif type_io == 'temp_atmega':
                 value = (value[0] + (value[1] * 256)) - 270 + 25
-                return round(value + self.mapiotype[board_id][io_logic]['offset_t'], 1)
+                return round(value + self.mapiotype[board_id][logic_io]['offset_t'], 1)
                 # return round(value, 1)
 
-            elif type_io == 'analog' or self.mapiotype[board_id][io_logic]['io_type'] == 'virtual':
-                Rvcc =  self.mapiotype[board_id][io_logic]['Rvcc']
-                Rgnd =  self.mapiotype[board_id][io_logic]['Rgnd']
-                print(Rvcc, Rgnd, value)
-                try:
-                    # print("\t\t\t\t\t\t\t\t\t\t\t\tANALOG", value[0] + (value[1] * 256))
-                    value = round((value[0] + (value[1] * 256)) * (Rvcc + Rgnd) / (Rgnd * 930), 1)
-                    print("*************")
-                    print (self.mapproc['%s-%s' %(board_id,io_logic)])
-                    print("*************")
+            elif device_type == 'VINR1R2' or device_type == 'VINKMKA' or type_io == 'analog' or type_io == 'virtual':
+                
+                rvcc =  self.mapiotype[board_id][logic_io]['rvcc']
+                rgnd =  self.mapiotype[board_id][logic_io]['rgnd']
+                #print("rvcc:%s - rgnd:%s - kmul:%s - kadd:%s value:%s" %(rvcc, rgnd, kmul, kadd, value))
+                
+                if device_type == 'VINR1R2':
+                    value = round((value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0), 1)
+                else:
+                    value = round((value[0] + (value[1] * 256)) * kmul + kadd, 1)
                     
-                    appboardid=self.mapproc['%s-%s' %(board_id,io_logic)]['board_id']
-                    appiologic=self.mapproc['%s-%s' %(board_id,io_logic)]['io_logic']
-                    appfuncplc=self.mapiotype[appboardid][appiologic]['plc_function']
-                    if appfuncplc=='power_on':
-                        vmin=self.mapiotype[appboardid][appiologic]['power_on_voltage_off']
-                        print(appboardid,appiologic,vmin,value)
-                        if value>=vmin:
+                bio = '%s-%s' %(board_id, logic_io)
+                if bio in self.mapproc:
+                    #print (self.mapproc['%s-%s' %(board_id, logic_io)])
+                    board_id_linked = self.mapproc['%s-%s' %(board_id, logic_io)]['board_id']
+                    logic_io_linked = self.mapproc['%s-%s' %(board_id, logic_io)]['logic_io']
+
+                    appfuncplc = self.mapiotype[board_id_linked][logic_io_linked]['plc_function']
+                    #print("appfuncplc:", appfuncplc)
+                    if appfuncplc == 'power_on':
+                        appboardid = self.mapproc['%s-%s' %(board_id,logic_io)]['board_id']
+                        appiologic = self.mapproc['%s-%s' %(board_id,logic_io)]['logic_io']
+                        vmin = self.mapiotype[appboardid][appiologic]['power_on_voltage_off']
+                        print(appboardid, appiologic, vmin, value)
+                        if value >= vmin:
                             self.poweroff_voltage_counter = self.poweroff_voltage_setup
-                        elif self.poweroff_voltage_counter>1: self.poweroff_voltage_counter -= 1
-                        else: print("SPENTO")  #self.shutdownRequest()
-                        print("count=",self.poweroff_voltage_counter)
-                except:
-                    print("Analog Error: Value:", value)
-                    return 0
+                        elif self.poweroff_voltage_counter > 1: 
+                            self.poweroff_voltage_counter -= 1
+                        else: 
+                            print("SPENTO")  #self.shutdownRequest()
+                        print("count=", self.poweroff_voltage_counter)
+                
+                #print("ANALOG VALUE:", value)
                 return value
 
             elif type_io == 'digital':
@@ -684,7 +724,7 @@ class Bus:
                 # value = value[0]
                 # value_io = value & 1
 
-                # if 'only_fronte_on' in self.mapiotype[board_id][io_logic] and self.mapiotype[board_id][io_logic]['only_fronte_on'] == 1:
+                # if 'only_fronte_on' in self.mapiotype[board_id][logic_io] and self.mapiotype[board_id][logic_io]['only_fronte_on'] == 1:
                     # value_io ^= 1
 
 
@@ -693,20 +733,22 @@ class Bus:
                     # fronte = '↑'
                 # elif value & 0b100:  # Fronte OFF
                     # fronte = '↓'
-                # print("==========>>>>>  VALORE IO:", board_id, io_logic, value_io)
-                # print("IO Digital: Board_id:%s, io_logic:%s, fronti:%s, value:%s" %(board_id, io_logic, fronte, value))
+                # print("==========>>>>>  VALORE IO:", board_id, logic_io, value_io)
+                # print("IO Digital: Board_id:%s, logic_io:%s, fronti:%s, value:%s" %(board_id, logic_io, fronte, value))
                 # pprint( self.status[board_id]['io'])
-                # self.status[board_id]['io'][io_logic - 1] = "%s%s" % (value_io, fronte
+                # self.status[board_id]['io'][logic_io - 1] = "%s%s" % (value_io, fronte
                 value = value[0]
-                # value = self.inverted(board_id, io_logic, value)
+                # value = self.inverted(board_id, logic_io, value)
 
-                # self.status[board_id]['io'][io_logic - 1] = value
+                # self.status[board_id]['io'][logic_io - 1] = value
                 return value
             else:
-                print("calculate ERROR: Tipo dispositivo NON trovato:", board_id, io_logic)
+                print("calculate ERROR: Tipo dispositivo NON trovato:", board_id, logic_io)
                 return value
         else:
-            print("calculate ERROR: Board o IO_LOGICO non presenti sul file di configurazione. Comunica IO ignorato. board_id:%s, io_logic:%s" % (board_id,  io_logic))
+            print("calculate ERROR: Board o logic_ioO non presenti sul file di configurazione. Comunica IO ignorato. board_id:%s, logic_io:%s" % (board_id,  logic_io))
+            # pprint(self.mapiotype)
+            # pprint(self.mapiotype[board_id])
             return 0
 
     def printStatus(self):
@@ -715,12 +757,12 @@ class Bus:
         """
 
         print("\n", "-" * 83, "STATUS IO", "-" * 83)
-        print(" ID Name        BoardType  IO:", end='')
+        print(" ID Name        board_type  IO:", end='')
         for i in range(1, 31):  # estremo superiore viene escluso
             print("{:>4} ".format(i), end='')
         print()
         for b in self.status:
-            print("{:>3} {:<11} {} {:>5}     ".format(b, self.status[b]['name'][:11], self.status[b]['boardtype'], self.status[b]['boardtypename']), end='')
+            print("{:>3} {:<11} {} {:>5}     ".format(b, self.status[b]['name'][:11], self.status[b]['board_type'], self.status[b]['boardtypename']), end='')
 
             for i in self.status[b]['io']:
                 
@@ -790,10 +832,6 @@ class Bus:
         Calculate trama and return list with right values
         """
         app=inSerial
-        # print("ByRicSer: ",hex(inSerial), chr(int(inSerial)))
-
-#        if inSerial!=0x90: print("ByRicSer: ",hex(inSerial),chr(inSerial))
-#        else: print("ByRicSer: ",hex(inSerial))
             
         if self.buffricnlung > 100:  # Errore 3
             print("ERR 3 Pacchetto troppo lungo")
@@ -814,7 +852,7 @@ class Bus:
                 self.labinitric()
                 return(ric)
             else:
-                print("ERRORE secondo CRC, calcolato - Ricevuto", hex(self.crcric), hex(auscrc))
+                #print("ERRORE secondo CRC, calcolato - Ricevuto", hex(self.crcric), hex(auscrc))
                 self.labinitric()
                 return []
 
@@ -838,8 +876,6 @@ class Bus:
                     ric=self.buffricnapp
                 
                 if len(self.buffricn) > 1:  # Non è un PING
-                    # ric.append()
-                    
                     if self.crcdoppio == 1:
 #                        print("Aspetto secondo CRC")
                         self.lastfinepacc = True
@@ -849,7 +885,6 @@ class Bus:
                     return(ric)
 
                 else: # è un PING
-#                    print(" E' UN PING")
                     self.labinitric()
                     return(ric)
 
@@ -962,14 +997,9 @@ class Bus:
 
     def setMaxBoardAddress(self, max_board_address):
         """
-        Setta il numero massimo di boards presenti nella rete. Serve per velocizzare il loop
+        Setta il numero massimo di board presenti nella rete. Serve per velocizzare il loop
         """
         return [self.BOARD_ADDRESS, self.code['CR_WR_EE'], 0, 6, 0, max_board_address] # Max Board Address
-
-    # def calcAddressLsMs7(self, address):
-    #     LS = address & 127
-    #     MS = address >> 7
-    #     return LS, MS
 
     def calcAddressLsMs8(self, address):
         """
@@ -986,11 +1016,11 @@ class Bus:
         LS, MS = self.calcAddressLsMs8(address)
         return [self.BOARD_ADDRESS, self.code['CR_RD_EE'], board_id, LS, MS, nbyte] # Read EE
 
-    def readEEnIOoffset(self, board_id, io_logic, offset, nbyte):
+    def readEEnIOoffset(self, board_id, logic_io, offset, nbyte):
         """
         Read EEPROM bytes + offset
         """
-        address = (io_logic * 32) + offset
+        address = (logic_io * 32) + offset
         return self.readEEadd(board_id, address, nbyte)
 
     def writeEEadd(self, board_id, address, data):
@@ -1001,31 +1031,31 @@ class Bus:
         msg = [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, LS, MS] + data # Read EE
         return msg
 
-    def writeEEnIOoffset(self, board_id, io_logic, offset, data):
+    def writeEEnIOoffset(self, board_id, logic_io, offset, data):
         """
         Write EEPROM bytes
         """
-        address = (io_logic * 32) + offset
+        address = (logic_io * 32) + offset
         return self.writeEEadd(board_id, address, data)
         
 
-    def readIO(self, board_id, io_logic):
+    def readIO(self, board_id, logic_io):
         """
         Read IO status
         """
-        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, io_logic, 0]
+        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, logic_io, 0]
         # print("ReadIO:", data)
         return data # Read EE
 
-    def writeIO(self, board_id, io_logic, data, ms=0):
+    def writeIO(self, board_id, logic_io, data, ms=0):
         """
         Write IO
         """
         # Su analogico è necessario inviare anche un MS byte per andare fino al valore 1023 (7 bit LS + 3 bit MS)
-        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, io_logic, ] + data + [ms]
+        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, logic_io, ] + data + [ms]
         return data # Read EE
 
-    def writeOneWire(self, board_id, io_logic, byteopzioni, data=[]):
+    def writeOneWire(self, board_id, logic_io, byteopzioni, data=[]):
         """
         Write One Wire command
         """
@@ -1036,10 +1066,10 @@ class Bus:
         # b2: scrive BIT a ZERO
         # b3: Occupa BUS
 
-        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, io_logic, byteopzioni] + data
+        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, logic_io, byteopzioni] + data
         return data # Read EE
 
-    def readOneWire(self, board_id, io_logic, byteopzioni, data=[]):
+    def readOneWire(self, board_id, logic_io, byteopzioni, data=[]):
         """
         Read OneWire data
         """
@@ -1050,10 +1080,10 @@ class Bus:
         # b2: scrive BIT a ZERO
         # b3: Occupa BUS
 
-        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, io_logic, byteopzioni] + data
+        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, logic_io, byteopzioni] + data
         return data # Read EE
 
-    def writeI2C(self, board_id, io_logic, byteopzioni, data):
+    def writeI2C(self, board_id, logic_io, byteopzioni, data):
         """
         Write I2C command
         """
@@ -1065,13 +1095,13 @@ class Bus:
         #    4: manda start dopo ultimo trasmissione di ultimo byte
         #    5: reset I2c prima di iniziare
 
-        # print(board_id, io_logic, byteopzioni, data)
+        # print(board_id, logic_io, byteopzioni, data)
         # data = self.get8to7(data)
-        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, io_logic, byteopzioni] + data
+        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, logic_io, byteopzioni] + data
         # print("WriteI2C:", data)
         return data
 
-    def readI2C(self, board_id, io_logic, byteopzioni, data):
+    def readI2C(self, board_id, logic_io, byteopzioni, data):
         """
         Read I2C byte
         """
@@ -1088,17 +1118,17 @@ class Bus:
         #    2: ritorno stato ultimo ACK
         #    3:6 Numero byte da leggere
 
-        # print(board_id, io_logic, byteopzioni, data)
+        # print(board_id, logic_io, byteopzioni, data)
         # data = self.get8to7(data)
-        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, io_logic, byteopzioni] + data
+        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, logic_io, byteopzioni] + data
         # print("WriteI2C:", data)
         return data
 
-    def initIO(self, board_id, io_logic):
+    def initIO(self, board_id, logic_io):
         """
         Init IO of board (read configuration in EEPROM)
         """
-        data = [self.BOARD_ADDRESS, self.code['CR_INIT_SINGOLO_IO'], board_id, io_logic]
+        data = [self.BOARD_ADDRESS, self.code['CR_INIT_SINGOLO_IO'], board_id, logic_io]
         return data
 
     def ping(self):
@@ -1274,634 +1304,620 @@ class Bus:
         # print("Termperatura BME280 ==>>", t, pressure, hh, tot)
         return tot
 
-    def resetEE(self, board_id, io_logic):
+    def resetEE(self, board_id, logic_io):
         """
         Mette a 0 gli enable dei vari IO logici.
-        Se io_logic=0, disabilita gli i dispositivi da 1 a 24
+        Se logic_io=0, disabilita gli i dispositivi da 1 a 24
         """
         TXtrama = []
-        if io_logic == 0:
+        if logic_io == 0:
             for x in range(1, 25):
-                msg = self.writeEEnIOoffset(board_id, io_logic, 0, [0,0])
+                msg = self.writeEEnIOoffset(board_id, logic_io, 0, [0,0])
                 TXtrama.append(msg)
-                TXtrama.append(self.initIO(board_id, io_logic))
+                TXtrama.append(self.initIO(board_id, logic_io))
 
         else:
-            msg = self.writeEEnIOoffset(board_id, io_logic, 0, [0, 0])
+            msg = self.writeEEnIOoffset(board_id, logic_io, 0, [0, 0])
             # print(msg)
             TXtrama.append(msg)
-            TXtrama.append(self.initIO(board_id, io_logic))
+            TXtrama.append(self.initIO(board_id, logic_io))
         TXtrama.append(self.boardReboot(board_id))
         return(TXtrama)
 
     def getConfiguration(self):
         """
-        Make configuration to send to boards
+        Make configuration to send to board
         """
         msg = []
-        for bb in self.config:
-            print("BB", bb)
-            if "BOARD" in bb:  # Seleziona le BOARD
-                boards = self.config.get(bb)
-                idbus = int(bb[5:])
-                if boards['GENERAL']['enable']==0:
-                    print("Configurazione boards: BOARD DISABILITATA: ", idbus)
+        #pprint(self.mapiotype)
+        #print("------------------------------------------")
+#        pprint(self.config)
+        for board_id in self.mapiotype:
+            flagreset = True
+            for logic_io in self.mapiotype[board_id]:
+                if not self.mapiotype[board_id][logic_io]['board_enable']:
+                    print("Configurazione board: BOARD DISABILITATA: ", board_id)
+                    break
+                print("BOARD_ID:", board_id)
+                if not self.mapiotype[board_id][logic_io]['enable']:
+                    print("Configurazione board: logic_io DISABILITATO: (Board/iologic)", board_id, logic_io)
                     continue
                 
-                msg.append(self.clearIO_boardReboot(idbus))
-                for board in boards:
-                    boardenable = int(boards.get('GENERAL')['enable'])
-                    boardtype = int(boards.get('GENERAL')['boardtype'])
-                    boardname = boards.get('GENERAL')['name']
+                if flagreset:
+                    flagreset = False
+                    msg.append(self.clearIO_boardReboot(board_id))
+                #print("$$$$$$$$$$$$")
+                #print(msg)
 
-                    if  not 'GENERAL' in board:
-                        message_conf_app = []
-                        io_logic = int(boards[board]['io_logic'])
-                        write_ee = [] if not 'write_ee' in boards[board] else boards.get(board)['write_ee']  # write_ee
-                        enable = 0 if not 'enable' in boards[board] else int(boards.get(board)['enable'])  # Enable
-                        # print("IO ABILITATI %s: %s" %(enable, io_logic))
-                        if not enable: continue 
-                        
-                        if io_logic >= 30:
-                            print("Configurazione boards ERROR: io_logic non può essere superiore a 29. IO_logic=%s", io_logic)
-                            continue
+                board_type = self.mapiotype[board_id][logic_io]['board_type']
+                boardname = self.mapiotype[board_id][logic_io]['name']
 
-                        pin = 0 if not board in self.iomap[boardtype] else self.iomap[boardtype][board]['pin']
-                        if pin:
-                            byte0 = self.mapmicro.get(pin)['iomicro']
-                        else:
-                            byte0 = 0
+                message_conf_app = []
+                write_ee = self.mapiotype[board_id][logic_io]['write_ee']
+                
+                if logic_io >= 30:
+                    print("Configurazione board ERROR: logic_io non può essere superiore a 29. logic_io=%s", logic_io)
+                    continue
 
-                        eels, eems = self.calcAddressLsMs8(io_logic * 32)
-                        byte1 = 1 if boards.get(board).get('direction') == 'output' else 0
+               
+                byte0 = self.mapiotype[board_id][logic_io]['io_fisic']
+                
+                eels, eems = self.calcAddressLsMs8(logic_io * 32)
+                
+                byte1 = self.mapiotype[board_id][logic_io]['direction_val']
 
-                        io_type = boards.get(board).get('io_type')
-                        device_name = boards.get(board).get('device_name')
-                        # print("-----", io_type)
-                        if not enable: io_type = 'disable' # Non fa configurazione se enable = 0
-                        if io_type == 'analog' or io_type == 'temp_atmega':
-                            byte1 |= 0b10
-                        elif io_type == 'digital':
-                            byte1 |= 0b00
-                        elif io_type == 'i2c':
-                            byte1 |= 0b1000
-                            enable = 0 if not 'enable' in boards[board] else int(boards.get(board)['enable'])  # Enable
-                            if enable == 0:
-                                byte1 = 0
-                        elif io_type == 'onewire' or io_type == 'onewire_test':
-                            byte1 |= 0b00100
-                        elif io_type == 'virtual':
-                            byte1 |= 0b1100
-                        elif io_type == 'disable':
-                            byte1 |= 0b00000
-                        else:
-                            print("Configurazione boards: ERROR: io_type non riconosciuto. IO: %s" %board, io_type, bb)
-                            continue
+                io_type = self.mapiotype[board_id][logic_io]['io_type']
+                
+                device_type = self.mapiotype[board_id][logic_io]['device_type']
+                
+                print("io_type: %s - device_type: %s" %(io_type, device_type))
+                
+                #if not enable: io_type = 'disable' # Non fa configurazione se enable = 0
+                
+                if io_type == 'analog' or io_type == 'temp_atmega':
+                    byte1 |= 0b10
+                elif io_type == 'digital':
+                    byte1 |= 0b00
+                elif io_type == 'i2c':
+                    byte1 |= 0b1000
+                elif io_type == 'onewire' or io_type == 'onewire_test':
+                    byte1 |= 0b00100
+                elif io_type == 'virtual':
+                    byte1 |= 0b1100
+                elif io_type == 'disable':
+                    byte1 |= 0b00000
+                else:
+                    print("Configurazione boards: ERROR: io_type non riconosciuto. BOARD_ID:%s - logic_io:%s - IO_TYPE:%s" %(board_id, logic_io, io_type))
+                    continue
 
-                        enable = 0 if not 'enable' in boards[board] else int(boards.get(board)['enable'])  # Enable
-                        if enable == 0:
-                            byte1 = 0
-                        # print("Configurazione boards: boards:%s, io_logic:%s" %(boardname, io_logic))
-                        byte1 |= 0x40 if int(boards.get(board)['enable']) == 1 else 0  # Settimo BIT
+                # print("Configurazione boards: boards:%s, logic_io:%s" %(boardname, logic_io))
+                byte1 |= 0x40 #b6
 
-                        direction = boards.get(board).get('direction', 0)
+                direction = self.mapiotype[board_id][logic_io]['direction']
 
-                        if direction == 'input':
-                            byte2 = 0 if not 'pullup' in boards.get(board) else int(boards.get(board)['pullup'])
-                            byte3 = 0
-                        elif direction == 'output':
-                            default_startup_value = int(boards.get(board)['default_startup_value']) if 'default_startup_value' in boards[board] else 0
-                            default_startup_value = default_startup_value
-                            byte2, byte3 = self.calcAddressLsMs8(default_startup_value)
-                        elif io_type == 'i2c' or io_type == 'onewire' or io_type == 'onewire_test':
-                            byte2 = byte3 = 0
-                        else:
-                            byte2 = byte3 = 0
-                            print("ERROR: DIRECTION su configurazione non riconosciuto. IO: %s" %board)
-                            # continue
+                if direction == 'input':
+                    byte2 = self.mapiotype[board_id][logic_io]['pullup']
+                    byte3 = 0
+                elif direction == 'output':
+                    default_startup_value = self.mapiotype[board_id][logic_io]['default_startup_value']
+                    default_startup_value = default_startup_value
+                    byte2, byte3 = self.calcAddressLsMs8(default_startup_value)
+                elif io_type == 'i2c' or io_type == 'onewire' or io_type == 'onewire_test':
+                    byte2 = byte3 = 0
+                else:
+                    byte2 = byte3 = 0
+                    print("ERROR: DIRECTION su configurazione non riconosciuto. IO: %s" %board)
+                    # continue
 
 
 
-                        if io_type == 'analog' or io_type == 'digital':
-                            byte4 = 0 if not 'n_refresh_on' in boards.get(board) else int(boards.get(board)['n_refresh_on'])  # Byte 4: rinfreschi rete sui fronti ON
-                            byte4 |= 0 if not 'n_refresh_off' in boards.get(board) else int(boards.get(board)['n_refresh_off']) << 3  # Byte 4: rinfreschi rete sui fronti OFF
-                        else:
-                            byte4 = 0
+                if io_type == 'analog' or io_type == 'digital':
+                    byte4 = self.mapiotype[board_id][logic_io]['n_refresh_on']  # Byte 4: rinfreschi rete sui fronti ON
+                    print("----", self.mapiotype[board_id][logic_io]['n_refresh_on'], self.mapiotype[board_id][logic_io]['n_refresh_off'])    
+                    byte4 |= self.mapiotype[board_id][logic_io]['n_refresh_off'] << 3  # Byte 4: rinfreschi rete sui fronti OFF
+                else:
+                    byte4 = 0
 
-                        inverted = 0 if 'inverted' not in boards.get(board) else int(boards.get(board)['inverted'])
-                        if inverted:  # Invert OUTPUT. Se inverted, lo stato ON in uscita di un rele si ha con lo stato zero.
-                            byte4 |= 128
-                        # byte5 = int(boards.get(board)['time_refresh']) & 255  # Byte 5: rinfresco periodico ls in decimi di secondo
-                        # byte6 = int(boards.get(board)['time_refresh']) >> 8  # Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
-                        byte5, byte6 = self.calcAddressLsMs8(int(boards.get(board)['time_refresh']))# Byte 5: rinfresco periodico ls in decimi di secondo, Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
-                        # print("RINFRESCHI", byte5, byte6)
+                if self.mapiotype[board_id][logic_io]['inverted']:  # Invert OUTPUT. Se inverted, lo stato ON in uscita di un rele si ha con lo stato zero.
+                    byte4 |= 128
 
-                        if io_type == 'analog' or io_type == 'digital':
-                            byte7 = 0 if not 'filter' in boards.get(board) else int(boards.get(board)['filter'])
-                        else:
-                            byte7 = 0
+                # byte5 = int(boards.get(board)['time_refresh']) & 255  # Byte 5: rinfresco periodico ls in decimi di secondo
+                # byte6 = int(boards.get(board)['time_refresh']) >> 8  # Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
+                byte5, byte6 = self.calcAddressLsMs8(self.mapiotype[board_id][logic_io]['time_refresh'])# Byte 5: rinfresco periodico ls in decimi di secondo, Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
+                # print("RINFRESCHI", byte5, byte6)
 
-                        message_conf_app.append(self.BOARD_ADDRESS)  # Mio indirizzo IDBUS
-                        message_conf_app.append(self.code['CR_WR_EE'])  # Comando scrittura EEPROM, 4 per leggere
-                        message_conf_app.append(idbus)  # IDBUS Board destinazione
-                        message_conf_app.append(eels)  # Indirizzo scrittura EE ls
-                        message_conf_app.append(eems)  # Indirizzo scrittura EE ms
-                        message_conf_app.append(byte0)  # Port fisico
-                        message_conf_app.append(byte1)  # Definizione input / output
-                        message_conf_app.append(byte2)  # Valore default LS
-                        message_conf_app.append(byte3)  # Valore default MS
-                        message_conf_app.append(byte4)  # rinfreschi rete sui fronti ON / OFF
-                        message_conf_app.append(byte5)  # Byte 5: rinfresco periodico ls
-                        message_conf_app.append(byte6)  # Byte 6: rinfresco periodico ms
-                        message_conf_app.append(byte7)  # Byte 7:  Filtro
+                if io_type == 'analog' or io_type == 'digital':
+                    byte7 = self.mapiotype[board_id][logic_io]['filter']
+                else:
+                    byte7 = 0
 
-                       # print("TRAMA CONFIGURAZIONE:             ", message_conf_app)
+                message_conf_app.append(self.BOARD_ADDRESS)  # Mio indirizzo IDBUS
+                message_conf_app.append(self.code['CR_WR_EE'])  # Comando scrittura EEPROM, 4 per leggere
+                message_conf_app.append(board_id)  # board_id destinazione
+                message_conf_app.append(eels)  # Indirizzo scrittura EE ls
+                message_conf_app.append(eems)  # Indirizzo scrittura EE ms
+                message_conf_app.append(byte0)  # Port fisico
+                message_conf_app.append(byte1)  # Definizione input / output
+                message_conf_app.append(byte2)  # Valore default LS
+                message_conf_app.append(byte3)  # Valore default MS
+                message_conf_app.append(byte4)  # rinfreschi rete sui fronti ON / OFF
+                message_conf_app.append(byte5)  # Byte 5: rinfresco periodico ls
+                message_conf_app.append(byte6)  # Byte 6: rinfresco periodico ms
+                message_conf_app.append(byte7)  # Byte 7:  Filtro
+
+                #print("TRAMA CONFIGURAZIONE:             ", message_conf_app)
+            
+                msg.append(message_conf_app)
+                # msg.append(self.initIO(board_id, logic_io))  # iNIt io
+
+                # Funzioni PLC:
+                # 0 DISABLE -> se non si usa il PLC
+                # 1 EQUAL -> funzione "="
+                # 2 AND
+                # 3 OR
+                # 4 XOR
+                # 5 ODD -> Funzione DISPARI
+                # 6 TOGGLE_ON -> su fronte ON
+                # 7 TOGGLE_OFF -> su fronte OFF
+                # 8 TOGGLE_ON_OFF su fronte ON OFF
+                # 9 TIMER
+                # 30 POWER_ON => Uscita per comandare il rele di reset alimentazione RAPBERRY quando non risponde sulla seriale per un certo tempo.
+                # OR 128 = uscita negata
+
+                # Ogni uscita con funzione associata ad ingressi digitali puo' avere al massimo 8 ingressi
+                # Ogni uscita con funzione associata ad ingressi analogici puo' avere al massimo 2 ingressi
+
+                """
+                OFFSET 8: codice funzione PLC
+                """
+                plc_function =  {
+                    'disable': 0,
+                    'equal': 1,
+                    'nequal': 1 | 128,
+                    'and': 2,
+                    'nand': 2 | 128,
+                    'or': 3,
+                    'nor': 3 | 128,
+                    'xor': 4,
+                    'nxor': 4 | 128,
+                    'odd': 5,
+                    'even': 5 | 128,
+                    'toggle_on': 6,
+                    'toggle_off': 7,
+                    'toggle_on_off': 8,
+                    'timer': 9,
+                    'ntimer': 9 | 128,
+                    'autostart_timer': 10,
+                    'nautostart_timer': 10 | 128,
+                    'test_nio_>=_n': 11,
+                    'ntest_nio_>=_n': 11 | 128,
+                    'test_nio_into_n': 12,
+                    'ntest_nio_into_n': 12 | 128,
+                    'test_schmitt_nio': 13,
+                    'ntest_schmitt_nio': 13 | 128,
+                    'or_transition_on': 15,
+                    'nor_transition_on': 15 | 128,
+                    'or_transition_on_all': 16,
+                    'nor_transition_on_all': 16 | 128,
+                    'analog_in_=_n': 20,
+                    'nanalog_in_=_n': 20 | 128,
+                    'analog_in_>_n': 21,
+                    'nanalog_in_>_n': 21 | 128,
+                    'analog_in_>=_n': 22,
+                    'nanalog_in_>=_n': 22 | 128,
+                    'analog_in_schmitt_n': 23,
+                    'nanalog_in_schmitt_n': 23 | 128,
+                    'if_analog_in1_=_analog_in2': 24,
+                    'nif_analog_in1_=_analog_in2': 24 | 128,
+                    'if_analog_in1_>_analog_in2': 25,
+                    'nif_analog_in1_>_analog_in2': 25 | 128,
+                    'if_analog_in1_>=_analog_in2': 26,
+                    'nif_analog_in1_>=_analog_in2': 26 | 128,
+                    'if_analog_in1_-_analog_in2_schmitt_value': 27,
+                    'nif_analog_in1_-_analog_in2_schmitt_value': 27 | 128,
+                    'last_change': 28,
+                    'nlast_change': 28 | 128,
+                    'last_change_all': 29,
+                    'nlast_change_all': 29 | 128,
+                    'power_on': 30, # Funzione che gestische l'alimentazione raspberry
+                    'counter_up': 32,
+                    'counter_dw': 33,
+                    'counter_up_dw': 34,
+                    'time_meter': 35,
+                    'powermeter': 36,
+                    'analog_in_+_n': 40,
+                    'analog_in_-_n': 41,
+                    'analog_in_*_n': 42,
+                    'analog_in_/_n': 43,
+                    'analog_in_%_n': 44,
+                    'analog_in_min_n': 45,
+                    'analog_in_max_n': 46,
+                    'analog_in1_+_analog_in2': 50,
+                    'analog_in1_-_analog_in2': 51,
+                    'analog_in1_*_analog_in2': 52,
+                    'analog_in1_/_analog_in2': 53,
+                    'analog_in1_%_analog_in2': 54,
+                    'analog_in1_min_analog_in2': 55,
+                    'analog_in1_max_analog_in2': 56,
+                    'sampletrigger': 60,
+                }
+
+                sbyte8 = self.mapiotype[board_id][logic_io]['plc_function']
+                # print("PLC_FUNCTION:************************", plc_function[byte8], byte8)
+
+                if sbyte8 == "disable":
+                    # print("PLC DISABILITATO", logic_io, plc_function[sbyte8])
+                    message_conf_app.append(0)
+
+                else:  # byte8 != "disable":
+                    # if inverted:
+                        # plc_function[byte8] ^= 0x80
+                    plc_params = self.mapiotype[board_id][logic_io]['plc_params']
+                    plc = []
+
+                    message_conf_app.append(plc_function[sbyte8])
+                    list_plc_linked_board_id_logic_io = []
                     
-                        msg.append(message_conf_app)
-                        # msg.append(self.initIO(idbus, io_logic))  # iNIt io
-
-                        # Funzioni PLC:
-                        # 0 DISABLE -> se non si usa il PLC
-                        # 1 EQUAL -> funzione "="
-                        # 2 AND
-                        # 3 OR
-                        # 4 XOR
-                        # 5 ODD -> Funzione DISPARI
-                        # 6 TOGGLE_ON -> su fronte ON
-                        # 7 TOGGLE_OFF -> su fronte OFF
-                        # 8 TOGGLE_ON_OFF su fronte ON OFF
-                        # 9 TIMER
-                        # 30 POWER_ON => Uscita per comandare il rele di reset alimentazione RAPBERRY quando non risponde sulla seriale per un certo tempo.
-                        # OR 128 = uscita negata
-
-                        # Ogni uscita con funzione associata ad ingressi digitali puo' avere al massimo 8 ingressi
-                        # Ogni uscita con funzione associata ad ingressi analogici puo' avere al massimo 2 ingressi
-
-                        """
-                        OFFSET 8: codice funzione PLC
-                        """
-                        plc_function =  {
-                            'disable': 0,
-                            'equal': 1,
-                            'nequal': 1 | 128,
-                            'and': 2,
-                            'nand': 2 | 128,
-                            'or': 3,
-                            'nor': 3 | 128,
-                            'xor': 4,
-                            'nxor': 4 | 128,
-                            'odd': 5,
-                            'even': 5 | 128,
-                            'toggle_on': 6,
-                            'toggle_off': 7,
-                            'toggle_on_off': 8,
-                            'timer': 9,
-                            'ntimer': 9 | 128,
-                            'autostart_timer': 10,
-                            'nautostart_timer': 10 | 128,
-                            'test_nio_>=_n': 11,
-                            'ntest_nio_>=_n': 11 | 128,
-                            'test_nio_into_n': 12,
-                            'ntest_nio_into_n': 12 | 128,
-                            'test_schmitt_nio': 13,
-                            'ntest_schmitt_nio': 13 | 128,
-                            'or_transition_on': 15,
-                            'nor_transition_on': 15 | 128,
-                            'or_transition_on_all': 16,
-                            'nor_transition_on_all': 16 | 128,
-                            'analog_in_=_n': 20,
-                            'nanalog_in_=_n': 20 | 128,
-                            'analog_in_>_n': 21,
-                            'nanalog_in_>_n': 21 | 128,
-                            'analog_in_>=_n': 22,
-                            'nanalog_in_>=_n': 22 | 128,
-                            'analog_in_schmitt_n': 23,
-                            'nanalog_in_schmitt_n': 23 | 128,
-                            'if_analog_in1_=_analog_in2': 24,
-                            'nif_analog_in1_=_analog_in2': 24 | 128,
-                            'if_analog_in1_>_analog_in2': 25,
-                            'nif_analog_in1_>_analog_in2': 25 | 128,
-                            'if_analog_in1_>=_analog_in2': 26,
-                            'nif_analog_in1_>=_analog_in2': 26 | 128,
-                            'if_analog_in1_-_analog_in2_schmitt_value': 27,
-                            'nif_analog_in1_-_analog_in2_schmitt_value': 27 | 128,
-                            'last_change': 28,
-                            'nlast_change': 28 | 128,
-                            'last_change_all': 29,
-                            'nlast_change_all': 29 | 128,
-                            'power_on': 30, # Funzione che gestische l'alimentazione raspberry
-                            'counter_up': 32,
-                            'counter_dw': 33,
-                            'counter_up_dw': 34,
-                            'time_meter': 35,
-                            'powermeter': 36,
-                            'analog_in_+_n': 40,
-                            'analog_in_-_n': 41,
-                            'analog_in_*_n': 42,
-                            'analog_in_/_n': 43,
-                            'analog_in_%_n': 44,
-                            'analog_in_min_n': 45,
-                            'analog_in_max_n': 46,
-                            'analog_in1_+_analog_in2': 50,
-                            'analog_in1_-_analog_in2': 51,
-                            'analog_in1_*_analog_in2': 52,
-                            'analog_in1_/_analog_in2': 53,
-                            'analog_in1_%_analog_in2': 54,
-                            'analog_in1_min_analog_in2': 55,
-                            'analog_in1_max_analog_in2': 56,
-                            'sampletrigger': 60,
-                        }
-
-                        # pprint(boards.get(board))
-                        sbyte8 = 'disable' if not 'plc_function' in boards.get(board) or boards.get(board)['plc_function'] == 'disable' else boards.get(board)['plc_function']
-                        # print("PLC_FUNCTION:************************", plc_function[byte8], byte8)
-
-                        if sbyte8 == "disable" or not enable:
-                            # print("PLC DISABILITATO", io_logic, plc_function[sbyte8])
-                            message_conf_app.append(0)
-
-                        else:  # byte8 != "disable":
-                            # if inverted:
-                                # plc_function[byte8] ^= 0x80
-                            plc_params = 0 if not 'plc_params' in boards.get(board) else boards.get(board)['plc_params']
-                            plc = []
-
-                            message_conf_app.append(plc_function[sbyte8])
-                            list_plc_linked_board_id_io_logic = []
-                            
-                            if sbyte8 == 'power_on':
-                                
-                                bio_linked = self.mapiotype[idbus][io_logic]['plc_linked_board_id_io_logic'][0].split("-")
-                                
-                                Rgnd = self.mapiotype[int(bio_linked[0])][int(bio_linked[1])]['Rgnd']
-                                Rvcc = self.mapiotype[int(bio_linked[0])][int(bio_linked[1])]['Rvcc']
-                                power_on_voltage_on = self.mapiotype[idbus][io_logic]['power_on_voltage_on']
-                                
-                                value_dac_in = self.ADC_value(float(power_on_voltage_on), Rvcc, Rgnd)
-                                # self.poweron_linked=1111
-                                
-                                
-                                plc += [int(bio_linked[1])] + list(self.calcAddressLsMs8(int(self.mapiotype[idbus][io_logic]['power_on_timeout']))) + list(self.calcAddressLsMs8(int(self.mapiotype[idbus][io_logic]['power_on_timeout']))) + list(self.calcAddressLsMs8(value_dac_in))
-                                # print("POWER_ON data:", byte8, value_dac_in, plc)
-                                
-
-                            else:  # Funzione PLC
-                                plc_xor_input = 0
-                                plc_linked_board_id_io_logic = [] if not 'plc_linked_board_id_io_logic' in boards.get(board) else boards.get(board)['plc_linked_board_id_io_logic']
-                                if plc_linked_board_id_io_logic:
-                                    
-                                    for plc_bio in plc_linked_board_id_io_logic:
-                                        plc_bio = plc_bio.split("-")      # esempi: 5-8 !5-8  !15-8 *-8  !*-8   /*-8
-                                        
-                                        if plc_bio[0][0] == '!':  # sistema la negazione degli ingressi
-                                            plc_bio[0] = plc_bio[0][1:]
-                                            plc_xor_input = plc_xor_input * 2 + 1
-                                        else:
-                                            plc_xor_input = plc_xor_input * 2
-                                        
-                                        if '*' in plc_bio[0]:  # sistema asterisco con stesso id-board eliminando i casi 1* *7
-                                           plc_bio[0] = idbus 
-                                            
-                                        list_plc_linked_board_id_io_logic.append(int(plc_bio[0]))
-                                        list_plc_linked_board_id_io_logic.append(int(plc_bio[1]))
-                                else:
-                                    print("BOARD_ID and IO_LOGIC not defined on CONFIGURATION File")
-
-                                plc_xor_input_old = 0 if not 'plc_xor_input' in boards.get(board) else int(boards.get(board)['plc_xor_input'])
-                                if plc_xor_input_old:
-                                    print("""NON USARE la Funzione: plc_xor_input. Per negare gli ingressi, mettere il carattere ! prima dell'board_id. 
-                                    Es:  "plc_linked_board_id_io_logic": ["!18-3", "17-3"]""")
-                                    sys.exit()
-                                
-                                plc.append(plc_xor_input)  # OFFSET 31: BYTE con NEGAZIONE ingressi. Mettere davanti a plc_linked_board_id_io_logic il carattere ! per negare gli ingresso
-
-                                plc_preset_input = 0 if not 'plc_preset_input' in boards.get(board) else int(boards.get(board)['plc_preset_input'])
-                                plc.append(plc_preset_input)  # OFFSET 30: BYTE PRESET valore default prima che arrivino i dati dalla rete
-
-                                
-                                plc.append(len(plc_linked_board_id_io_logic))  # OFFSET 29: Numero ingressi per la funzione PLC
-                                
-                                # print("list_plc_linked_board_id_io_logic", list_plc_linked_board_id_io_logic)
-                                plc += list_plc_linked_board_id_io_logic
-                                
-                                # if plc_linked_board_id_io_logic:
-                                #     for plc_bio in plc_linked_board_id_io_logic:
-                                #         plc_bio = plc_bio.split("-")
-                                #         plc.append(int(plc_bio[0]))  # OFFSET 28: BOARD_ID
-                                #         plc.append(int(plc_bio[1]))  # OFFSET 27: IO_LOGICO
-                                # else:
-                                #     print("BOARD_ID and IO_LOGIC not defined on CONFIGURATION File")
-                                
-                                print("Funzione PLC:", sbyte8)
-                                if sbyte8 in ["timer", "ntimer", "autostart_timer", "nautostart_timer"]:
-                                    # Se timer, dopo elenco di BOARD_ID e IO_LOGIC, seguono questi parametri:
-                                    # Modo TIMER:   b1:b0
-                                    #                       0:0 innesca su fronte ON e su fronte OFF (se b2==1 => b0=stato uscita)
-                                    #                       0:1 innesca su fronte ON (se b2==1 => Con che valore partire)
-                                    #                       1:0 spegne su fronte OFF
-                                    #                       1:1 innesca su fronte ON e spegne su fronte OFF
-                                    #               b3:b2
-                                    #                       0:0 Non usato
-                                    #                       0:1 Uscita ferma con ingresso a 1 (b0 indica lo stato di uscita ferma e b1 indica lo stato di partenza per l'uscita)
-                                    #                       1:0 sospende conteggio con ingresso a 1
-                                    #                       1:1 partenza con stato off per inneschi normali
-                                    #               b5:b4
-                                    #                       0:0 esclusi inneschi con timer innescato
-                                    #                       0:1 se arriva innesco, reinit tempo timer
-                                    #                       1:0 se arriva innesco, somma tempo timer al tempo residuoi
-                                    #                       1:1 se arriva innesco, cambia stato timer
-                                    #               b6 e b7: 0 0 centesimi di secondo
-                                    #               b6 e b7: 1 0 decimi di secondo
-                                    #               b6 e b7: 0 1 secondi
-                                    #               b6 e b7: 1 1 2.5 secondi
-                                    # Byte: numero massimo di commutazioni. 0 = infinito
-                                    # Byte: Tempo ON LS
-                                    # Byte: Tempo ON MS
-                                    # Byte: Tempo OFF LS
-                                    # Byte: Tempo OFF MS
-
-                                    plc_mode_timer = 0 if not 'plc_mode_timer' in boards.get(board) else int(boards.get(board)['plc_mode_timer'])
-
-                                    plc_time_unit = 0.01 if not 'plc_time_unit' in boards.get(board) else boards.get(board)['plc_time_unit']
-                                    # Unità di tempo
-                                    plc_time_unit_app = 0
-                                    if plc_time_unit == 1:
-                                        plc_time_unit_app = 0x80
-                                    elif plc_time_unit == 0.1:
-                                        plc_time_unit_app = 0x40
-                                    elif plc_time_unit == 0.01:  # Centesimi
-                                        plc_time_unit_app = 0
-                                    elif plc_time_unit == 2.5:
-                                        plc_time_unit_app = 0xC0
-                                    
-                                    plc.append((plc_mode_timer & 0x3F) | plc_time_unit_app)
-
-                                    plc_timer_n_transitions = 0 if not 'plc_timer_n_transitions' in boards.get(board) else int(boards.get(board)['plc_timer_n_transitions'])
-                                    if plc_timer_n_transitions > 255:
-                                        print("ERRORE CONFIGURATION: plc_timer_n_transitions 0...255")
-                                        sys.exit()
-                                    plc.append(plc_timer_n_transitions)
-
-                                    plc_time_on = 0 if not 'plc_time_on' in boards.get(board) else int(boards.get(board)['plc_time_on'])
-                                    # plc.append(plc_time_on & 255)
-                                    # plc.append(plc_time_on >> 8)
-                                    plc += list(self.calcAddressLsMs8(plc_time_on))
-
-                                    plc_time_off = 0 if not 'plc_time_off' in boards.get(board) else int(boards.get(board)['plc_time_off'])
-                                    # plc.append(plc_time_off & 255)
-                                    # plc.append(plc_time_off >> 8)
-                                    plc += list(self.calcAddressLsMs8(plc_time_off))
-
-                                elif sbyte8 in ["equal", "nequal"]:
-
-                                    plc_time_unit = 0.01 if not 'plc_time_unit' in boards.get(board) else boards.get(board)['plc_time_unit']
-
-                                    # Unità di tempo
-                                    if plc_time_unit == 1:
-                                        plc.append(0x80)
-                                    elif plc_time_unit == 0.1:
-                                        plc.append(0x40)
-                                    elif plc_time_unit == 0.01:  # Centesimi
-                                        plc.append(0)
-                                    elif plc_time_unit == 2.5:
-                                        plc.append(0xC0)
-
-                                    plc.append(0) # Numero massimo di coomutazioni (ignorato)
-
-                                    plc_delay_on_off = 0 if not 'plc_delay_on_off' in boards.get(board) else int(boards.get(board)['plc_delay_on_off'])
-                                    # plc.append(plc_delay_on_off & 0xff)
-                                    # plc.append(plc_delay_on_off >> 8)
-                                    plc += list(self.calcAddressLsMs8(plc_delay_on_off))
-
-                                    plc_delay_off_on = 0 if not 'plc_delay_off_on' in boards.get(board) else int(boards.get(board)['plc_delay_off_on'])
-                                    # plc.append(plc_delay_off_on & 0xff)
-                                    # plc.append(plc_delay_off_on >> 8)
-                                    plc += list(self.calcAddressLsMs8(plc_delay_off_on))
-
-                                elif sbyte8 in ['test_nio_>_n', 'ntest_nio_>_n', 'test_nio_into_n', 'ntest_nio_into_n', 'test_schmitt_nio', 'ntest_schmitt_nio']:
-                                    plc_params_val = int(plc_params)
-                                    plc.append(plc_params_val)
-
-                                elif sbyte8 in ['analog_in_=_n', 'nanalog_in_=_n', 'analog_in_>_n', 'nanalog_in_>_n', 'analog_in_>=_n', 'nanalog_in_>=_n']:
-                                    plc_params_val = int(plc_params)
-                                    # plc.append(plc_params_val & 255)
-                                    # plc.append(plc_params_val >> 8)
-                                    plc += list(self.calcAddressLsMs8(plc_params_val))
-
-                                elif sbyte8 in ['analog_in_schmitt_n','nanalog_in_schmitt_n']:
-                                    plc_params_val = list(plc_params)
-                                    # plc.append(plc_params_val[0] & 255)
-                                    # plc.append(plc_params_val[0] >> 8)
-                                    plc += list(self.calcAddressLsMs8(plc_params_val[0]))
-                                    # plc.append(plc_params_val[1] & 255)
-                                    # plc.append(plc_params_val[1] >> 8)
-                                    plc += list(self.calcAddressLsMs8(plc_params_val[1]))
-
-                                elif sbyte8 in ['if_analog_in1_=_analog_in2', 'nif_analog_in1_=_analog_in2', 'if_analog_in1_>_analog_in2', 'nif_analog_in1_>_analog_in2', 'if_analog_in1_>=_analog_in2', 'nif_analog_in1_>=_analog_in2']:
-                                    pass
-
-                                elif sbyte8 in ['if_analog_in1_-_analog_in2_schmitt_value','nif_analog_in1_-_analog_in2_schmitt_value']:
-                                    plc_params_val = list(plc_params)
-                                    # plc.append(plc_params_val[0] & 255)
-                                    # plc.append(plc_params_val[0] >> 8)
-                                    plc += list(self.calcAddressLsMs8(plc_params_val[0]))
-                                    # plc.append(plc_params_val[1] & 255)
-                                    # plc.append(plc_params_val[1] >> 8)
-                                    plc += list(self.calcAddressLsMs8(plc_params_val[1]))
-
-                                elif sbyte8 == 'last_change':
-                                    pass
-
-                                elif sbyte8 == 'last_change_all':
-                                    pass
-
-                                elif sbyte8 in ['analog_in_+_n', 'analog_in_-_n', 'analog_in_*_n', 'analog_in_/_n', 'analog_in_%_n', 'analog_in_min_n', 'analog_in_max_n']:
-
-                                    plc_params_val = int(plc_params)
-                                    # plc.append(plc_params_val & 255)
-                                    # plc.append(plc_params_val >> 8)
-                                    plc += list(self.calcAddressLsMs8(plc_params_val))
-
-                                elif sbyte8 in ['analog_in1_+_analog_in2', 'analog_in1_-_analog_in2', 'analog_in1_*_analog_in2', 'analog_in1_/_analog_in2', \
-                                                'analog_in1_/_analog_in2', 'analog_in1_%_analog_in2', 'analog_in1_min_analog_in2', 'analog_in1_max_analog_in2']:
-                                    pass
-
-                                elif sbyte8 in ['counter_up', 'counter_dw']:
-                                    counter_mode = 0 if not 'counter_mode' in boards.get(board) else int(boards.get(board)['counter_mode'])
-                                    plc.append(counter_mode)
-                                    counter_filter = 0 if not 'counter_filter' in boards.get(board) else int(boards.get(board)['counter_filter'])
-                                    plc.append(counter_filter)
-                                    counter_timeout = 0 if not 'counter_timeout' in boards.get(board) else int(boards.get(board)['counter_timeout'])
-                                    # plc.append(counter_timeout & 255)
-                                    # plc.append(counter_timeout >> 8)
-                                    plc += list(self.calcAddressLsMs8(counter_timeout))
-
-                                elif sbyte8 == 'time_meter':
-                                    counter_mode = 0 if not 'counter_mode' in boards.get(board) else int(boards.get(board)['counter_mode'])
-                                    plc.append(counter_mode)
-                                    counter_filter = 0 if not 'counter_filter' in boards.get(board) else int(boards.get(board)['counter_filter'])
-                                    plc.append(counter_filter)
-                                    counter_timeout = 0 if not 'counter_timeout' in boards.get(board) else int(boards.get(board)['counter_timeout'])
-                                    # plc.append(counter_timeout & 255)
-                                    # plc.append(counter_timeout >> 8)
-                                    plc += list(self.calcAddressLsMs8(counter_timeout))
-
-                                elif sbyte8 == 'powermeter':
-                                    counter_mode = 0 if not 'counter_mode' in boards.get(board) else int(boards.get(board)['counter_mode'])
-                                    plc.append(counter_mode)
-                                    counter_filter = 0 if not 'counter_filter' in boards.get(board) else int(boards.get(board)['counter_filter'])
-                                    plc.append(counter_filter)
-                                    counter_timeout = 0 if not 'counter_timeout' in boards.get(board) else int(boards.get(board)['counter_timeout'])
-                                    # plc.append(counter_timeout & 255)
-                                    # plc.append(counter_timeout >> 8)
-                                    plc += list(self.calcAddressLsMs8(counter_timeout))
-                                    counter_min_period_time = 0 if not 'counter_min_period_time' in boards.get(board) else int(boards.get(board)['counter_min_period_time'])
-                                    plc.append(counter_min_period_time)
-                                    powermeter_k = 0 if not 'powermeter_k' in boards.get(board) else int(boards.get(board)['powermeter_k'])
-                                    # plc.append(powermeter_k & 255)
-                                    # plc.append(powermeter_k >> 8)
-                                    #plc += [powermeter_k & 255, powermeter_k >> 8]
-                                    plc += list(self.calcAddressLsMs8(powermeter_k))
-
-                                elif sbyte8 == 'or' or sbyte8 == 'odd' or sbyte8 == 'even' or sbyte8 == 'toggle_off' or sbyte8 == 'toggle_on' or sbyte8 == 'toggle_on_off'  :
-                                    pass
-
-
-                                else:
-                                    log.write('FUNZIONE PLC NON TROVATA: %s' %sbyte8)    
-                                    sys.exit()
-
-                            plclen = len(plc)
-                            print("CONFIGURAZIONE PLC =======>>>>>: ", plc)
-                            plc.reverse()
-
-                            plc_EE_start = (io_logic * 32) + 32 - plclen
-                            plc_data = self.writeEEadd(idbus, plc_EE_start, plc)
-                            # print("PLC_DATA:", plc_data)
-                            msg.append(plc_data)
-
-                        # Configurazione relativa ai sensori I2C e OneWire
-
-                        if io_type == 'i2c':
-                            if device_name == 'PCA9535':
-                                print("==>> Inserisce trama di confgurazione I2C per PCA9535")
-                                # msg.append(self.writeEE(idbus, eels + 10, eems, [5, 3, 0x4e, 2, 0x0a, 0xa0]))
-                                # msg.append(self.writeEE(idbus, eels + 16, eems, [5, 3, 0x4e, 6, 0, 0])) # Impostare direzione OUT (inizializzazione)
-                                # msg.append(self.writeEE(idbus, eels + 22, eems, [5, 3, 0x4e, 2, 0xa0, 0x0a]))
-                            elif device_name == 'BME280':
-                                if self.EEPROM_LANGUAGE == 0:
-                                    print("EEPROM_LANGUAGE OLD")
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 10, [3 | self.i2c_const['CONCATENA'], 1 | 8, 0xec, 0xf7]))  # 3|128: 128 per concatenare con prg. successivo), 32 reset +
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 64, 0xec | 1]))  # 2|64: lettura I2C. 3+64: 64 byte da leggere
-
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 17, [4 | self.i2c_const['CONCATENA'], 3 | 32, 0xec, 0xf2, 0x03]))  # Inizializzazione BME e Oversampling umidità
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 22, [4 | self.i2c_const['NON_CONCATENA'], 3, 0xec, 0xf4, 0x8f]))  # Inizializzazione BME temperatura + pressione  (Oversampling)
-                                elif self.EEPROM_LANGUAGE == 1:
-                                    print("EEPROM_LANGUAGE NEW")
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 10, [3, 1 | 8, 0xec, 0xf7]))  # 3|128: 128 per concatenare con prg. successivo), 32 reset +
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 64, 0xec | 1, 0]))  # 2|64: lettura I2C. 3+64: 64 byte da leggere
-
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 18, [4, 3 | 32, 0xec, 0xf2, 0x03]))  # Inizializzazione BME e Oversampling umidità
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 23, [4, 3, 0xec, 0xf4, 0x8f, 0]))  # Inizializzazione BME temperatura + pressione  (Oversampling)
-
-
-                            elif device_name == 'AM2320':
-                                print("CONFIGURAZIONE AM2320")
-                                if self.EEPROM_LANGUAGE == 0:  # vecchio linguaggio
-                                    i2cconf = []
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 10, [2 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0xb8]))  # 3|128: 128 per concatenare con prg. successivo), 32 reset +
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 13, [5 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'],  3, 0xb8, 0x03, 0x00, 0x04]))
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 19, [3 | self.i2c_const['FLAG_PAUSA'] | self.i2c_const['BYTE_OPZIONI_LETTURA'], 100, 3 | 64, 0xb9, 0 ]))
-                                elif self.EEPROM_LANGUAGE == 1:  # nuovo linguaggio
-                                    i2cconf = []
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 10, [2 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0xb8]))  #3=start+stop, 0xb8=indirizzo dispositivo*2 serve per risveglio dispositivo 
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 13, [5 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'],  3, 0xb8, 0x03, 0x00, 0x04]))  #3=start+stop, 0xb8=indirizzo dispositivo*2,03=?, 00=indirizzo primo byte da leggere, 4=numero byte da leggere 
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 19, [1 | self.i2c_const['FLAG_PAUSA'] , 100 ])) #100=decine di microsecondi di pausa, totale 1 ms
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 19, [3 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3|40 , 0xb9, 0, 0, 0 ])) #3=start+stop|40=numero byte da leggere*8=5*8, 5 perchè servono 4 byte e inizia col numero di byte (4)+b,b,b,b, 0xb9=indirizzo dispositivo+flag lettura, 0=nessun programma seguente, 0=nessun programma setup
-                                msg.extend(i2cconf)
-
-                            elif device_name == 'TSL2561':
-                                print("CONFIGURAZIONE TSL2561")
-                                if self.EEPROM_LANGUAGE == 0:
-                                    i2cconf = []
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 10, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC]))
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 14, [2 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 32, 0x72 | 1  ]))
-
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 17, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x80]))
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 21, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03]))
-                                
-                                elif self.EEPROM_LANGUAGE == 1:
-                                    i2cconf = []
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 10, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC]))
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 32, 0x72 | 1  ]))
-
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 17, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x80]))
-                                    i2cconf.append(self.writeEEnIOoffset(idbus, io_logic, 21, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03, 0, 0]))
-
-                                msg.extend(i2cconf)
-                                # print("CONFIGURAZIONE I2C:", i2cconf)
-
-                        elif io_type == 'onewire':
-                            if device_name == 'DS18B20':
-                                if self.EEPROM_LANGUAGE == 0:
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 10, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0xcc, 0x44]))  # num. byte, byte opzioni, campionamento di tutte le sonde, campiona temperatura
-                                    address = 0 if 'address' not in boards.get(board) else boards.get(board).get('address')
-                                    print("ADDRESS ID ONE WIRE:", address)                                 
-                                    if address:
-                                        address = [int(x, 16) for x in address]
-                                        msg.append(self.writeEEnIOoffset(idbus, io_logic, 14, [11 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0x55] + address +  [0xbe, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp
-                                    else:
-                                        msg.append(self.writeEEnIOoffset(idbus, io_logic, 14, [3 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0xCC] + [0xbe, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp
-
-                                elif  self.EEPROM_LANGUAGE == 1:  
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 10, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0xcc, 0x44]))  # num. byte, byte opzioni, campionamento di tutte le sonde, campiona temperatura
-                                    address = 0 if 'address' not in boards.get(board) else boards.get(board).get('address')
-                                    print("ADDRESS ID ONE WIRE:", address)
-                                    if address:
-                                        address = [int(x, 16) for x in address]
-                                        msg.append(self.writeEEnIOoffset(idbus, io_logic, 14, [11 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0x55] + address +  [0xbe, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp
-                                    else:
-                                        msg.append(self.writeEEnIOoffset(idbus, io_logic, 14, [3 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0xCC] + [0xbe, 0, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp                                
-                            
-                            elif device_name == 'GENERIC':
-                                # Go To programma di altro IO logico
-                                # print("WRITE_EE", write_ee, idbus, eels + 10, eems, [32 | 3, 0, 0])
-                                if write_ee:
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 10, [32 | 3, 0, 0]))  # [32: Go_TO | 3: IO logico, 0: offset (0=10), 0=non ci sono altri programmi da eseguire ]
-                                else:
-                                    print("********************")
-                                    msg.append(self.writeEEnIOoffset(idbus, io_logic, 10, [32 | 3, 0, 0]))  # [32: Go_TO | 3: IO logico, 0: offset (0=10), 0=non ci sono altri programmi da eseguire ]
+                    if sbyte8 == 'power_on':
                         
+                        bio_linked = self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io'][0].split("-")
+                        
+                        rgnd = self.mapiotype[int(bio_linked[0])][int(bio_linked[1])]['rgnd']
+                        rvcc = self.mapiotype[int(bio_linked[0])][int(bio_linked[1])]['rvcc']
+                        power_on_voltage_on = self.mapiotype[board_id][logic_io]['power_on_voltage_on']
+                        
+                        value_dac_in = self.ADC_value(float(power_on_voltage_on), rvcc, rgnd)
+                        # self.poweron_linked=1111
+                        
+                        
+                        plc += [int(bio_linked[1])] + list(self.calcAddressLsMs8(int(self.mapiotype[board_id][logic_io]['power_on_timeout']))) + list(self.calcAddressLsMs8(int(self.mapiotype[board_id][logic_io]['power_on_timeout']))) + list(self.calcAddressLsMs8(value_dac_in))
+                        # print("POWER_ON data:", byte8, value_dac_in, plc)
+                        
+
+                    else:  # Funzione PLC
+                        plc_xor_input = 0
+                        plc_linked_board_id_logic_io = self.mapiotype[int(bio_linked[0])][int(bio_linked[1])]['plc_linked_board_id_logic_io']
+
+                        if plc_linked_board_id_logic_io:
+                            
+                            for plc_bio in plc_linked_board_id_logic_io:
+                                plc_bio = plc_bio.split("-")      # esempi: 5-8 !5-8  !15-8 *-8  !*-8   /*-8
+                                
+                                if plc_bio[0][0] == '!':  # sistema la negazione degli ingressi
+                                    plc_bio[0] = plc_bio[0][1:]
+                                    plc_xor_input = plc_xor_input * 2 + 1
+                                else:
+                                    plc_xor_input = plc_xor_input * 2
+                                
+                                if '*' in plc_bio[0]:  # sistema asterisco con stesso id-board eliminando i casi 1* *7
+                                   plc_bio[0] = board_id 
+                                    
+                                list_plc_linked_board_id_logic_io.append(int(plc_bio[0]))
+                                list_plc_linked_board_id_logic_io.append(int(plc_bio[1]))
                         else:
-                            # If not I2C or OneWire, set 0, 0 at address 10 and 11.
-                            msg.append(self.writeEEnIOoffset(idbus, io_logic, 10, [0,0]))  # 0 = lunghezza programma periodico, 0 = lunghezza prg. inizializzazione
+                            print("BOARD_ID and logic_io not defined on CONFIGURATION File")
+
+                        plc_xor_input_old =  self.mapiotype[board_id][logic_io]['plc_xor_input']
+                        if plc_xor_input_old:
+                            print("""NON USARE la Funzione: plc_xor_input. Per negare gli ingressi, mettere il carattere ! prima dell'board_id. 
+                            Es:  "plc_linked_board_id_logic_io": ["!18-3", "17-3"]""")
+                            sys.exit()
+                        
+                        plc.append(plc_xor_input)  # OFFSET 31: BYTE con NEGAZIONE ingressi. Mettere davanti a plc_linked_board_id_logic_io il carattere ! per negare gli ingresso
+
+                        plc_preset_input =  self.mapiotype[board_id][logic_io]['plc_preset_input']
+                        plc.append(plc_preset_input)  # OFFSET 30: BYTE PRESET valore default prima che arrivino i dati dalla rete
+
+                        
+                        plc.append(len(plc_linked_board_id_logic_io))  # OFFSET 29: Numero ingressi per la funzione PLC
+                        
+                        # print("list_plc_linked_board_id_logic_io", list_plc_linked_board_id_logic_io)
+                        plc += list_plc_linked_board_id_logic_io
+                        
+                        # if plc_linked_board_id_logic_io:
+                        #     for plc_bio in plc_linked_board_id_logic_io:
+                        #         plc_bio = plc_bio.split("-")
+                        #         plc.append(int(plc_bio[0]))  # OFFSET 28: BOARD_ID
+                        #         plc.append(int(plc_bio[1]))  # OFFSET 27: logic_ioO
+                        # else:
+                        #     print("BOARD_ID and logic_io not defined on CONFIGURATION File")
+                        
+                        print("Funzione PLC:", sbyte8)
+                        if sbyte8 in ["timer", "ntimer", "autostart_timer", "nautostart_timer"]:
+                            # Se timer, dopo elenco di BOARD_ID e logic_io, seguono questi parametri:
+                            # Modo TIMER:   b1:b0
+                            #                       0:0 innesca su fronte ON e su fronte OFF (se b2==1 => b0=stato uscita)
+                            #                       0:1 innesca su fronte ON (se b2==1 => Con che valore partire)
+                            #                       1:0 spegne su fronte OFF
+                            #                       1:1 innesca su fronte ON e spegne su fronte OFF
+                            #               b3:b2
+                            #                       0:0 Non usato
+                            #                       0:1 Uscita ferma con ingresso a 1 (b0 indica lo stato di uscita ferma e b1 indica lo stato di partenza per l'uscita)
+                            #                       1:0 sospende conteggio con ingresso a 1
+                            #                       1:1 partenza con stato off per inneschi normali
+                            #               b5:b4
+                            #                       0:0 esclusi inneschi con timer innescato
+                            #                       0:1 se arriva innesco, reinit tempo timer
+                            #                       1:0 se arriva innesco, somma tempo timer al tempo residuoi
+                            #                       1:1 se arriva innesco, cambia stato timer
+                            #               b6 e b7: 0 0 centesimi di secondo
+                            #               b6 e b7: 1 0 decimi di secondo
+                            #               b6 e b7: 0 1 secondi
+                            #               b6 e b7: 1 1 2.5 secondi
+                            # Byte: numero massimo di commutazioni. 0 = infinito
+                            # Byte: Tempo ON LS
+                            # Byte: Tempo ON MS
+                            # Byte: Tempo OFF LS
+                            # Byte: Tempo OFF MS
+
+                            plc_mode_timer = self.mapiotype[board_id][logic_io]['plc_mode_timer']
+
+                            plc_time_unit = self.mapiotype[board_id][logic_io]['plc_time_unit']
+                            # Unità di tempo
+                            plc_time_unit_app = 0
+                            if plc_time_unit == 1:
+                                plc_time_unit_app = 0x80
+                            elif plc_time_unit == 0.1:
+                                plc_time_unit_app = 0x40
+                            elif plc_time_unit == 0.01:  # Centesimi
+                                plc_time_unit_app = 0
+                            elif plc_time_unit == 2.5:
+                                plc_time_unit_app = 0xC0
+                            
+                            plc.append((plc_mode_timer & 0x3F) | plc_time_unit_app)
+
+                            plc_timer_n_transitions = self.mapiotype[board_id][logic_io]['plc_timer_n_transitions']
+                            if plc_timer_n_transitions > 255:
+                                print("ERRORE CONFIGURATION: plc_timer_n_transitions 0...255")
+                                sys.exit()
+                            plc.append(plc_timer_n_transitions)
+
+                            plc_time_on = self.mapiotype[board_id][logic_io]['plc_time_on']
+                            # plc.append(plc_time_on & 255)
+                            # plc.append(plc_time_on >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_time_on))
+
+                            plc_time_off = self.mapiotype[board_id][logic_io]['plc_time_off']
+                            # plc.append(plc_time_off & 255)
+                            # plc.append(plc_time_off >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_time_off))
+
+                        elif sbyte8 in ["equal", "nequal"]:
+
+                            plc_time_unit = self.mapiotype[board_id][logic_io]['plc_time_unit']
+
+                            # Unità di tempo
+                            if plc_time_unit == 1:
+                                plc.append(0x80)
+                            elif plc_time_unit == 0.1:
+                                plc.append(0x40)
+                            elif plc_time_unit == 0.01:  # Centesimi
+                                plc.append(0)
+                            elif plc_time_unit == 2.5:
+                                plc.append(0xC0)
+
+                            plc.append(0) # Numero massimo di coomutazioni (ignorato)
+
+                            plc_delay_on_off = self.mapiotype[board_id][logic_io]['plc_delay_on_off']
+                            # plc.append(plc_delay_on_off & 0xff)
+                            # plc.append(plc_delay_on_off >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_delay_on_off))
+
+                            plc_delay_off_on = self.mapiotype[board_id][logic_io]['plc_delay_off_on']
+                            # plc.append(plc_delay_off_on & 0xff)
+                            # plc.append(plc_delay_off_on >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_delay_off_on))
+
+                        elif sbyte8 in ['test_nio_>_n', 'ntest_nio_>_n', 'test_nio_into_n', 'ntest_nio_into_n', 'test_schmitt_nio', 'ntest_schmitt_nio']:
+                            plc_params_val = int(plc_params)
+                            plc.append(plc_params_val)
+
+                        elif sbyte8 in ['analog_in_=_n', 'nanalog_in_=_n', 'analog_in_>_n', 'nanalog_in_>_n', 'analog_in_>=_n', 'nanalog_in_>=_n']:
+                            plc_params_val = int(plc_params)
+                            # plc.append(plc_params_val & 255)
+                            # plc.append(plc_params_val >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_params_val))
+
+                        elif sbyte8 in ['analog_in_schmitt_n','nanalog_in_schmitt_n']:
+                            plc_params_val = list(plc_params)
+                            # plc.append(plc_params_val[0] & 255)
+                            # plc.append(plc_params_val[0] >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_params_val[0]))
+                            # plc.append(plc_params_val[1] & 255)
+                            # plc.append(plc_params_val[1] >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_params_val[1]))
+
+                        elif sbyte8 in ['if_analog_in1_=_analog_in2', 'nif_analog_in1_=_analog_in2', 'if_analog_in1_>_analog_in2', 'nif_analog_in1_>_analog_in2', 'if_analog_in1_>=_analog_in2', 'nif_analog_in1_>=_analog_in2']:
+                            pass
+
+                        elif sbyte8 in ['if_analog_in1_-_analog_in2_schmitt_value','nif_analog_in1_-_analog_in2_schmitt_value']:
+                            plc_params_val = list(plc_params)
+                            # plc.append(plc_params_val[0] & 255)
+                            # plc.append(plc_params_val[0] >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_params_val[0]))
+                            # plc.append(plc_params_val[1] & 255)
+                            # plc.append(plc_params_val[1] >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_params_val[1]))
+
+                        elif sbyte8 == 'last_change':
+                            pass
+
+                        elif sbyte8 == 'last_change_all':
+                            pass
+
+                        elif sbyte8 in ['analog_in_+_n', 'analog_in_-_n', 'analog_in_*_n', 'analog_in_/_n', 'analog_in_%_n', 'analog_in_min_n', 'analog_in_max_n']:
+
+                            plc_params_val = int(plc_params)
+                            # plc.append(plc_params_val & 255)
+                            # plc.append(plc_params_val >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_params_val))
+
+                        elif sbyte8 in ['analog_in1_+_analog_in2', 'analog_in1_-_analog_in2', 'analog_in1_*_analog_in2', 'analog_in1_/_analog_in2', \
+                                        'analog_in1_/_analog_in2', 'analog_in1_%_analog_in2', 'analog_in1_min_analog_in2', 'analog_in1_max_analog_in2']:
+                            pass
+
+                        elif sbyte8 in ['counter_up', 'counter_dw']:
+                            counter_mode = self.mapiotype[board_id][logic_io]['counter_mode']
+                            plc.append(counter_mode)
+                            counter_filter = self.mapiotype[board_id][logic_io]['counter_filter']
+                            plc.append(counter_filter)
+                            counter_timeout = self.mapiotype[board_id][logic_io]['counter_timeout']
+                            # plc.append(counter_timeout & 255)
+                            # plc.append(counter_timeout >> 8)
+                            plc += list(self.calcAddressLsMs8(counter_timeout))
+
+                        elif sbyte8 == 'time_meter':
+                            counter_mode = self.mapiotype[board_id][logic_io]['counter_mode']
+                            plc.append(counter_mode)
+                            counter_filter = self.mapiotype[board_id][logic_io]['counter_filter']
+                            plc.append(counter_filter)
+                            counter_timeout = self.mapiotype[board_id][logic_io]['counter_timeout']
+                            # plc.append(counter_timeout & 255)
+                            # plc.append(counter_timeout >> 8)
+                            plc += list(self.calcAddressLsMs8(counter_timeout))
+
+                        elif sbyte8 == 'powermeter':
+                            counter_mode = self.mapiotype[board_id][logic_io]['counter_mode']
+                            plc.append(counter_mode)
+                            counter_filter = self.mapiotype[board_id][logic_io]['counter_filter']
+                            plc.append(counter_filter)
+                            counter_timeout = self.mapiotype[board_id][logic_io]['counter_timeout']
+                            # plc.append(counter_timeout & 255)
+                            # plc.append(counter_timeout >> 8)
+                            plc += list(self.calcAddressLsMs8(counter_timeout))
+                            counter_min_period_time = self.mapiotype[board_id][logic_io]['counter_min_period_time']
+                            plc.append(counter_min_period_time)
+                            powermeter_k = self.mapiotype[board_id][logic_io]['powermeter_k']
+                            # plc.append(powermeter_k & 255)
+                            # plc.append(powermeter_k >> 8)
+                            #plc += [powermeter_k & 255, powermeter_k >> 8]
+                            plc += list(self.calcAddressLsMs8(powermeter_k))
+
+                        elif sbyte8 == 'or' or sbyte8 == 'odd' or sbyte8 == 'even' or sbyte8 == 'toggle_off' or sbyte8 == 'toggle_on' or sbyte8 == 'toggle_on_off'  :
+                            pass
 
 
-                # print("ADD REBOOT")
-                # msg.append(self.boardReboot(idbus))
-        # msg.append(self.getTypeBoard(5))
-        # print("RESET TOTALE")
-        # msg.append(self.setMaxBoardAddress(self.MAX_BOARD_ADDRESS))
+                        else:
+                            log.write('FUNZIONE PLC NON TROVATA: %s' %sbyte8)    
+                            sys.exit()
+
+                    plclen = len(plc)
+                    print("CONFIGURAZIONE PLC =======>>>>>: ", plc)
+                    plc.reverse()
+
+                    plc_EE_start = (logic_io * 32) + 32 - plclen
+                    plc_data = self.writeEEadd(board_id, plc_EE_start, plc)
+                    # print("PLC_DATA:", plc_data)
+                    msg.append(plc_data)
+
+                # Configurazione relativa ai sensori I2C e OneWire
+                
+                #if io_type == 'i2c':
+                if device_type == 'PCA9535':
+                    print("==>> Inserisce trama di confgurazione I2C per PCA9535")
+                    # msg.append(self.writeEE(board_id, eels + 10, eems, [5, 3, 0x4e, 2, 0x0a, 0xa0]))
+                    # msg.append(self.writeEE(board_id, eels + 16, eems, [5, 3, 0x4e, 6, 0, 0])) # Impostare direzione OUT (inizializzazione)
+                    # msg.append(self.writeEE(board_id, eels + 22, eems, [5, 3, 0x4e, 2, 0xa0, 0x0a]))
+                elif device_type == 'BME280':
+                    if self.EEPROM_LANGUAGE == 0:
+                        print("EEPROM_LANGUAGE OLD")
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['CONCATENA'], 1 | 8, 0xec, 0xf7]))  # 3|128: 128 per concatenare con prg. successivo), 32 reset +
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 64, 0xec | 1]))  # 2|64: lettura I2C. 3+64: 64 byte da leggere
+
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 17, [4 | self.i2c_const['CONCATENA'], 3 | 32, 0xec, 0xf2, 0x03]))  # Inizializzazione BME e Oversampling umidità
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 22, [4 | self.i2c_const['NON_CONCATENA'], 3, 0xec, 0xf4, 0x8f]))  # Inizializzazione BME temperatura + pressione  (Oversampling)
+                    elif self.EEPROM_LANGUAGE == 1:
+                        print("EEPROM_LANGUAGE NEW")
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3, 1 | 8, 0xec, 0xf7]))  # 3|128: 128 per concatenare con prg. successivo), 32 reset +
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 64, 0xec | 1, 0]))  # 2|64: lettura I2C. 3+64: 64 byte da leggere
+
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 18, [4, 3 | 32, 0xec, 0xf2, 0x03]))  # Inizializzazione BME e Oversampling umidità
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 23, [4, 3, 0xec, 0xf4, 0x8f, 0]))  # Inizializzazione BME temperatura + pressione  (Oversampling)
+
+
+                elif device_type == 'AM2320':
+                    print("CONFIGURAZIONE AM2320")
+                    if self.EEPROM_LANGUAGE == 0:  # vecchio linguaggio
+                        i2cconf = []
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [2 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0xb8]))  # 3|128: 128 per concatenare con prg. successivo), 32 reset +
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 13, [5 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'],  3, 0xb8, 0x03, 0x00, 0x04]))
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 19, [3 | self.i2c_const['FLAG_PAUSA'] | self.i2c_const['BYTE_OPZIONI_LETTURA'], 100, 3 | 64, 0xb9, 0 ]))
+                    elif self.EEPROM_LANGUAGE == 1:  # nuovo linguaggio
+                        i2cconf = []
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [2 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0xb8]))  #3=start+stop, 0xb8=indirizzo dispositivo*2 serve per risveglio dispositivo 
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 13, [5 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'],  3, 0xb8, 0x03, 0x00, 0x04]))  #3=start+stop, 0xb8=indirizzo dispositivo*2,03=?, 00=indirizzo primo byte da leggere, 4=numero byte da leggere 
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 19, [1 | self.i2c_const['FLAG_PAUSA'] , 100 ])) #100=decine di microsecondi di pausa, totale 1 ms
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 19, [3 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3|40 , 0xb9, 0, 0, 0 ])) #3=start+stop|40=numero byte da leggere*8=5*8, 5 perchè servono 4 byte e inizia col numero di byte (4)+b,b,b,b, 0xb9=indirizzo dispositivo+flag lettura, 0=nessun programma seguente, 0=nessun programma setup
+                    msg.extend(i2cconf)
+
+                elif device_type == 'TSL2561':
+                    print("CONFIGURAZIONE TSL2561")
+                    if self.EEPROM_LANGUAGE == 0:
+                        i2cconf = []
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC]))
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 32, 0x72 | 1  ]))
+
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 17, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x80]))
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 21, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03]))
+                    
+                    elif self.EEPROM_LANGUAGE == 1:
+                        i2cconf = []
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC]))
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 32, 0x72 | 1  ]))
+
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 17, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x80]))
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 21, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03, 0, 0]))
+
+                    msg.extend(i2cconf)
+                    # print("CONFIGURAZIONE I2C:", i2cconf)
+
+                #elif io_type == 'onewire':
+                elif device_type == 'DS18B20':
+                    if self.EEPROM_LANGUAGE == 0:
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0xcc, 0x44]))  # num. byte, byte opzioni, campionamento di tutte le sonde, campiona temperatura
+                        device_address = self.mapiotype[board_id][logic_io]['device_address']
+                        print("ADDRESS ID ONE WIRE:", device_address)                                 
+                        if device_address:
+                            device_address = [int(x, 16) for x in device_address]
+                            msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [11 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0x55] + device_address +  [0xbe, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp
+                        else:
+                            msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [3 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0xCC] + [0xbe, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp
+
+                    elif  self.EEPROM_LANGUAGE == 1:  
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0xcc, 0x44]))  # num. byte, byte opzioni, campionamento di tutte le sonde, campiona temperatura
+                        device_address = self.mapiotype[board_id][logic_io]['device_address']
+                        print("ADDRESS ID ONE WIRE:", device_address)
+                        if device_address:
+                            device_address = [int(x, 16) for x in device_address]
+                            msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [11 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0x55] + device_address +  [0xbe, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp
+                        else:
+                            msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [3 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0xCC] + [0xbe, 0, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp                                
+                
+                elif device_type == 'GENERIC':
+                    # Go To programma di altro IO logico
+                    # print("WRITE_EE", write_ee, board_id, eels + 10, eems, [32 | 3, 0, 0])
+                    if write_ee:
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [32 | 3, 0, 0]))  # [32: Go_TO | 3: IO logico, 0: offset (0=10), 0=non ci sono altri programmi da eseguire ]
+                    else:
+                        print("********************")
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [32 | 3, 0, 0]))  # [32: Go_TO | 3: IO logico, 0: offset (0=10), 0=non ci sono altri programmi da eseguire ]
+                
+                else:
+                    # If not I2C or OneWire, set 0, 0 at address 10 and 11.
+                    msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [0,0]))  # 0 = lunghezza programma periodico, 0 = lunghezza prg. inizializzazione
+
         if msg:
             msg.append(self.boardReboot(0))
         else:
             print("NESSUNA CONFIGURAZIONE BOARD DA INVIARE")    
-        pprint(msg)
-        
-        # mmsg = msg.pop(0)
-        # print("***");
-        # pprint(msg)
-        # print("***");
-        # msg.append(mmsg)
-        # pprint(msg)
-        # print("***");
-        # kkkk;
+        #pprint(msg)
+
         return msg
 
-    def arrivatatrama(self): # utilizzatore: 0=dl485, 1=domoticz
+    def arrivatatrama(self):
         # arrivata una trama completa (PING e trame piu lunghe)
         self.nowtime = int(time.time())  # seleziona la parte intera dei secondi
-        # print(b.RXtrama)
+        #print(b.RXtrama)
         self.board_ready[self.RXtrama[0]] = self.nowtime  # Aggiorna la data di quando è stato ricevuto la trama del nodo, serve per dizionario delle boards rilevate sul bus
 
         if self.RXtrama[0] + 1 == self.BOARD_ADDRESS:  # test su address ricevuto, e' ora di trasmettere
@@ -1916,15 +1932,14 @@ class Bus:
                     self.log.write("{:<11} {}    {:<18}".format(self.nowtime, 'CONFIG. TIMEOUT MSG', str(self.BUFF_MSG_TX[x][0])))
                     
                     self.TXmsg.insert(0,self.BUFF_MSG_TX[x][0])  ## lo mette al primo posto nella lista di trasmissione
-                    # print(b.TXmsg)
                     del self.BUFF_MSG_TX[x] ## lo cancella per poterlo reinserire tutto perche non c'è il goto
                     break  ## esce dal for
                 
             if len(self.TXmsg): #se qualcosa da trasmettere
-                
+                #print("TXmsg to send:", len(self.TXmsg))
                 msg = self.TXmsg.pop(0)  # prende dalla lista la prima trama da trasmettere (msg piu vecchio)
                 ##print(msg, msg[2], b.BUFF_MSG_TX)
-                if (len(msg)>1): print("****FORSE TRASMETTE: %s            %s" %(len(self.TXmsg), self.int2hex(msg)))
+                #if (len(msg)>1): print("****FORSE TRASMETTE: %s            %s" %(len(self.TXmsg), self.int2hex(msg)))
                 if (len(msg)>1) and (msg[1]==self.code['CR_REBOOT']):  # il comando reboot va trasmesso alla fine della configurazione
                     if self.BUFF_MSG_TX or self.TXmsg:
                         self.log.write("{:<12}    {:<18}".format(self.nowtime, 'REBOOT RIMESSO IN LISTA X ATTESA DIZIONARIO VUOTO'))
@@ -1964,11 +1979,12 @@ class Bus:
         self.RXtrama[0] &= 0x3F  # Trasforma la trama di nodo occupato in libero (serve solo per la trasmissione) 
 
 #                b.labinitric()  # Reset buffer ricezione e init crc ricezione per prossimo pacchetto da ricevere
-
+        #print(self.RXtrama,"*****")
         if len(self.RXtrama) > 1:  # Analizza solo comunicazioni valide (senza PING)
-            # print(b.code['COMUNICA_IO'], b.code['CR_WR_OUT'])
+            #print(b.code['COMUNICA_IO'], b.code['CR_WR_OUT'])
 #                    print("Arrivata trama: ",b.int2hex(b.RXtrama))
             if self.RXtrama[1] == 0x26: # CR_WR_EE <<<==============================
+                
                 self.log.write("{:<11} TX                     {:<18} {} {}".format(self.nowtime, 'VERIFICA_FEEDBACK, TRAMA RIC:', self.int2hex(self.RXtrama), ''))
                 print("VERIFICA_FEEDBACK, TRAMA RIC:", self.int2hex(self.RXtrama), end='')
                 if self.RXtrama[0] in self.BUFF_MSG_TX:
@@ -1990,7 +2006,7 @@ class Bus:
                 try:
                     self.status[self.RXtrama[0]]['io'][self.RXtrama[2] - 1] = value
                 except:
-                    print("chiave non trovata")    
+                    print("chiave non trovata",self.RXtrama)    
             
                 self.log.write("{:<11} RX  {:<18} {} {}".format(self.nowtime, self.code[self.RXtrama[1]], self.int2hex(self.RXtrama), self.RXtrama))
 
@@ -2024,9 +2040,7 @@ class Bus:
                 br.sort()
                 self.log.write("{:<12} BOARD_READY           {:<18} ".format(int(self.nowtime), str(br)))
                 self.printStatus()  # Print status of IO
-                
-        
-
+                       
 # END BUS Class
 
 # INIZIO PARTE MAIN
@@ -2060,7 +2074,7 @@ if __name__ == '__main__':
 
     """ Reset parametri SCHEDE """
     # se serve si resetta una o tutte le schede con le tre righe sotto
-    # msg = b.resetEE(2, 0)  # Board_id, io_logic. Se io_logic=0, resetta tutti gli IO
+    # msg = b.resetEE(2, 0)  # Board_id, logic_io. Se logic_io=0, resetta tutti gli IO
     # print("RESET IO SCHEDE:", msg)
     # b.TXmsg = msg
 
@@ -2069,6 +2083,7 @@ if __name__ == '__main__':
     # b.TXmsg += reset
 
     b.TXmsg += b.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
+    pprint(b.TXmsg)
 
     b.oldtime = int(time.time()) - 10  # init oldtime per stampe dizionario con i/o per stampa subito al primo loop
     
@@ -2087,37 +2102,12 @@ if __name__ == '__main__':
             b.RXtrama = b.readSerial(d)  # accumula i vari caratteri e restituisce il pacchetto finito quando trova il carattere di fine pacchetto
             # print(b.RXtrama)
             if not b.RXtrama: continue
+            #if len(b.RXtrama) > 1: print(b.int2hex(b.RXtrama))
             
             b.arrivatatrama()
 
             b.writeLog()
             
-
-            # log.write("T", b.nowtime)
-            # try:
-                # conn, addr = sock.accept()
-                # log.write("AA")
-            # except:
-                # pass
-
-            # try:  # Routine per la Ricezione comandi da django e altro via UDP
-                # conn.setblocking(0)
-                # data = conn.recv(BUFFER_SIZE)
-                # log.write("X", b.nowtime)
-                # if data:
-                    # data = data.decode('utf-8')
-                    # data = data.split(';')
-                    # if 'onCommand' in data:
-                        # board_id = int(data[1])
-                        # io_logic = int(data[2])
-                        # value = json.loads(data[3])[0]
-                        # message = "MSG ricevuto da Domoticz: board_id:%s, io_logic:%s, value prima:%s" %(board_id, io_logic, value)
-                        # value = b.checkIO(board_id, io_logic, [value])
-                        # msg = b.writeIO(board_id, io_logic, [value])
-                        # log.write(message + " Value dopo:%s, msg:%s" %(value, msg))
-
-                        # addTX(msg)
-
             b.RXtrama = []  # Azzera trama ricezione
             time.sleep(0.0005)  # Delay per non occupare tutta la CPU
 
