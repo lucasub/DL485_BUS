@@ -419,11 +419,9 @@ class Bus:
                 board_enable = 0
                 for bb in self.config[b]:
                     if 'GENERAL_BOARD' in bb:
-                        # print("-------Board_id", board_id, self.config[b][bb])
-                        #pprint(self.config[b][bb])
                         board_enable = self.config[b][bb]['enable']  # Board enable
                         board_type = self.config[b][bb]['board_type']
-                        # pprint(board_enable)
+                        # pprint(self.config[b][bb])
 
 
                 for bb in self.config[b]:
@@ -452,9 +450,7 @@ class Bus:
                         try:
                             pin = self.iomap[board_type][bb]['pin']
                         except:
-                            print("PIN NON TROVATO IN:")
-                            print(board_type, bb)
-                            print(self.iomap[board_type][bb])
+                            print("PIN NON TROVATO IN:", board_type, bb, self.iomap[board_type])
                             pin = 0
                         
                         if pin>0:
@@ -525,7 +521,7 @@ class Bus:
                             'plc_mode_timer': int(self.config[b][bb].get('plc_mode_timer', 0)), 
                             'plc_xor_input': 0,  #int(self.config[b][bb].get('plc_xor_input', 0)), 
                             'power_on_timeout' : int(self.config[b][bb].get('power_on_timeout',0)) ,
-                            'power_on_timeout_off' : int(self.config[b][bb].get('power_on_timeout_off', 0)),
+                            'power_on_timin_off' : int(self.config[b][bb].get('power_on_timin_off', 0)),
                             'power_on_voltage_off' : float(self.config[b][bb].get('power_on_voltage_off', 0)),
                             'power_on_voltage_on' : float(self.config[b][bb].get('power_on_voltage_on', 0)),
                             'powermeter_k': int(self.config[b][bb].get('powermeter_k', 0)),
@@ -643,7 +639,7 @@ class Bus:
                     (value * kmul) + kadd
                     return round(value + self.mapiotype[board_id][logic_io]['offset_t'], 1)
                 else:
-                    print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
+                    # print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
                     return None
 
             elif type_io == 'digital' and plc_function == 'powermeter' :
@@ -725,14 +721,16 @@ class Bus:
                         appboardid = self.mapproc['%s-%s' %(board_id,logic_io)]['board_id']
                         appiologic = self.mapproc['%s-%s' %(board_id,logic_io)]['logic_io']
                         vmin = self.mapiotype[appboardid][appiologic]['power_on_voltage_off']
-                        print(appboardid, appiologic, vmin, value)
+                        # print(appboardid, appiologic, vmin, value)
                         if value >= vmin:
                             self.poweroff_voltage_counter = self.poweroff_voltage_setup
                         elif self.poweroff_voltage_counter > 1: 
                             self.poweroff_voltage_counter -= 1
                         else: 
-                            print("SPENTO")  #self.shutdownRequest()
-                        print("count=", self.poweroff_voltage_counter)
+                            # print("SPENTO")  
+                            """ Abilitare per spegnere RAPSBERRY PI """
+                            #self.shutdownRequest() 
+                        print("count = ", self.poweroff_voltage_counter)
                 
                 #print("ANALOG VALUE:", value)
                 return value
@@ -749,10 +747,10 @@ class Bus:
                 value = value[0]
                 return value
             else:
-                print("calculate ERROR: Tipo dispositivo NON trovato:", board_id, logic_io)
+                # print("calculate ERROR: Tipo dispositivo NON trovato:", board_id, logic_io)
                 return value
         else:
-            print("calculate ERROR: Board o logic_io non presenti sul file di configurazione. Comunica IO ignorato. board_id:%s, logic_io:%s" % (board_id,  logic_io))
+            # print("calculate ERROR: Board o logic_io non presenti sul file di configurazione. Comunica IO ignorato. board_id:%s, logic_io:%s" % (board_id,  logic_io))
             # pprint(self.mapiotype)
             # pprint(self.mapiotype[board_id])
             return 0
@@ -837,7 +835,7 @@ class Bus:
         """
         Calculate trama and return list with right values
         """
-        app=inSerial
+        app = inSerial
             
         if self.buffricnlung > 100:  # Errore 3
             print("ERR 3 Pacchetto troppo lungo")
@@ -854,7 +852,7 @@ class Bus:
 #            print("CRC calcolato:", hex(self.crcric),", 7bit==>", hex(self.crcric & 0x7f))
             ric = self.buffricn
             if (auscrc ^ self.crcric) & 0x7f == 0:  # crc corretto e fine pacchetto veramente
-#                print("Secondo crc OK")
+            #    print("Secondo crc OK")
                 self.labinitric()
                 return(ric)
             else:
@@ -869,10 +867,10 @@ class Bus:
 #            print("fine pacchetto decodificato:", hex(inSerial),", 6bit==>",hex(inSerial&0x3F), "confrontare con:", hex(self.crcric & 0x3F) )
 #            print("confrontare con:            ", hex(self.crcric),", 6bit==>",hex(self.crcric & 0x3F), end="" )
             if (inSerial ^ self.crcric) & 0x3F == 0:  # crc corretto
-#                print(" CRC OK",end="")
+                # print(" CRC OK",end="")
                 # print(inSerial)
                 
-                appn=len(self.buffricn)+len(self.buffricnapp)                
+                appn = len(self.buffricn) + len(self.buffricnapp)                
                 if appn>2:  # non è un ping
                     if self.buffricnapp:
 #                        print("sistema ultimi residui")
@@ -900,12 +898,12 @@ class Bus:
                 return []
 
         elif inSerial == 0:  # Errore 1
-            print("ERR: 1 Tre 0 ricevuti, byte=", hex(inSerial))
+            print("ERR 1: Tre 0 ricevuti, byte=", hex(inSerial))
             self.labinitric()
             return []
 
         elif inSerial == 0x38:  # Errore 2
-            print("ERR: 2 Tre 1 ricevuti, byte=", hex(inSerial))
+            print("ERR 2: Tre 1 ricevuti, byte=", hex(inSerial))
             self.labinitric()
             return []
 
@@ -1344,7 +1342,7 @@ class Bus:
                 if not self.mapiotype[board_id][logic_io]['board_enable']:
                     print("Configurazione board: BOARD DISABILITATA: ", board_id)
                     break
-                print("BOARD_ID:", board_id)
+                # print("BOARD_ID:", board_id)
                 if not self.mapiotype[board_id][logic_io]['enable']:
                     print("Configurazione board: logic_io DISABILITATO: (Board/iologic)", board_id, logic_io)
                     continue
@@ -1378,7 +1376,7 @@ class Bus:
                 
                 device_type = self.mapiotype[board_id][logic_io]['device_type']
                 
-                print("io_type: %s - device_type: %s" %(io_type, device_type))
+                # print("io_type: %s - device_type: %s" %(io_type, device_type))
                 
                 #if not enable: io_type = 'disable' # Non fa configurazione se enable = 0
                 
@@ -1562,7 +1560,7 @@ class Bus:
                     plc = []
 
                     message_conf_app.append(plc_function[sbyte8])
-                    print("--------------------->>>>>>>>>>>>>>>>>>>>>>message_conf_app", message_conf_app)
+                    # print("--------------------->>>>>>>>>>>>>>>>>>>>>>message_conf_app", message_conf_app)
 
                     plc_linked_board_id_logic_io = self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io']
 
@@ -1576,11 +1574,12 @@ class Bus:
                         
                         value_dac_in = self.ADC_value(float(power_on_voltage_on), rvcc, rgnd)
                         # self.poweron_linked=1111
-                        print(self.mapproc)
-                        print("valuedacin:",value_dac_in,power_on_voltage_on, rvcc, rgnd)
+                        # print(self.mapproc)
+                        # print("valuedacin:",value_dac_in,power_on_voltage_on, rvcc, rgnd)
                         plc += [self.mapiotype[board_id][logic_io]['plc_byte_list_io'][1]]
-                        plc += list(self.calcAddressLsMs8(int(self.mapiotype[board_id][logic_io]['power_on_timeout']))) + list(self.calcAddressLsMs8(int(self.mapiotype[board_id][logic_io]['power_on_timeout']))) + list(self.calcAddressLsMs8(value_dac_in))
-                        print("POWER_ON data:", sbyte8, value_dac_in, plc)
+                        # print(self.mapiotype[board_id][logic_io]['power_on_timin_off'])
+                        plc += list(self.calcAddressLsMs8(int(self.mapiotype[board_id][logic_io]['power_on_timeout']))) + list(self.calcAddressLsMs8(int(self.mapiotype[board_id][logic_io]['power_on_timin_off']))) + list(self.calcAddressLsMs8(value_dac_in))
+                        # print("POWER_ON data:", sbyte8, value_dac_in, plc)
                         
 
                     else:  # Funzione PLC
@@ -1592,7 +1591,7 @@ class Bus:
                         plc.append(len(plc_linked_board_id_logic_io))  # OFFSET 29: Numero ingressi per la funzione PLC
                         
                         # print("list_plc_linked_board_id_logic_io", list_plc_linked_board_id_logic_io)
-                        print(plc_linked_board_id_logic_io)
+                        # print(plc_linked_board_id_logic_io)
                         
                         plc += self.mapiotype[board_id][logic_io]['plc_byte_list_io']
                         # print(plc)
@@ -1796,7 +1795,7 @@ class Bus:
 
                     plc_EE_start = (logic_io * 32) + 32 - plclen
                     plc_data = self.writeEEadd(board_id, plc_EE_start, plc)
-                    print("<<<<<<<<<<<<<<<<<<<============PLC_DATA:", sbyte8, plc_function[sbyte8], plc_data)
+                    # print("<<<<<<<<<<<<<<<<<<<============PLC_DATA:", sbyte8, plc_function[sbyte8], plc_data)
                     msg.append(plc_data)
 
                 # Configurazione relativa ai sensori I2C e OneWire
@@ -1865,7 +1864,7 @@ class Bus:
                     if self.EEPROM_LANGUAGE == 0:
                         msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0xcc, 0x44]))  # num. byte, byte opzioni, campionamento di tutte le sonde, campiona temperatura
                         device_address = self.mapiotype[board_id][logic_io]['device_address']
-                        print("ADDRESS ID ONE WIRE:", device_address)                                 
+                        # print("ADDRESS ID ONE WIRE:", device_address)                                 
                         if device_address:
                             device_address = [int(x, 16) for x in device_address]
                             msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [11 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0x55] + device_address +  [0xbe, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp
@@ -1875,7 +1874,7 @@ class Bus:
                     elif  self.EEPROM_LANGUAGE == 1:  
                         msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0xcc, 0x44]))  # num. byte, byte opzioni, campionamento di tutte le sonde, campiona temperatura
                         device_address = self.mapiotype[board_id][logic_io]['device_address']
-                        print("ADDRESS ID ONE WIRE:", device_address)
+                        # print("ADDRESS ID ONE WIRE:", device_address)
                         if device_address:
                             device_address = [int(x, 16) for x in device_address]
                             msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [11 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 1+72, 0x55] + device_address +  [0xbe, 0]))  # num. byte, byte opzioni, S/N sonda, ID, 0xbe leggi temp
@@ -1954,7 +1953,7 @@ class Bus:
 #                        print("****SENZA BYTE RESIDUI*******",self.int2hex(msg))
                         if len(msg) > 1: # non è un ping, aggiunge byte residui
                             msg1 = self.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui 
-                            print("******CON BYTE RESIDUI*******", self.int2hex(msg1))
+                            # print("******CON BYTE RESIDUI*******", self.int2hex(msg1))
                         else: # è un ping non aggiunge i residui
                             msg1 = msg
                             # print("TXPING:", self.int2hex(msg))
@@ -1984,7 +1983,7 @@ class Bus:
             if self.RXtrama[1] == 0x26: # CR_WR_EE <<<==============================
                 
                 self.log.write("{:<11} TX                     {:<18} {} {}".format(self.nowtime, 'VERIFICA_FEEDBACK, TRAMA RIC:', self.int2hex(self.RXtrama), ''))
-                print("VERIFICA_FEEDBACK, TRAMA RIC:", self.int2hex(self.RXtrama), end='')
+                # print("VERIFICA_FEEDBACK, TRAMA RIC:", self.int2hex(self.RXtrama), end='')
                 if self.RXtrama[0] in self.BUFF_MSG_TX:
                     msgapp = self.BUFF_MSG_TX[self.RXtrama[0]][0]
                     #  print(", TROVATO STESSO INDIRIZZO", msgapp, ", VERIFICA CONTENUTO...", end='')
@@ -1992,7 +1991,7 @@ class Bus:
                     #  se feedback sia feedback di scrittura e2
                     if msgapp[3:] == self.RXtrama[2:]:
                         self.log.write("{:<11} {:<18} {} {}".format(self.nowtime, 'VERIFICA OK', '', ''))
-                        print(" VERIFICA OK")
+                        # print(" VERIFICA OK")
                         del self.BUFF_MSG_TX[self.RXtrama[0]]
                     else: print(" ERR VERIFICA BUFF=", msgapp[3:]," TRAMARIC=", self.RXtrama[2:])        
                 else:
@@ -2099,9 +2098,9 @@ if __name__ == '__main__':
 
         for d in RXbytes:  # analizza i caratteri ricevuti
             b.RXtrama = b.readSerial(d)  # accumula i vari caratteri e restituisce il pacchetto finito quando trova il carattere di fine pacchetto
-            # print(b.RXtrama)
+            
             if not b.RXtrama: continue
-            #if len(b.RXtrama) > 1: print(b.int2hex(b.RXtrama))
+            # if len(b.RXtrama) > 1: print(b.int2hex(b.RXtrama))
             
             b.arrivatatrama()
 
