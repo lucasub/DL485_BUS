@@ -117,17 +117,17 @@ class Bus:
     }
 
     device_type_dict = {
-        'DS18B20':              {'io_type':'onewire',   'direction':'input',    'dtype':'Temperature',      'pullup':1},
-        'AM2320':               {'io_type':'i2c',       'direction':'input',    'dtype':'Temp+Hum',         'pullup':0},
-        'BME280':               {'io_type':'i2c',       'direction':'input',    'dtype':'Temp+Hum+Baro',    'pullup':0},
-        'TSL2561':              {'io_type':'i2c',       'direction':'input',    'dtype':'Light',            'pullup':0},
-        'VINR1R2':              {'io_type':'analog',    'direction':'input',    'dtype':'Voltage',          'pullup':0},
-        'VINKMKA':              {'io_type':'analog',    'direction':'input',    'dtype':'Voltage',          'pullup':0},
-        'DIGITAL_OUT':          {'io_type':'digital',   'direction':'output',   'dtype':'Switch',           'pullup':0},
-        'DIGITAL_IN':           {'io_type':'digital',   'direction':'input',    'dtype':'Switch',           'pullup':0},
-        'DIGITAL_IN_PULLUP':    {'io_type':'digital',   'direction':'input',    'dtype':'Switch',           'pullup':1},
-        'PSICROMETER':          {'io_type':'',          'direction':'input',    'dtype':'Humidity',         'pullup':0},
-        'TEMP_ATMEGA':          {'io_type':'temp_atmega','direction':'input',   'dtype':'Temperature',      'pullup':0},
+        'DS18B20':              {'type_io':'onewire',   'direction':'input',    'dtype':'Temperature',      'pullup':1},
+        'AM2320':               {'type_io':'i2c',       'direction':'input',    'dtype':'Temp+Hum',         'pullup':0},
+        'BME280':               {'type_io':'i2c',       'direction':'input',    'dtype':'Temp+Hum+Baro',    'pullup':0},
+        'TSL2561':              {'type_io':'i2c',       'direction':'input',    'dtype':'Light',            'pullup':0},
+        'VINR1R2':              {'type_io':'analog',    'direction':'input',    'dtype':'Voltage',          'pullup':0},
+        'VINKMKA':              {'type_io':'analog',    'direction':'input',    'dtype':'Voltage',          'pullup':0},
+        'DIGITAL_OUT':          {'type_io':'digital',   'direction':'output',   'dtype':'Switch',           'pullup':0},
+        'DIGITAL_IN':           {'type_io':'digital',   'direction':'input',    'dtype':'Switch',           'pullup':0},
+        'DIGITAL_IN_PULLUP':    {'type_io':'digital',   'direction':'input',    'dtype':'Switch',           'pullup':1},
+        'PSICROMETER':          {'type_io':'',          'direction':'input',    'dtype':'Humidity',         'pullup':0},
+        'TEMP_ATMEGA':          {'type_io':'temp_atmega','direction':'input',   'dtype':'Temperature',      'pullup':0},
     }
 
     i2c_const = {  # Const I2C
@@ -488,11 +488,11 @@ class Bus:
                             'direction_val': direction_val,
                             'dtype': self.config[b][bb].get('dtype', self.device_type_dict[devicetype].get('dtype', 'Switch')),
                             'enable': enable,
-                            'filter': int(self.config[b][bb].get('filter', 127)),
+                            'filter': int(self.config[b][bb].get('filter', 20)),
                             'function': self.config[b][bb].get('function', 0),
                             'io_fisic': io_fisic,
                             'logic_io': logic_io,
-                            'io_type': self.device_type_dict[devicetype].get('io_type'),
+                            'type_io': self.device_type_dict[devicetype].get('type_io'),
                             'inverted': inverted,
                             'kadd': self.config[b][bb].get('kadd', 0),
                             'kmul': self.config[b][bb].get('kmul', 1),
@@ -515,6 +515,7 @@ class Bus:
                             'plc_params': int(self.config[b][bb].get('plc_params', 0)), 
                             'plc_time_off': int(self.config[b][bb].get('plc_time_off', 0)), 
                             'plc_time_on': int(self.config[b][bb].get('plc_time_on', 0)), 
+                            'plc_tmax_on': int(self.config[b][bb].get('plc_tmax_on', 65535)), 
                             'plc_time_unit': float(self.config[b][bb].get('plc_time_unit', 1)), # default 1 secondo
                             'plc_timer_n_transitions': int(self.config[b][bb].get('plc_timer_n_transitions', 0)), 
                             'plc_preset_input': int(self.config[b][bb].get('plc_preset_input', 0)), 
@@ -622,7 +623,7 @@ class Bus:
 
             adjust = lambda value : (value * kmul) + kadd # Funzione che aggiusta il risultato
 
-            type_io = self.mapiotype[board_id][logic_io]['io_type']
+            type_io = self.mapiotype[board_id][logic_io]['type_io']
             device_type = self.mapiotype[board_id][logic_io]['device_type']
             plc_function = self.mapiotype[board_id][logic_io]['plc_function']
             
@@ -654,7 +655,7 @@ class Bus:
                 
 
             elif device_type == 'BME280':
-                # print(self.mapiotype[board_id][logic_io]['io_type'], self.mapiotype[board_id][logic_io]['device_type'] )
+                # print(self.mapiotype[board_id][logic_io]['type_io'], self.mapiotype[board_id][logic_io]['device_type'] )
                 
                 value = self.getBME280(value)
                 return value
@@ -1372,28 +1373,28 @@ class Bus:
                 
                 byte1 = self.mapiotype[board_id][logic_io]['direction_val']
 
-                io_type = self.mapiotype[board_id][logic_io]['io_type']
+                type_io = self.mapiotype[board_id][logic_io]['type_io']
                 
                 device_type = self.mapiotype[board_id][logic_io]['device_type']
                 
-                # print("io_type: %s - device_type: %s" %(io_type, device_type))
+                # print("type_io: %s - device_type: %s" %(type_io, device_type))
                 
-                #if not enable: io_type = 'disable' # Non fa configurazione se enable = 0
+                #if not enable: type_io = 'disable' # Non fa configurazione se enable = 0
                 
-                if io_type == 'analog' or io_type == 'temp_atmega':
+                if type_io == 'analog' or type_io == 'temp_atmega':
                     byte1 |= 0b10
-                elif io_type == 'digital':
+                elif type_io == 'digital':
                     byte1 |= 0b00
-                elif io_type == 'i2c':
+                elif type_io == 'i2c':
                     byte1 |= 0b1000
-                elif io_type == 'onewire' or io_type == 'onewire_test':
+                elif type_io == 'onewire' or type_io == 'onewire_test':
                     byte1 |= 0b00100
-                elif io_type == 'virtual':
+                elif type_io == 'virtual':
                     byte1 |= 0b1100
-                elif io_type == 'disable':
+                elif type_io == 'disable':
                     byte1 |= 0b00000
                 else:
-                    print("Configurazione boards: ERROR: io_type non riconosciuto. BOARD_ID:%s - logic_io:%s - IO_TYPE:%s" %(board_id, logic_io, io_type))
+                    print("Configurazione boards: ERROR: type_io non riconosciuto. BOARD_ID:%s - logic_io:%s - type_io:%s" %(board_id, logic_io, type_io))
                     continue
 
                 # print("Configurazione boards: boards:%s, logic_io:%s" %(boardname, logic_io))
@@ -1408,14 +1409,14 @@ class Bus:
                     default_startup_value = self.mapiotype[board_id][logic_io]['default_startup_value']
                     default_startup_value = default_startup_value
                     byte2, byte3 = self.calcAddressLsMs8(default_startup_value)
-                elif io_type == 'i2c' or io_type == 'onewire' or io_type == 'onewire_test':
+                elif type_io == 'i2c' or type_io == 'onewire' or type_io == 'onewire_test':
                     byte2 = byte3 = 0
                 else:
                     byte2 = byte3 = 0
                     print("ERROR: DIRECTION su configurazione non riconosciuto. IO: %s" %board)
                     # continue
 
-                if io_type == 'analog' or io_type == 'digital':
+                if type_io == 'analog' or type_io == 'digital':
                     byte4 = self.mapiotype[board_id][logic_io]['n_refresh_on']  # Byte 4: rinfreschi rete sui fronti ON
                     # print("----", self.mapiotype[board_id][logic_io]['n_refresh_on'], self.mapiotype[board_id][logic_io]['n_refresh_off'])    
                     byte4 |= self.mapiotype[board_id][logic_io]['n_refresh_off'] << 3  # Byte 4: rinfreschi rete sui fronti OFF
@@ -1430,7 +1431,7 @@ class Bus:
                 byte5, byte6 = self.calcAddressLsMs8(self.mapiotype[board_id][logic_io]['time_refresh'])# Byte 5: rinfresco periodico ls in decimi di secondo, Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
                 # print("RINFRESCHI", byte5, byte6)
 
-                if io_type == 'analog' or io_type == 'digital':
+                if type_io == 'analog' or type_io == 'digital':
                     byte7 = self.mapiotype[board_id][logic_io]['filter']
                 else:
                     byte7 = 0
@@ -1564,6 +1565,19 @@ class Bus:
 
                     plc_linked_board_id_logic_io = self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io']
 
+                    plc_time_unit = self.mapiotype[board_id][logic_io]['plc_time_unit']
+                    # Unità di tempo
+                    plc_time_unit_app = 0
+                    if plc_time_unit == 1:
+                        plc_time_unit_app = 0x80
+                    elif plc_time_unit == 0.1:
+                        plc_time_unit_app = 0x40
+                    elif plc_time_unit == 0.01:  # Centesimi
+                        plc_time_unit_app = 0
+                    elif plc_time_unit == 2.5:
+                        plc_time_unit_app = 0xC0
+
+
                     if sbyte8 == 'power_on':
                         appboardid = self.mapiotype[board_id][logic_io]['plc_byte_list_io'][0]
                         applogicio = self.mapiotype[board_id][logic_io]['plc_byte_list_io'][1]
@@ -1635,18 +1649,6 @@ class Bus:
 
                             plc_mode_timer = self.mapiotype[board_id][logic_io]['plc_mode_timer']
 
-                            plc_time_unit = self.mapiotype[board_id][logic_io]['plc_time_unit']
-                            # Unità di tempo
-                            plc_time_unit_app = 0
-                            if plc_time_unit == 1:
-                                plc_time_unit_app = 0x80
-                            elif plc_time_unit == 0.1:
-                                plc_time_unit_app = 0x40
-                            elif plc_time_unit == 0.01:  # Centesimi
-                                plc_time_unit_app = 0
-                            elif plc_time_unit == 2.5:
-                                plc_time_unit_app = 0xC0
-                            
                             plc.append((plc_mode_timer & 0x3F) | plc_time_unit_app)
 
                             plc_timer_n_transitions = self.mapiotype[board_id][logic_io]['plc_timer_n_transitions']
@@ -1667,29 +1669,17 @@ class Bus:
 
                         elif sbyte8 in ["equal", "nequal"]:
 
-                            plc_time_unit = self.mapiotype[board_id][logic_io]['plc_time_unit']
-
-                            # Unità di tempo
-                            if plc_time_unit == 1:
-                                plc.append(0x80)
-                            elif plc_time_unit == 0.1:
-                                plc.append(0x40)
-                            elif plc_time_unit == 0.01:  # Centesimi
-                                plc.append(0)
-                            elif plc_time_unit == 2.5:
-                                plc.append(0xC0)
-
+                            plc.append(plc_time_unit_app)
                             plc.append(0) # Numero massimo di commutazioni (ignorato)
 
                             plc_delay_on_off = self.mapiotype[board_id][logic_io]['plc_delay_on_off']
-                            # plc.append(plc_delay_on_off & 0xff)
-                            # plc.append(plc_delay_on_off >> 8)
                             plc += list(self.calcAddressLsMs8(plc_delay_on_off))
 
                             plc_delay_off_on = self.mapiotype[board_id][logic_io]['plc_delay_off_on']
-                            # plc.append(plc_delay_off_on & 0xff)
-                            # plc.append(plc_delay_off_on >> 8)
                             plc += list(self.calcAddressLsMs8(plc_delay_off_on))
+                            
+                            plc_tmax_on = self.mapiotype[board_id][logic_io]['plc_tmax_on']
+                            plc += list(self.calcAddressLsMs8(plc_tmax_on))
 
                         elif sbyte8 in ['test_nio_>_n', 'ntest_nio_>_n', 'test_nio_into_n', 'ntest_nio_into_n', 'test_schmitt_nio', 'ntest_schmitt_nio']:
                             plc_params_val = int(plc_params)
@@ -1781,8 +1771,12 @@ class Bus:
                             #plc += [powermeter_k & 255, powermeter_k >> 8]
                             plc += list(self.calcAddressLsMs8(powermeter_k))
 
-                        elif sbyte8 == 'or' or sbyte8 == 'odd' or sbyte8 == 'even' or sbyte8 == 'toggle_off' or sbyte8 == 'toggle_on' or sbyte8 == 'toggle_on_off'  :
-                            pass
+                        elif sbyte8 in  ['and', 'nand',   'or', 'nor', 'xor', 'nxor', 'odd', 'even', 'toggle_off', 'toggle_on', 'toggle_on_off']:
+                            plc.append(plc_time_unit_app)
+                            plc.append(0) # Numero massimo di commutazioni (ignorato)
+                            
+                            plc_tmax_on = self.mapiotype[board_id][logic_io]['plc_tmax_on']
+                            plc += list(self.calcAddressLsMs8(plc_tmax_on))
 
 
                         else:
@@ -1800,7 +1794,7 @@ class Bus:
 
                 # Configurazione relativa ai sensori I2C e OneWire
                 
-                #if io_type == 'i2c':
+                #if type_io == 'i2c':
                 if device_type == 'PCA9535':
                     print("==>> Inserisce trama di confgurazione I2C per PCA9535")
                     # msg.append(self.writeEE(board_id, eels + 10, eems, [5, 3, 0x4e, 2, 0x0a, 0xa0]))
@@ -1859,7 +1853,7 @@ class Bus:
                     msg.extend(i2cconf)
                     # print("CONFIGURAZIONE I2C:", i2cconf)
 
-                #elif io_type == 'onewire':
+                #elif type_io == 'onewire':
                 elif device_type == 'DS18B20':
                     if self.EEPROM_LANGUAGE == 0:
                         msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0xcc, 0x44]))  # num. byte, byte opzioni, campionamento di tutte le sonde, campiona temperatura
