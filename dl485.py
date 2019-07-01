@@ -126,7 +126,7 @@ class Bus:
         'DIGITAL_OUT':          {'type_io':'digital',   'direction':'output',   'dtype':'Switch',           'pullup':0},
         'DIGITAL_IN':           {'type_io':'digital',   'direction':'input',    'dtype':'Switch',           'pullup':0},
         'DIGITAL_IN_PULLUP':    {'type_io':'digital',   'direction':'input',    'dtype':'Switch',           'pullup':1},
-        'PSICROMETER':          {'type_io':'',          'direction':'input',    'dtype':'Humidity',         'pullup':0},
+        'PSYCHROMETER':          {'type_io':'',          'direction':'input',    'dtype':'Humidity',         'pullup':0},
         'TEMP_ATMEGA':          {'type_io':'temp_atmega','direction':'input',   'dtype':'Temperature',      'pullup':0},
     }
 
@@ -164,48 +164,48 @@ class Bus:
     # Function PIN map: I=input, O=output, P=pwm, SDA=sda, VCC=VCC, GND=GND, X=xtal, PROG=prog_button, LED_TX=led TX,
     #                  LED_RX=led RX, MO=MOSI, MI=MISO, SC=Serial clock, TX_BUS=BUS, AT=Atemega temp, 
     mapmicro = {  # MAP PIN Atmega328P QFN32PIN
-         1: {'name': 'PD3',         'iomicro':    3,    'function': ['I', 'O', 'P']},
-         2: {'name': 'PD4',         'iomicro':    4,    'function': ['I', 'O']},
-         3: {'name': 'PE0',         'iomicro':   21,    'function': ['I', 'O', 'SDA']},
-         4: {'name': 'VCC',         'iomicro':   99,    'function': ['VCC']},
-         5: {'name': 'GND',         'iomicro':   99,    'function': ['GND']},
-         6: {'name': 'PE1',         'iomicro':   22,    'function': ['I', 'O', 'A']},
-         7: {'name': 'XTAL1',       'iomicro':   99,    'function': ['X']},
-         8: {'name': 'XTAL2',       'iomicro':   99,    'function': ['X']},
-         9: {'name': 'PD5',         'iomicro':    5,    'function': ['PROG']},
-        10: {'name': 'PD6',         'iomicro':    6,    'function': ['LED_TX']},
-        11: {'name': 'PD7',         'iomicro':    7,    'function': ['LR']},
-        12: {'name': 'PB0',         'iomicro':    8,    'function': ['I', 'O']},
-        13: {'name': 'PB1',         'iomicro':    9,    'function': ['I', 'O', 'P']},
-        14: {'name': 'PB2',         'iomicro':   10,    'function': ['I', 'O', 'P']},
-        15: {'name': 'PB3',         'iomicro':   11,    'function': ['I', 'O', 'MO']},
-        16: {'name': 'PB4',         'iomicro':   12,    'function': ['I', 'O', 'MI']},
-        17: {'name': 'PB5',         'iomicro':   13,    'function': ['I', 'O', 'SC']},
-        18: {'name': 'AVCC',        'iomicro':   99,    'function': ['VCC']},
-        19: {'name': 'ADC6 PE2',    'iomicro':   23,    'function': []},
-        20: {'name': 'AREF',        'iomicro':   99,    'function': []},
-        21: {'name': 'GND',         'iomicro':   99,    'function': []},
-        22: {'name': 'ADC7 PE3',    'iomicro':   24,    'function': []},
-        23: {'name': 'PC0',         'iomicro':   14,    'function': []},
-        24: {'name': 'PC1',         'iomicro':   15,    'function': []},
-        25: {'name': 'PC2',         'iomicro':   16,    'function': []},
-        26: {'name': 'PC3',         'iomicro':   17,    'function': []},
-        27: {'name': 'PC4',         'iomicro':   18,    'function': []},
-        28: {'name': 'PC5',         'iomicro':   19,    'function': []},
-        29: {'name': 'RST',         'iomicro':   99,    'function': []},
-        30: {'name': 'PD0',         'iomicro':    0,    'function': []},
-        31: {'name': 'PD1',         'iomicro':    1,    'function': ['TX_BUS']},
-        32: {'name': 'PD2',         'iomicro':    2,    'function': ['']},
-        33: {'name': 'BME280',      'iomicro':   18,    'function': []},
-        34: {'name': 'BME280',      'iomicro':   18,    'function': []},
-        35: {'name': 'DS18B20',     'iomicro':    3,    'function': []},
-        37: {'name': 'TEMP_ATMEGA', 'iomicro':   25,    'function': ['AT']},
-        38: {'name': 'AM2320',      'iomicro':   18,    'function': ['AM2320']},
-        41: {'name': 'VIRT1',       'iomicro':   40,    'function': ['VIRTUAL1']},
-        42: {'name': 'VIRT2',       'iomicro':   40,    'function': ['VIRTUAL2']},
-        43: {'name': 'VIRT3',       'iomicro':   40,    'function': ['VIRTUAL3']},
-        44: {'name': 'VIRT4',       'iomicro':   40,    'function': ['VIRTUAL4']},
-        45: {'name': 'VIRT5',       'iomicro':   40,    'function': ['VIRTUAL5']},
+         1: {'name': 'PD3',         'fisic_io':    3,    'function': ['I', 'O', 'P']},
+         2: {'name': 'PD4',         'fisic_io':    4,    'function': ['I', 'O']},
+         3: {'name': 'PE0',         'fisic_io':   21,    'function': ['I', 'O', 'SDA']},
+         4: {'name': 'VCC',         'fisic_io':   99,    'function': ['VCC']},
+         5: {'name': 'GND',         'fisic_io':   99,    'function': ['GND']},
+         6: {'name': 'PE1',         'fisic_io':   22,    'function': ['I', 'O', 'A']},
+         7: {'name': 'XTAL1',       'fisic_io':   99,    'function': ['X']},
+         8: {'name': 'XTAL2',       'fisic_io':   99,    'function': ['X']},
+         9: {'name': 'PD5',         'fisic_io':    5,    'function': ['PROG']},
+        10: {'name': 'PD6',         'fisic_io':    6,    'function': ['LED_TX']},
+        11: {'name': 'PD7',         'fisic_io':    7,    'function': ['LR']},
+        12: {'name': 'PB0',         'fisic_io':    8,    'function': ['I', 'O']},
+        13: {'name': 'PB1',         'fisic_io':    9,    'function': ['I', 'O', 'P']},
+        14: {'name': 'PB2',         'fisic_io':   10,    'function': ['I', 'O', 'P']},
+        15: {'name': 'PB3',         'fisic_io':   11,    'function': ['I', 'O', 'MO']},
+        16: {'name': 'PB4',         'fisic_io':   12,    'function': ['I', 'O', 'MI']},
+        17: {'name': 'PB5',         'fisic_io':   13,    'function': ['I', 'O', 'SC']},
+        18: {'name': 'AVCC',        'fisic_io':   99,    'function': ['VCC']},
+        19: {'name': 'ADC6 PE2',    'fisic_io':   23,    'function': []},
+        20: {'name': 'AREF',        'fisic_io':   99,    'function': []},
+        21: {'name': 'GND',         'fisic_io':   99,    'function': []},
+        22: {'name': 'ADC7 PE3',    'fisic_io':   24,    'function': []},
+        23: {'name': 'PC0',         'fisic_io':   14,    'function': []},
+        24: {'name': 'PC1',         'fisic_io':   15,    'function': []},
+        25: {'name': 'PC2',         'fisic_io':   16,    'function': []},
+        26: {'name': 'PC3',         'fisic_io':   17,    'function': []},
+        27: {'name': 'PC4',         'fisic_io':   18,    'function': []},
+        28: {'name': 'PC5',         'fisic_io':   19,    'function': []},
+        29: {'name': 'RST',         'fisic_io':   99,    'function': []},
+        30: {'name': 'PD0',         'fisic_io':    0,    'function': []},
+        31: {'name': 'PD1',         'fisic_io':    1,    'function': ['TX_BUS']},
+        32: {'name': 'PD2',         'fisic_io':    2,    'function': ['']},
+        33: {'name': 'BME280',      'fisic_io':   18,    'function': []},
+        34: {'name': 'BME280',      'fisic_io':   18,    'function': []},
+        35: {'name': 'DS18B20',     'fisic_io':    3,    'function': []},
+        37: {'name': 'TEMP_ATMEGA', 'fisic_io':   25,    'function': ['AT']},
+        38: {'name': 'AM2320',      'fisic_io':   18,    'function': ['AM2320']},
+        41: {'name': 'VIRT1',       'fisic_io':   40,    'function': ['VIRTUAL1']},
+        42: {'name': 'VIRT2',       'fisic_io':   40,    'function': ['VIRTUAL2']},
+        43: {'name': 'VIRT3',       'fisic_io':   40,    'function': ['VIRTUAL3']},
+        44: {'name': 'VIRT4',       'fisic_io':   40,    'function': ['VIRTUAL4']},
+        45: {'name': 'VIRT5',       'fisic_io':   40,    'function': ['VIRTUAL5']},
     }
 
     iomap = { # MAP IO of board in base al tipoboard 1,2,3,4,5
@@ -455,54 +455,56 @@ class Bus:
                         
                         if pin>0:
                             try:
-                                io_fisic = self.mapmicro[self.iomap[board_type][bb]['pin']]['iomicro']
+                                fisic_io = self.mapmicro[self.iomap[board_type][bb]['pin']]['fisic_io']
                             except:
                                 print("IO FISICO NON TROVATO")
-                                io_fisic = 99
+                                fisic_io = 99
                         else:
-                            io_fisic = 99
+                            fisic_io = 99
                                 
                             
                         if 'direction' in self.config[b][bb]:
                             direction = self.config[b][bb]['direction']
-                        elif 'direction' in self.device_type_dict[devicetype]:
+                        elif self.device_type_dict[devicetype] == 'direction':
                             direction = self.device_type_dict[devicetype]['direction']
                         else:
                             direction = 'input'
                              
                         direction_val = 1 if direction == 'output' else 0
-                            
+
+                        # Rinominare  counter_filter in plc_counter_filter, counter_mode in plc_counter_mode, counter_min_period_time in plc_counter_min_period_time
+                        # counter_timeout in plc_counter_timeout
+
                         self.mapiotype[board_id][logic_io] = {
-                            'board_enable': board_enable,
-                            'board_type': board_type,
-                            'counter_filter': self.config[b][bb].get('counter_filter', 0),
-                            'counter_min_period_time': int(self.config[b][bb].get('counter_min_period_time', 0)),
-                            'counter_mode': int(self.config[b][bb].get('counter_mode', 0)),
-                            'counter_timeout': int(self.config[b][bb].get('counter_timeout', 0)),
+                            'board_enable': board_enable, # Abilitazione scheda
+                            'board_type': board_type, # Tipo scheda
+                            'counter_filter': self.config[b][bb].get('counter_filter', 0), # ?? meglio rinominare in plc_counter_filter
+                            'counter_min_period_time': int(self.config[b][bb].get('counter_min_period_time', 0)), # ?? meglio rinominare in plc_counter_min_period_time
+                            'counter_mode': int(self.config[b][bb].get('counter_mode', 0)), # ?? meglio rinominare in plc_counter_mode (tipo conteggio timer PLC)
+                            'counter_timeout': int(self.config[b][bb].get('counter_timeout', 0)), # ?? meglio rinominare in plc_counter_timeout ??
                             'default_startup_filter_value': int(self.config[b][bb].get('default_startup_filter_value', 0)), # 0 o 1
-                            'default_startup_value': default_startup_value,
-                            'description': self.config[b][bb].get('description', 'NO description'),
-                            'device_address': self.config[b][bb].get('address', []),
+                            'default_startup_value': default_startup_value,  # Valore di default allo startup
+                            'description': self.config[b][bb].get('description', 'NO description'),  # Descrizione IO
+                            'device_address': self.config[b][bb].get('address', []),  # Address of I2C / Onewire (serial number for DS18B20)
                             'device_type': devicetype,
-                            'direction': direction,
-                            'direction_val': direction_val,
-                            'dtype': self.config[b][bb].get('dtype', self.device_type_dict[devicetype].get('dtype', 'Switch')),
+                            'direction': direction,  # Input / Output
+                            'direction_val': direction_val,  # 1=Output, 0=Input (how arduino)
+                            'dtype': self.config[b][bb].get('dtype', self.device_type_dict[devicetype].get('dtype', 'Switch')),  # Domoticz Device
                             'enable': enable,
-                            'filter': int(self.config[b][bb].get('filter', 20)),
-                            'function': self.config[b][bb].get('function', 0),
-                            'io_fisic': io_fisic,
-                            'logic_io': logic_io,
+                            'filter': int(self.config[b][bb].get('filter', 20)),  # For digital input (Anti-bounce filter)
+                            #'function': self.config[b][bb].get('function', 0), Non usato
+                            'fisic_io': fisic_io,  # PIN address od micro
                             'type_io': self.device_type_dict[devicetype].get('type_io'),
-                            'inverted': inverted,
+                            'inverted': inverted,  # Logic Invert of IO
                             'kadd': self.config[b][bb].get('kadd', 0),
                             'kmul': self.config[b][bb].get('kmul', 1),
+                            'logic_io': logic_io,
                             'n_refresh_off': int(self.config[b][bb].get('n_refresh_off', 1)),
                             'n_refresh_on': int(self.config[b][bb].get('n_refresh_on', 1)),
                             'name': self.config[b][bb].get('name', 'NO Name'),
                             'offset_altitude': int(self.config[b][bb].get('offset_altitude', 0)),  # OFFSET altitudine
-                            'offset_h': int(self.config[b][bb].get('offset_h', 0)),  # OFFSET humidity
-                            'offset_p': int(self.config[b][bb].get('offset_p', 0)),  # OFFSET pression
-                            'offset_t': int(self.config[b][bb].get('offset_t', 0)),  # OFFSET temperature
+                            'offset_pression': int(self.config[b][bb].get('offset_pression', 0)),  # OFFSET pression
+                            'offset_temperature': int(self.config[b][bb].get('offset_temperature', 0)),  # OFFSET temperature
                             'only_fronte_off': int(self.config[b][bb].get('only_fronte_off', 0)),
                             'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
                             'pin_label': bb,
@@ -637,8 +639,51 @@ class Bus:
                 if crc == value[8]:
                     value = ((value[1] << 8) + value[0]) * 0.0625
                     # print(value)
-                    (value * kmul) + kadd
-                    return round(value + self.mapiotype[board_id][logic_io]['offset_t'], 1)
+                    value = round((((value * kmul) + kadd)+ self.mapiotype[board_id][logic_io]['offset_temperature']), 1)
+                
+                    bio = '%s-%s' %(board_id, logic_io)
+                    if bio in self.mapproc:
+                        # print("DS18B20 LINKED BOARD", bio, self.mapproc[bio])
+                        board_id_linked = self.mapproc[bio]["board_id"]
+                        logic_io_linked = self.mapproc[bio]["logic_io"]
+                        device_type_linked = self.mapiotype[board_id_linked][logic_io_linked]['device_type']
+                        if device_type_linked =="PSYCHROMETER":
+                            #print("***",self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"])
+                            io_linked = self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"]
+                            t1 = io_linked[0].split("-")
+                            t2 = io_linked[1].split("-")
+                            temp_umido = self.status[int(t1[0])]['io'][int(t1[1])-1]
+                            temp_secco = self.status[int(t2[0])]['io'][int(t2[1])-1]
+
+                            # print(device_type_linked,io_linked,temp_umido,temp_secco)
+                            
+                            pressione_vapore_saturo_temperatura_sensore_asciutto = 6.11 * 10 ** ((7.5 * temp_secco)/(237.7 + temp_secco))
+                            pressione_vapore_saturo_temperatura_sensore_umido = 6.11 * 10 ** ((7.5 * temp_umido)/(237.7 + temp_umido))
+                            altezza = 100
+                            pressione_approssimata_all_altezza = (0.9877 ** (altezza/100)) * 1013.25
+                            
+                            pressione_vapore_aria_umida =  pressione_vapore_saturo_temperatura_sensore_umido - (1005/(2.5*0.622*10**6))*pressione_approssimata_all_altezza*(temp_secco-temp_umido)
+                            
+                            correzione_strumentale = pressione_vapore_aria_umida*(1-(temp_secco-temp_umido)/(temp_secco+50/(temp_secco+10**-10)))
+                            umidita_relativa_percentuale = (correzione_strumentale / pressione_vapore_saturo_temperatura_sensore_asciutto) * 100
+                            umidita_specifica_alla_saturazione = 0.622*pressione_vapore_saturo_temperatura_sensore_asciutto/pressione_approssimata_all_altezza
+                            umidita_specifica = umidita_relativa_percentuale*umidita_specifica_alla_saturazione/100
+
+                            # print(
+                            #     "board_id_linked:", board_id_linked,"\n",
+                            #     "logic_io_linked:", logic_io_linked,"\n",
+                            #     "temp_secco", temp_secco, "temp_umido", temp_umido,"\n",
+                            #     "pressione_vapore_saturo_temperatura_sensore_asciutto", pressione_vapore_saturo_temperatura_sensore_asciutto,"\n",
+                            #     "pressione_vapore_saturo_temperatura_sensore_umido", pressione_vapore_saturo_temperatura_sensore_umido,"\n",
+                            #     "pressione_approssimata_all_altezza", pressione_approssimata_all_altezza, "\n",
+                            #     "pressione_vapore_aria_umida", pressione_vapore_aria_umida,"\n",
+                            #     "correzione_strumentale", correzione_strumentale,"\n",
+                            #     "umidita_relativa_percentuale", umidita_relativa_percentuale,"\n",
+                            #     "umidita_specifica_alla_saturazione", umidita_specifica_alla_saturazione,"\n",
+                            #     "umidita_specifica", umidita_specifica
+                            # )
+                            self.status[board_id_linked]['io'][logic_io_linked - 1] = round(umidita_relativa_percentuale, 1)
+                    return value
                 else:
                     # print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
                     return None
@@ -663,9 +708,9 @@ class Bus:
             elif device_type == 'AM2320':
                 # print ("VALUE=",value)
                 
-                hum = ((value[1] * 256 + value[2]) / 10.0) + self.mapiotype[board_id][logic_io]['offset_h']
+                hum = ((value[1] * 256 + value[2]) / 10.0) + self.mapiotype[board_id][logic_io]['offset_altitude']
 
-                temp = (((value[3]&0x7F) * 256 + value[4]) / 10.0) + self.mapiotype[board_id][logic_io]['offset_t']
+                temp = (((value[3]&0x7F) * 256 + value[4]) / 10.0) + self.mapiotype[board_id][logic_io]['offset_temperature']
                 if value[3] & 0x80 == 0x80: temp = -temp
                 # print("AM2320", hum, temp)
                 return [temp, hum]
@@ -696,7 +741,7 @@ class Bus:
 
             elif device_type == 'TEMP_ATMEGA':
                 value = (value[0] + (value[1] * 256)) - 270 + 25
-                return round(value + self.mapiotype[board_id][logic_io]['offset_t'], 1)
+                return round(value + self.mapiotype[board_id][logic_io]['offset_temperature'], 1)
                 # return round(value, 1)
 
             elif device_type == 'VINR1R2' or device_type == 'VINKMKA' or type_io == 'analog' or type_io == 'virtual':
@@ -747,6 +792,10 @@ class Bus:
                 # value_io = value & 1
                 value = value[0]
                 return value
+
+            elif device_type == 'PSICROMETRO':
+                print("PSICROMETRO")
+
             else:
                 # print("calculate ERROR: Tipo dispositivo NON trovato:", board_id, logic_io)
                 return value
@@ -1367,7 +1416,7 @@ class Bus:
                     continue
 
                
-                byte0 = self.mapiotype[board_id][logic_io]['io_fisic']
+                byte0 = self.mapiotype[board_id][logic_io]['fisic_io']
                 
                 eels, eems = self.calcAddressLsMs8(logic_io * 32)
                 
@@ -1376,6 +1425,17 @@ class Bus:
                 type_io = self.mapiotype[board_id][logic_io]['type_io']
                 
                 device_type = self.mapiotype[board_id][logic_io]['device_type']
+
+                plc_linked_board_id_logic_io = self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io']
+
+                if device_type == "PSYCHROMETER":  # PSYCHROMETER è calcolato da DL485.py in base a 2 temperature. Nessuna configurazione da inviare
+                    if len(plc_linked_board_id_logic_io) != 2:
+                        print("PSYCHROMETER CONFIGURATION ERROR: Need 2 TEMPERATURE value linked")
+                        sys.exit()
+                    # print("plc_linked_board_id_logic_io", plc_linked_board_id_logic_io)  
+                    print("PSYCHROMETER",message_conf_app )  
+                    continue
+
                 
                 # print("type_io: %s - device_type: %s" %(type_io, device_type))
                 
@@ -1401,20 +1461,22 @@ class Bus:
                 byte1 |= 0x40 #b6
 
                 direction = self.mapiotype[board_id][logic_io]['direction']
-
-                if direction == 'input':
+                if type_io == 'i2c' or type_io == 'onewire' or type_io == 'onewire_test':
+                    byte2 = self.mapiotype[board_id][logic_io]['pullup']
+                    byte3 = 0
+                    print(board_id,"*************** Pullup: ",bin(byte2),bin(byte1))
+                elif direction == 'input':
                     byte2 = self.mapiotype[board_id][logic_io]['pullup'] | (self.mapiotype[board_id][logic_io]['default_startup_filter_value']*2)
                     byte3 = 0
                 elif direction == 'output':
                     default_startup_value = self.mapiotype[board_id][logic_io]['default_startup_value']
                     default_startup_value = default_startup_value
                     byte2, byte3 = self.calcAddressLsMs8(default_startup_value)
-                elif type_io == 'i2c' or type_io == 'onewire' or type_io == 'onewire_test':
-                    byte2 = byte3 = 0
                 else:
                     byte2 = byte3 = 0
                     print("ERROR: DIRECTION su configurazione non riconosciuto. IO: %s" %board)
                     # continue
+
 
                 if type_io == 'analog' or type_io == 'digital':
                     byte4 = self.mapiotype[board_id][logic_io]['n_refresh_on']  # Byte 4: rinfreschi rete sui fronti ON
@@ -1563,7 +1625,7 @@ class Bus:
                     message_conf_app.append(plc_function[sbyte8])
                     # print("--------------------->>>>>>>>>>>>>>>>>>>>>>message_conf_app", message_conf_app)
 
-                    plc_linked_board_id_logic_io = self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io']
+                    # plc_linked_board_id_logic_io = self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io'] # già calcolato sopra
 
                     plc_time_unit = self.mapiotype[board_id][logic_io]['plc_time_unit']
                     # Unità di tempo
@@ -2001,7 +2063,9 @@ class Bus:
                     print("chiave non trovata",self.RXtrama)    
             
                 self.log.write("{:<11} RX  {:<18} {} {}".format(self.nowtime, self.code[self.RXtrama[1]], self.int2hex(self.RXtrama), self.RXtrama))
-
+                
+                
+                
             elif self.RXtrama[1] & 32:
                 apprx=self.RXtrama[1]-32 # ricava comando associato a questa risposta
                 if apprx in self.code:
@@ -2074,7 +2138,7 @@ if __name__ == '__main__':
     # reset = b.resetEE(0, 0)
     # b.TXmsg += reset
 
-    b.TXmsg += b.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
+    #                                 b.TXmsg += b.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
     pprint(b.TXmsg)
 
     b.oldtime = int(time.time()) - 10  # init oldtime per stampe dizionario con i/o per stampa subito al primo loop
