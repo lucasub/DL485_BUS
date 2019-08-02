@@ -632,6 +632,9 @@ class Bus:
                 # .format(board_id, logic_io, device_type, type_io, kmul, kadd, plc_function))            
             
             if device_type == 'DS18B20':
+                # print("DS18B20", value)
+                if len(value) < 9:
+                    return None
                 crc = 0
                 for x in value[0:8]:
                     crc = self.calcCrcDS(x, crc)
@@ -2185,7 +2188,7 @@ if __name__ == '__main__':
             b.RXtrama = b.readSerial(d)  # accumula i vari caratteri e restituisce il pacchetto finito quando trova il carattere di fine pacchetto
             
             if not b.RXtrama: continue
-            # if len(b.RXtrama) > 1: print(b.int2hex(b.RXtrama))
+            if len(b.RXtrama) > 0: print(b.int2hex(b.RXtrama))
             
             b.arrivatatrama()
 
