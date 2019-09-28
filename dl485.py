@@ -6,7 +6,6 @@ Class protocol DL485
 import sys
 import os
 print("Working PATH:", os.getcwd())
-import arduinoserial
 import serial
 from pprint import pprint
 import time
@@ -295,6 +294,11 @@ class Bus:
             'BME280B':      {'pin':   0},
             'AM2320':       {'pin':   0},
             'TSL2561':      {'pin':   27},
+            'VIRT1':        {'pin':  41,  'name':    'VIRT1'},
+            'VIRT2':        {'pin':  42,  'name':    'VIRT2'},
+            'VIRT3':        {'pin':  43,  'name':    'VIRT3'},
+            'VIRT4':        {'pin':  44,  'name':    'VIRT4'},
+            'VIRT5':        {'pin':  45,  'name':    'VIRT5'},
         },
 
         3: {  # DL485P OLD VERIONS 2.1
@@ -653,7 +657,7 @@ class Bus:
                         logic_io_linked = self.mapproc[bio]["logic_io"]
                         device_type_linked = self.mapiotype[board_id_linked][logic_io_linked]['device_type']
                         if device_type_linked =="PSYCHROMETER":
-                            #print("***",self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"])
+                            print("***",self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"])
                             io_linked = self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"]
                             t1 = io_linked[0].split("-")
                             t2 = io_linked[1].split("-")
@@ -674,22 +678,15 @@ class Bus:
                                 
                                 correzione_strumentale = pressione_vapore_aria_umida*(1-(temp_secco-temp_umido)/(temp_secco+50/(temp_secco+10**-10)))
                                 umidita_relativa_percentuale = (correzione_strumentale / pressione_vapore_saturo_temperatura_sensore_asciutto) * 100
-                                umidita_specifica_alla_saturazione = 0.622*pressione_vapore_saturo_temperatura_sensore_asciutto/pressione_approssimata_all_altezza
-                                umidita_specifica = umidita_relativa_percentuale*umidita_specifica_alla_saturazione/100
+                                if umidita_relativa_percentuale > 100:
+                                    print("PSYCHROMETER WARNING: T_umido > T_secco. Set umidità=100")
+                                    umidita_relativa_percentuale = 100
+                                elif umidita_relativa_percentuale < 0:
+                                    print("PSYCHROMETER WARNING: Umidità < 0,  Set umidità=0")
+                                    umidita_relativa_percentuale = 0
+                                umidita_specifica_alla_saturazione = 0.622 * pressione_vapore_saturo_temperatura_sensore_asciutto / pressione_approssimata_all_altezza
+                                umidita_specifica = umidita_relativa_percentuale*umidita_specifica_alla_saturazione / 100
 
-                                # print(
-                                #     "board_id_linked:", board_id_linked,"\n",
-                                #     "logic_io_linked:", logic_io_linked,"\n",
-                                #     "temp_secco", temp_secco, "temp_umido", temp_umido,"\n",
-                                #     "pressione_vapore_saturo_temperatura_sensore_asciutto", pressione_vapore_saturo_temperatura_sensore_asciutto,"\n",
-                                #     "pressione_vapore_saturo_temperatura_sensore_umido", pressione_vapore_saturo_temperatura_sensore_umido,"\n",
-                                #     "pressione_approssimata_all_altezza", pressione_approssimata_all_altezza, "\n",
-                                #     "pressione_vapore_aria_umida", pressione_vapore_aria_umida,"\n",
-                                #     "correzione_strumentale", correzione_strumentale,"\n",
-                                #     "umidita_relativa_percentuale", umidita_relativa_percentuale,"\n",
-                                #     "umidita_specifica_alla_saturazione", umidita_specifica_alla_saturazione,"\n",
-                                #     "umidita_specifica", umidita_specifica
-                                # )
                                 self.status[board_id_linked]['io'][logic_io_linked - 1] = round(umidita_relativa_percentuale, 1)
                             else:
                                 print('PSYCHROMETER ERROR: Temp1 or Temp2 have None value')
@@ -708,7 +705,6 @@ class Bus:
                 # print(plc_function, value)
                 return value[0] + (value[1] * 256)
                 
-
             elif device_type == 'BME280':
                 # print(self.mapiotype[board_id][logic_io]['type_io'], self.mapiotype[board_id][logic_io]['device_type'] )
                 
@@ -2188,7 +2184,7 @@ if __name__ == '__main__':
             b.RXtrama = b.readSerial(d)  # accumula i vari caratteri e restituisce il pacchetto finito quando trova il carattere di fine pacchetto
             
             if not b.RXtrama: continue
-            if len(b.RXtrama) > 0: print(b.int2hex(b.RXtrama))
+            # if len(b.RXtrama) > 0: print(b.int2hex(b.RXtrama))
             
             b.arrivatatrama()
 
