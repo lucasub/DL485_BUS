@@ -795,6 +795,7 @@ class Bus:
                 # b5: fronte ON da trasmettere
                 # value = value[0]
                 # value_io = value & 1
+
                 value = value[0]
                 return value
 
@@ -1409,10 +1410,27 @@ class Bus:
             flagreset = True
             #pprint(self.mapiotype[board_id])
             for logic_io in self.mapiotype[board_id]:
-                if not self.mapiotype[board_id][logic_io]['board_enable']:
+                
+                # casi 'board_enable': 
+                #  0=programmazione disabilitata,
+                #  1=cancella tutto e riprogramma,
+                #  2=cancella tutto e non riprogramma
+                
+                appbe=self.mapiotype[board_id][logic_io]['board_enable']
+                
+                if appbe==0:
                     # print("Configurazione board: BOARD DISABILITATA: ", board_id)
                     break
+                    
+                if appbe==2:
+                    msg.append(self.clearIO_boardReboot(board_id))
+                    break
+
+                if appbe != 1:
+                    print("ERRORE CAMPO board enable, BOARD: ", board_id)
+                    break
                 
+                    
                 print("ABILITATI: BOARD:", board_id, "LOGIC_IO:",logic_io)    
                 
                 if flagreset:
@@ -2058,11 +2076,10 @@ class Bus:
 
 #                b.labinitric()  # Reset buffer ricezione e init crc ricezione per prossimo pacchetto da ricevere
         #print(self.RXtrama,"*****")
-        if len(self.RXtrama) > 1:  # Analizza solo comunicazioni valide (senza PING)
+        if len(self.RXtrama) > 1:  # Analizza solo comunicazioni valide (senza PING) di tutta la rete
 
-#            print(self.RXtrama, b.code['COMUNICA_IO'], b.code['CR_WR_OUT'])
-#                    print("Arrivata trama: ",b.int2hex(b.RXtrama))
-            if self.RXtrama[1] == 0x26: # CR_WR_EE <<<==============================
+            # print("Arrivata trama: ",b.int2hex(b.RXtrama))
+            if self.RXtrama[1] == 0x26: # feedback al comando CR_WR_EE <<<==============================
                 
                 self.log.write("{:<11} TX                     {:<18} {} {}".format(self.nowtime, 'VERIFICA_FEEDBACK, TRAMA RIC:', self.int2hex(self.RXtrama), ''))
                 # print("VERIFICA_FEEDBACK, TRAMA RIC:", self.int2hex(self.RXtrama), end='')
@@ -2079,20 +2096,25 @@ class Bus:
                 else:
                     print(" ERR RICEVUTO FEEDBACK DI MSG MAI INVIATO")
 
-
-            if self.RXtrama[1] in [self.code['COMUNICA_IO'], self.code['CR_WR_OUT']]:  # COMUNICA_IO / Scrive valore USCITA
-                value = self.calculate(self.RXtrama[0], self.RXtrama[2], self.RXtrama[3:])  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
+            # if self.RXtrama[1] in [self.code['COMUNICA_IO'], self.code['CR_WR_OUT'] | 32]:  # COMUNICA_IO / Scrive valore USCITA
+            if self.RXtrama[1] ==  self.code['COMUNICA_IO']:  # COMUNICA_IO / Scrive valore USCITA
+                """
+                Comunicazione variazione IO della stessa BOARD
+                """
+                board_id = self.RXtrama[0]
+                logic_io = self.RXtrama[2]
+                value = self.RXtrama[3:]
+                # print("TRAMA:", board_id, logic_io, value)
+                value = self.calculate(board_id, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
                 # print("CALCULATE VALUE:", self.RXtrama[0], self.RXtrama[2], self.RXtrama[3:], value)
                 try:
-                    self.status[self.RXtrama[0]]['io'][self.RXtrama[2] - 1] = value
+                    self.status[board_id]['io'][logic_io - 1] = value
                 except:
-                    print("chiave non trovata",self.RXtrama)    
+                    print("chiave non trovata avviso1", self.RXtrama)    
             
-                self.log.write("{:<11} RX  {:<18} {} {}".format(self.nowtime, self.code[self.RXtrama[1]], self.int2hex(self.RXtrama), self.RXtrama))
+                self.log.write("{:<11} RX  {:<18} {} {}".format(self.nowtime, self.code[self.RXtrama[1]&0xDF], self.int2hex(self.RXtrama), self.RXtrama))
                 
-                
-                
-            elif self.RXtrama[1] & 32:
+            elif self.RXtrama[1] & 32: #è feedback
                 apprx=self.RXtrama[1]-32 # ricava comando associato a questa risposta
                 if apprx in self.code:
                     err = ''
@@ -2102,6 +2124,11 @@ class Bus:
                         """
                         err = self.error[self.RXtrama[4]] if self.RXtrama[4] in self.error else 'ERRORE NON DEFINITO'
                     self.log.write("{:<11} RX  {:<18} {} {}".format(self.nowtime, self.code[apprx], self.int2hex(self.RXtrama), err))
+            
+            else:
+                # print("RXTRAMA ALTRO COMANDO", self.RXtrama, self.code[self.RXtrama[1]])
+                pass
+
         # else: print("RXPING",int2hex(self.RXtrama))            
 
     def writeLog(self):
@@ -2184,7 +2211,7 @@ if __name__ == '__main__':
             b.RXtrama = b.readSerial(d)  # accumula i vari caratteri e restituisce il pacchetto finito quando trova il carattere di fine pacchetto
             
             if not b.RXtrama: continue
-            # if len(b.RXtrama) > 0: print(b.int2hex(b.RXtrama))
+            # if len(b.RXtrama) > 1: print("Trama arrivata:", b.RXtrama, b.int2hex(b.RXtrama))
             
             b.arrivatatrama()
 
@@ -2195,3 +2222,8 @@ if __name__ == '__main__':
 
 
     log.write("FINE SCRIPT")
+
+"""
+NOTE, TODO e BUGS
+
+"""
