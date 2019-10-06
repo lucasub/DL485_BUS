@@ -657,7 +657,7 @@ class Bus:
                         logic_io_linked = self.mapproc[bio]["logic_io"]
                         device_type_linked = self.mapiotype[board_id_linked][logic_io_linked]['device_type']
                         if device_type_linked =="PSYCHROMETER":
-                            print("***",self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"])
+                            print("PSYCHROMETER",self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"])
                             io_linked = self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"]
                             t1 = io_linked[0].split("-")
                             t2 = io_linked[1].split("-")
@@ -686,7 +686,7 @@ class Bus:
                                     umidita_relativa_percentuale = 0
                                 umidita_specifica_alla_saturazione = 0.622 * pressione_vapore_saturo_temperatura_sensore_asciutto / pressione_approssimata_all_altezza
                                 umidita_specifica = umidita_relativa_percentuale*umidita_specifica_alla_saturazione / 100
-
+                                print("PSYCHROMETER HUMIDITY: {}".format(round(umidita_relativa_percentuale, 1)))
                                 self.status[board_id_linked]['io'][logic_io_linked - 1] = round(umidita_relativa_percentuale, 1)
                             else:
                                 print('PSYCHROMETER ERROR: Temp1 or Temp2 have None value')
@@ -817,7 +817,7 @@ class Bus:
         """
 
         print("\n", "-" * 83, "STATUS IO", "-" * 83)
-        print(" ID Name        board_type  IO:", end='')
+        print(" ID Name        board_type  IO: ", end='')
         for i in range(1, 30):  # estremo superiore viene escluso
             print("{:>4} ".format(i), end='')
         print()
