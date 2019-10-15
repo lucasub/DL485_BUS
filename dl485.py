@@ -18,11 +18,12 @@ import curses
 class Log:
     def __init__(self, file='log.txt', logstate=0):
         self.logstate = logstate
-        self.file = file
-        logging.basicConfig(format = '%(asctime)s %(message)s',
-            datefmt = '%m/%d/%Y %H:%M:%S',
-            filename = self.file,
-            level=logging.DEBUG)
+        if self.logstate & 1:
+            self.file = file
+            logging.basicConfig(format = '%(asctime)s %(message)s',
+                datefmt = '%m/%d/%Y %H:%M:%S',
+                filename = self.file,
+                level=logging.DEBUG)
 
     def write(self, data=''):
         """
@@ -118,17 +119,19 @@ class Bus:
     }
 
     device_type_dict = {
-        'DS18B20':              {'type_io':'onewire',   'direction':'input',    'dtype':'Temperature',      'pullup':1},
-        'AM2320':               {'type_io':'i2c',       'direction':'input',    'dtype':'Temp+Hum',         'pullup':0},
-        'BME280':               {'type_io':'i2c',       'direction':'input',    'dtype':'Temp+Hum+Baro',    'pullup':0},
-        'TSL2561':              {'type_io':'i2c',       'direction':'input',    'dtype':'Light',            'pullup':0},
-        'VINR1R2':              {'type_io':'analog',    'direction':'input',    'dtype':'Voltage',          'pullup':0},
-        'VINKMKA':              {'type_io':'analog',    'direction':'input',    'dtype':'Voltage',          'pullup':0},
-        'DIGITAL_OUT':          {'type_io':'digital',   'direction':'output',   'dtype':'Switch',           'pullup':0},
-        'DIGITAL_IN':           {'type_io':'digital',   'direction':'input',    'dtype':'Switch',           'pullup':0},
-        'DIGITAL_IN_PULLUP':    {'type_io':'digital',   'direction':'input',    'dtype':'Switch',           'pullup':1},
-        'PSYCHROMETER':          {'type_io':'',          'direction':'input',    'dtype':'Humidity',         'pullup':0},
-        'TEMP_ATMEGA':          {'type_io':'temp_atmega','direction':'input',   'dtype':'Temperature',      'pullup':0},
+        'DS18B20':              {'type_io':'onewire',       'direction':'input',    'dtype':'Temperature',      'pullup':1},
+        'AM2320':               {'type_io':'i2c',           'direction':'input',    'dtype':'Temp+Hum',         'pullup':0},
+        'BME280':               {'type_io':'i2c',           'direction':'input',    'dtype':'Temp+Hum+Baro',    'pullup':0},
+        'TSL2561':              {'type_io':'i2c',           'direction':'input',    'dtype':'Light',            'pullup':0},
+        'VINR1R2':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
+        'VINKMKA':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
+        'DIGITAL_OUT':          {'type_io':'digital',       'direction':'output',   'dtype':'Switch',           'pullup':0},
+        'DIGITAL_IN':           {'type_io':'digital',       'direction':'input',    'dtype':'Switch',           'pullup':0},
+        'DIGITAL_IN_PULLUP':    {'type_io':'digital',       'direction':'input',    'dtype':'Switch',           'pullup':1},
+        'ANALOG_IN':            {'type_io':'analog',        'direction':'input',    'dtype':'Switch',           'pullup':0},
+        'PSYCHROMETER':         {'type_io':'',              'direction':'input',    'dtype':'Humidity',          'pullup':0},
+        'TEMP_ATMEGA':          {'type_io':'temp_atmega',   'direction':'input',    'dtype':'Temperature',       'pullup':0},
+        'VIRTUAL':              {'type_io':'discrete',      'direction':'output',   'dtype':'Temperature',       'pullup':0},
     }
 
     i2c_const = {  # Const I2C
@@ -473,23 +476,23 @@ class Bus:
                             fisic_io = 99
                                 
                         # Rinominare  counter_filter in plc_counter_filter, counter_mode in plc_counter_mode, counter_min_period_time in plc_counter_min_period_time
-                        # counter_timeout in plc_counter_timeout
+                        # plc_counter_timeout in plc_counter_timeout
 
-                        #direction=self.config[b][bb].get('direction', self.device_type_dict[device_type]['direction']),  # Input / Output
                         direction = self.device_type_dict[device_type].get('direction')
+                        if not direction:
+                            raise("ERROR: direcrtion NOT DEFINE!!!")
                         
                         self.mapiotype[board_id][logic_io] = {
                             'board_enable': board_enable, # Abilitazione scheda
                             'board_type': board_type, # Tipo scheda
                             'counter_filter': self.config[b][bb].get('counter_filter', 0), # ?? meglio rinominare in plc_counter_filter
                             'counter_min_period_time': int(self.config[b][bb].get('counter_min_period_time', 0)), # ?? meglio rinominare in plc_counter_min_period_time
-                            'counter_mode': int(self.config[b][bb].get('counter_mode', 0)), # ?? meglio rinominare in plc_counter_mode (tipo conteggio timer PLC)
-                            'counter_timeout': int(self.config[b][bb].get('counter_timeout', 0)), # ?? meglio rinominare in plc_counter_timeout ??
+                            'counter_mode': int(self.config[b][bb].get('counter_mode', 0)), # ?? meglio rinominare in plc_counter_mode (tipo conteggio timer PLC)                            
                             'default_startup_filter_value': int(self.config[b][bb].get('default_startup_filter_value', 0)), # 0 o 1
                             'default_startup_value': default_startup_value,  # Valore di default allo startup
                             'description': self.config[b][bb].get('description', 'NO description'),  # Descrizione IO
                             'device_address': self.config[b][bb].get('address', []),  # Address of I2C / Onewire (serial number for DS18B20)
-                            'device_type': device_type,
+                            'device_type': device_type, # Tipo di device collegato al PIN del micro
                             'direction': direction,  # Input / Output
                             'direction_val': 1 if direction == 'output' else 0,  # 1=Output, 0=Input (how arduino)
                             'dtype': self.config[b][bb].get('dtype', self.device_type_dict[device_type].get('dtype', 'Switch')),  # Domoticz Device
@@ -511,12 +514,13 @@ class Bus:
                             'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
                             'pin_label': bb,
                             'pin': pin,
+                            'plc_counter_timeout': int(self.config[b][bb].get('plc_counter_timeout', 0)),
                             'plc_delay_off_on': int(self.config[b][bb].get('plc_delay_off_on', 0)),     
                             'plc_delay_on_off': int(self.config[b][bb].get('plc_delay_on_off', 0)), 
                             'plc_function': self.config[b][bb].get('plc_function', 'disable'),
                             'plc_linked_board_id_logic_io': self.config[b][bb].get('plc_linked_board_id_logic_io', []),
                             'plc_byte_list_io': [],
-                            'plc_params': int(self.config[b][bb].get('plc_params', 0)), 
+                            'plc_params': self.config[b][bb].get('plc_params', 0), 
                             'plc_time_off': int(self.config[b][bb].get('plc_time_off', 0)), 
                             'plc_time_on': int(self.config[b][bb].get('plc_time_on', 0)), 
                             'plc_tmax_on': int(self.config[b][bb].get('plc_tmax_on', 65535)), 
@@ -524,7 +528,7 @@ class Bus:
                             'plc_timer_n_transitions': int(self.config[b][bb].get('plc_timer_n_transitions', 0)), 
                             'plc_preset_input': int(self.config[b][bb].get('plc_preset_input', 0)), 
                             'plc_mode_timer': int(self.config[b][bb].get('plc_mode_timer', 0)), 
-                            'plc_xor_input': 0,  #int(self.config[b][bb].get('plc_xor_input', 0)), 
+                            'plc_xor_input': 0,  
                             'power_on_timeout' : int(self.config[b][bb].get('power_on_timeout',0)) ,
                             'power_on_tmin_off' : int(self.config[b][bb].get('power_on_tmin_off', 0)),
                             'power_on_voltage_off' : float(self.config[b][bb].get('power_on_voltage_off', 0)),
@@ -633,7 +637,7 @@ class Bus:
             plc_function = self.mapiotype[board_id][logic_io]['plc_function']
             
             # print("board_id: {:<5} logic_io: {:<5} device_type: {:<25} type_io: {:<25} kmul: {:<10} kadd: {:<10} plc_function: {:<10}"
-                # .format(board_id, logic_io, device_type, type_io, kmul, kadd, plc_function))            
+            #     .format(board_id, logic_io, device_type, type_io, kmul, kadd, plc_function))            
             
             if device_type == 'DS18B20':
                 # print("DS18B20", value)
@@ -704,6 +708,11 @@ class Bus:
             elif type_io == 'digital' and plc_function == 'time_meter' :
                 # print(plc_function, value)
                 return value[0] + (value[1] * 256)
+
+            elif type_io == 'analog' and device_type == 'ANALOG_IN':
+                if len(value) >= 2: # Attenzione: lasciare  altrimenti se si passa dalla configurazione DIGITAL_IN in ANALOG_IN, puo' dare errore
+                    return value[0] + (value[1] * 256)  
+                return 0              
                 
             elif device_type == 'BME280':
                 # print(self.mapiotype[board_id][logic_io]['type_io'], self.mapiotype[board_id][logic_io]['device_type'] )
@@ -758,6 +767,7 @@ class Bus:
                 if device_type == 'VINR1R2':
                     value = round((value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0), 1)
                 else:
+                    print("----------------------", value)
                     value = round((value[0] + (value[1] * 256)) * kmul + kadd, 1)
                     
                 bio = '%s-%s' %(board_id, logic_io)
@@ -1476,7 +1486,8 @@ class Bus:
                 # print("type_io: %s - device_type: %s" %(type_io, device_type))
                 
                 #if not enable: type_io = 'disable' # Non fa configurazione se enable = 0
-                
+                print("")
+
                 if type_io == 'analog' or type_io == 'temp_atmega':
                     byte1 |= 0b10
                 elif type_io == 'digital':
@@ -1485,7 +1496,7 @@ class Bus:
                     byte1 |= 0b1000
                 elif type_io == 'onewire' or type_io == 'onewire_test':
                     byte1 |= 0b00100
-                elif type_io == 'virtual':
+                elif type_io == 'discrete':
                     byte1 |= 0b1100
                 elif type_io == 'disable':
                     byte1 |= 0b00000
@@ -1610,8 +1621,8 @@ class Bus:
                     'nanalog_in_>_n': 21 | 128,
                     'analog_in_>=_n': 22,
                     'nanalog_in_>=_n': 22 | 128,
-                    'analog_in_schmitt_n': 23,
-                    'nanalog_in_schmitt_n': 23 | 128,
+                    'analog_in_schmitt': 23,
+                    'nanalog_in_schmitt': 23 | 128,
                     'if_analog_in1_=_analog_in2': 24,
                     'nif_analog_in1_=_analog_in2': 24 | 128,
                     'if_analog_in1_>_analog_in2': 25,
@@ -1635,8 +1646,8 @@ class Bus:
                     'analog_in_*_n': 42,
                     'analog_in_/_n': 43,
                     'analog_in_%_n': 44,
-                    'analog_in_min_n': 45,
-                    'analog_in_max_n': 46,
+                    'analog_in_lim_max_n': 45,
+                    'analog_in_lim_min_n': 46,
                     'analog_in1_+_analog_in2': 50,
                     'analog_in1_-_analog_in2': 51,
                     'analog_in1_*_analog_in2': 52,
@@ -1781,36 +1792,31 @@ class Bus:
                             plc_tmax_on = self.mapiotype[board_id][logic_io]['plc_tmax_on']
                             plc += list(self.calcAddressLsMs8(plc_tmax_on))
 
-                        elif sbyte8 in ['test_nio_>_n', 'ntest_nio_>_n', 'test_nio_into_n', 'ntest_nio_into_n', 'test_schmitt_nio', 'ntest_schmitt_nio']:
+                        elif sbyte8 in ['test_nio_>_n', 'ntest_nio_>_n', 'test_nio_>=_n', 'ntest_nio_>=_n']:
                             plc_params_val = int(plc_params)
                             plc.append(plc_params_val)
+                        
+                        elif sbyte8 in ['test_nio_into_n', 'ntest_nio_into_n', 'test_schmitt_nio', 'ntest_schmitt_nio']:
+                            plc_params_val = list(plc_params)
+                            plc.append(plc_params_val[1] * 16 | plc_params[0])
 
                         elif sbyte8 in ['analog_in_=_n', 'nanalog_in_=_n', 'analog_in_>_n', 'nanalog_in_>_n', 'analog_in_>=_n', 'nanalog_in_>=_n']:
                             plc_params_val = int(plc_params)
-                            # plc.append(plc_params_val & 255)
-                            # plc.append(plc_params_val >> 8)
                             plc += list(self.calcAddressLsMs8(plc_params_val))
 
-                        elif sbyte8 in ['analog_in_schmitt_n','nanalog_in_schmitt_n']:
+                        elif sbyte8 in ['analog_in_schmitt', 'nanalog_in_schmitt']:
                             plc_params_val = list(plc_params)
-                            # plc.append(plc_params_val[0] & 255)
-                            # plc.append(plc_params_val[0] >> 8)
-                            plc += list(self.calcAddressLsMs8(plc_params_val[0]))
-                            # plc.append(plc_params_val[1] & 255)
-                            # plc.append(plc_params_val[1] >> 8)
                             plc += list(self.calcAddressLsMs8(plc_params_val[1]))
-
+                            plc += list(self.calcAddressLsMs8(plc_params_val[0]))
+                            
                         elif sbyte8 in ['if_analog_in1_=_analog_in2', 'nif_analog_in1_=_analog_in2', 'if_analog_in1_>_analog_in2', 'nif_analog_in1_>_analog_in2', 'if_analog_in1_>=_analog_in2', 'nif_analog_in1_>=_analog_in2']:
+                            """ non serve passare alcun parametro """
                             pass
-
-                        elif sbyte8 in ['if_analog_in1_-_analog_in2_schmitt_value','nif_analog_in1_-_analog_in2_schmitt_value']:
+                            
+                        elif sbyte8 in ['if_analog_in1_-_analog_in2_schmitt_value', 'nif_analog_in1_-_analog_in2_schmitt_value']:
                             plc_params_val = list(plc_params)
-                            # plc.append(plc_params_val[0] & 255)
-                            # plc.append(plc_params_val[0] >> 8)
-                            plc += list(self.calcAddressLsMs8(plc_params_val[0]))
-                            # plc.append(plc_params_val[1] & 255)
-                            # plc.append(plc_params_val[1] >> 8)
                             plc += list(self.calcAddressLsMs8(plc_params_val[1]))
+                            plc += list(self.calcAddressLsMs8(plc_params_val[0]))
 
                         elif sbyte8 == 'last_change':
                             pass
@@ -1818,7 +1824,7 @@ class Bus:
                         elif sbyte8 == 'last_change_all':
                             pass
 
-                        elif sbyte8 in ['analog_in_+_n', 'analog_in_-_n', 'analog_in_*_n', 'analog_in_/_n', 'analog_in_%_n', 'analog_in_min_n', 'analog_in_max_n']:
+                        elif sbyte8 in ['analog_in_+_n', 'analog_in_-_n', 'analog_in_*_n', 'analog_in_/_n', 'analog_in_%_n', 'analog_in_lim_min_n', 'analog_in_lim_max_n']:
 
                             plc_params_val = int(plc_params)
                             # plc.append(plc_params_val & 255)
@@ -1834,11 +1840,11 @@ class Bus:
                             plc.append(counter_mode)
                             counter_filter = self.mapiotype[board_id][logic_io]['counter_filter']
                             plc.append(counter_filter)
-                            counter_timeout = self.mapiotype[board_id][logic_io]['counter_timeout']
-                            # print("----------------------", board_id, logic_io, counter_timeout)
-                            # plc.append(counter_timeout & 255)
-                            # plc.append(counter_timeout >> 8)
-                            plcapp = list(self.calcAddressLsMs8(counter_timeout))
+                            plc_counter_timeout = self.mapiotype[board_id][logic_io]['plc_counter_timeout']
+                            # print("----------------------", board_id, logic_io, plc_counter_timeout)
+                            # plc.append(plc_counter_timeout & 255)
+                            # plc.append(plc_counter_timeout >> 8)
+                            plcapp = list(self.calcAddressLsMs8(plc_counter_timeout))
                             # print("plcapp", plcapp)
                             plc += plcapp
                             # print("///////////////////", plc)
@@ -1849,20 +1855,20 @@ class Bus:
                             plc.append(counter_mode)
                             counter_filter = self.mapiotype[board_id][logic_io]['counter_filter']
                             plc.append(counter_filter)
-                            counter_timeout = self.mapiotype[board_id][logic_io]['counter_timeout']
-                            # plc.append(counter_timeout & 255)
-                            # plc.append(counter_timeout >> 8)
-                            plc += list(self.calcAddressLsMs8(counter_timeout))
+                            plc_counter_timeout = self.mapiotype[board_id][logic_io]['plc_counter_timeout']
+                            # plc.append(plc_counter_timeout & 255)
+                            # plc.append(plc_counter_timeout >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_counter_timeout))
 
                         elif sbyte8 == 'powermeter':
                             counter_mode = self.mapiotype[board_id][logic_io]['counter_mode']
                             plc.append(counter_mode)
                             counter_filter = self.mapiotype[board_id][logic_io]['counter_filter']
                             plc.append(counter_filter)
-                            counter_timeout = self.mapiotype[board_id][logic_io]['counter_timeout']
-                            # plc.append(counter_timeout & 255)
-                            # plc.append(counter_timeout >> 8)
-                            plc += list(self.calcAddressLsMs8(counter_timeout))
+                            plc_counter_timeout = self.mapiotype[board_id][logic_io]['plc_counter_timeout']
+                            # plc.append(plc_counter_timeout & 255)
+                            # plc.append(plc_counter_timeout >> 8)
+                            plc += list(self.calcAddressLsMs8(plc_counter_timeout))
                             counter_min_period_time = self.mapiotype[board_id][logic_io]['counter_min_period_time']
                             plc.append(counter_min_period_time)
                             powermeter_k = self.mapiotype[board_id][logic_io]['powermeter_k']
@@ -1878,9 +1884,11 @@ class Bus:
                             plc_tmax_on = self.mapiotype[board_id][logic_io]['plc_tmax_on']
                             plc += list(self.calcAddressLsMs8(plc_tmax_on))
 
+                        elif sbyte8 in  ['or_transition_on']:
+                            pass
 
                         else:
-                            log.write('FUNZIONE PLC NON TROVATA: %s' %sbyte8)    
+                            self.log.write('FUNZIONE PLC NON TROVATA: %s' %sbyte8)    
                             sys.exit()
 
                     plclen = len(plc)
