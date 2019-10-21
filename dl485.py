@@ -430,6 +430,7 @@ class Bus:
                     if 'GENERAL_BOARD' in bb:
                         board_enable = self.config[b][bb]['enable']  # Board enable
                         board_type = self.config[b][bb]['board_type']
+                        overwrite_text = self.config[b][bb].get('overwrite_text', 0) # Overtwrite Name and Description of Domoticz device with config.json
                         # pprint(self.config[b][bb])
                         if not board_enable:
                             print("BOARD DISABILItata", b)
@@ -481,7 +482,7 @@ class Bus:
                         direction = self.device_type_dict[device_type].get('direction')
                         if not direction:
                             raise("ERROR: direcrtion NOT DEFINE!!!")
-                        
+                            
                         self.mapiotype[board_id][logic_io] = {
                             'board_enable': board_enable, # Abilitazione scheda
                             'board_type': board_type, # Tipo scheda
@@ -512,6 +513,7 @@ class Bus:
                             'offset_temperature': int(self.config[b][bb].get('offset_temperature', 0)),  # OFFSET temperature
                             'only_fronte_off': int(self.config[b][bb].get('only_fronte_off', 0)),
                             'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
+                            'overwrite_text': overwrite_text,
                             'pin_label': bb,
                             'pin': pin,
                             'plc_counter_timeout': int(self.config[b][bb].get('plc_counter_timeout', 0)),
@@ -640,7 +642,7 @@ class Bus:
             #     .format(board_id, logic_io, device_type, type_io, kmul, kadd, plc_function))            
             
             if device_type == 'DS18B20':
-                # print("DS18B20", value)
+                # print(">>>>>>>>>>>>>>>>>>>>>>>>><<DS18B20", value)
                 if len(value) < 9:
                     return None
                 crc = 0
@@ -1611,10 +1613,12 @@ class Bus:
                     'ntest_nio_into_n': 12 | 128,
                     'test_schmitt_nio': 13,
                     'ntest_schmitt_nio': 13 | 128,
-                    'or_transition_on': 15,
-                    'nor_transition_on': 15 | 128,
-                    'or_transition_on_all': 16,
-                    'nor_transition_on_all': 16 | 128,
+                    'or_transition_on_single': 15, # Se più di un fronte sullo stesso campionamento o fronti consecutivi, si considera un fronte singolo
+                    'nor_transition_on_single': 15 | 128,
+                    'or_transition_on_multi': 16, # n impulsi separati per ciascun fronte
+                    'nor_transition_on_multi': 16 | 128,
+                    'or_transition_on_sum': 17, # Uscita allungata finche non sono finiti i fronti
+                    'nor_transition_on_sum': 17 | 128,
                     'analog_in_=_n': 20,
                     'nanalog_in_=_n': 20 | 128,
                     'analog_in_>_n': 21,
@@ -1884,7 +1888,7 @@ class Bus:
                             plc_tmax_on = self.mapiotype[board_id][logic_io]['plc_tmax_on']
                             plc += list(self.calcAddressLsMs8(plc_tmax_on))
 
-                        elif sbyte8 in  ['or_transition_on']:
+                        elif sbyte8 in  ['or_transition_on_single', 'nor_transition_on_single', 'or_transition_on_multi', 'nor_transition_on_multi', 'or_transition_on_sum', 'nor_transition_on_sum' ]:
                             pass
 
                         else:

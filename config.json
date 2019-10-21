@@ -1,1 +1,89 @@
-json/config_mytek.json
+{
+    "BOARD1": {
+        "GENERAL_BOARD": {
+            "board_address": 1,
+            "board_type": 1,
+            "enable": true,
+            "name": "DL485M",
+            "overwrite_text": 0
+        },
+        "PD3": {
+            "description": "Sensore temperatura",
+            "device_type": "DS18B20",
+            "enable": true,
+            "logic_io": 3,
+            "name": "DL18B20",
+            "time_refresh": 300
+        },
+        "PD4": {
+            "description": "Test OUT",
+            "device_type": "DIGITAL_OUT",
+            "enable": true,
+            "logic_io": 4,
+            "name": "OUT",
+            "time_refresh": 300
+        },
+        "PE0": {
+            "description": "",
+            "device_type": "DIGITAL_IN",
+            "enable": true,
+            "logic_io": 5,
+            "name": "IN NO PULLUP",
+            "time_refresh": 300
+        },
+        "PE1": {
+            "description": "",
+            "device_type": "DIGITAL_IN_PULLUP",
+            "enable": true,
+            "logic_io": 6,
+            "name": "IN PULLUP",
+            "time_refresh": 300
+        },
+        "TEMP_ATMEGA": {
+            "description": "Temperatura MICRO",
+            "device_type": "TEMP_ATMEGA",
+            "enable": true,
+            "logic_io": 2,
+            "name": "Temp Micro",
+            "time_refresh": 300
+        },
+        "VIN": {
+            "description": "Tensione ingresso",
+            "device_type": "VINR1R2",
+            "enable": true,
+            "logic_io": 1,
+            "name": "VIN",
+            "rgnd": 470,
+            "rvcc": 12000,
+            "time_refresh": 300
+        },
+        "TSL2561":{//i2c
+            "enable": 1,
+            "logic_io": 7,
+            "device_type": "TSL2561",
+            "time_refresh": 600,//TTSL2561
+            "address": "0x72",
+            "name": "TSL2561",
+            "description": "Sensore Luminosità",
+            "dtype": "Illumination"
+        }
+    },
+    "GENERAL_NET": {
+        "board_address": 2,
+        "bus_baudrate": "19200",
+        "bus_port": "/dev/ttyAMA0",
+        "max_board_address": 20
+    },
+    "TYPEB": {
+        "1": "DL485M",
+        "2": "DL485B",
+        "3": "DL485Pold",
+        "4": "DL485R",
+        "5": "DL485P",
+        "DL485B": 2,
+        "DL485M": 1,
+        "DL485P": 5,
+        "DL485Pold": 3,
+        "DL485R": 4
+    }
+}
