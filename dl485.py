@@ -790,7 +790,7 @@ class Bus:
                 logic_io_calibration = self.mapiotype[board_id][logic_io]['logic_io_calibration']
                 bme_key = '{}-{}'.format(board_id, logic_io_calibration)
                 # print("bme_key:", bme_key)
-                if (bme_key in self.BME) and self.BME[bme_key]['flag26'] and self.BME[bme_key]['flag7']:
+                if (bme_key in self.BME) and self.BME[bme_key].get('flag26') and self.BME[bme_key].get('flag7'):
                     # pprint(self.BME[bme_key])
 
                     v1 = (T_Raw / 16384.0 - self.BME[bme_key]['dig_T1'] / 1024.0) * self.BME[bme_key]['dig_T2']
