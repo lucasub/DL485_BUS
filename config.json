@@ -85,7 +85,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA RELE", // Nome della BOARD
             "board_type": 4, // Tipo di Board: Vedi TYPEB
-            "enable": 0 // Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 1 // Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         //         Tensione alimentazione BOARD
         "VIN": { // Tensione alimentazione BOARD
@@ -152,15 +152,6 @@
             "name": "IO3",
             "description": "Ingresso IO3"
         },
-        "IO4": {
-            "enable": 0,
-            "logic_io": 14,
-            "device_type": "DIGITAL_IN_PULLUP",
-            "filter": 0,
-            "time_refresh": 3000,
-            "name": "IO4",
-            "description": "Ingresso IO4"
-        },
         "OUT2": {
             "enable": 0,
             "logic_io": 4,
@@ -176,10 +167,21 @@
             "name": "VIRT",
             "description": "Virtuale"
         },
+        "BME280_CALIB":{//i2c
+            "enable": 1,
+            "logic_io": 14, // Attenzione: LOGIC_IO della calibrazione deve essere appena precedente al LOGIC_IO del BME associato
+            "device_type": "BME280_CALIB",
+            "time_refresh": 60,//TBME280
+            "address": "0xEC",
+            "name": "BME280",
+            "description": "Sensore T+U+B bagno",
+            "dtype": "Temp+Hum+Baro"
+        },
         "BME280":{//i2c
             "enable": 1,
             "logic_io": 11,
             "device_type": "BME280",
+            "logic_io_calibration": 14,
             "time_refresh": 60,//TBME280
             "address": "0xEC",
             "altitude": 76, //Altitudine sappada
@@ -192,17 +194,8 @@
             "name": "BME280",
             "description": "Sensore T+U+B bagno",
             "dtype": "Temp+Hum+Baro"
-        },
-        "BME280_CALIB":{//i2c
-            "enable": 1,
-            "logic_io": 10,
-            "device_type": "BME280_CALIB",
-            "time_refresh": 60,//TBME280
-            "address": "0xEC",
-            "name": "BME280",
-            "description": "Sensore T+U+B bagno",
-            "dtype": "Temp+Hum+Baro"
         }
+
     },
 
     "BOARD1": {

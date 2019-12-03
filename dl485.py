@@ -510,6 +510,7 @@ class Bus:
                             'n_refresh_off': int(self.config[b][bb].get('n_refresh_off', 1)),
                             'n_refresh_on': int(self.config[b][bb].get('n_refresh_on', 1)),
                             'name': self.config[b][bb].get('name', 'NO Name'),
+                            'logic_io_calibration': self.config[b][bb].get('logic_io_calibration', 0),
                             'altitude': int(self.config[b][bb].get('altitude', 0)),  # OFFSET altitudine
                             'offset_pression': int(self.config[b][bb].get('offset_pression', 0)),  # OFFSET pression
                             'round_pression': int(self.config[b][bb].get('round_pression', 0)),  
@@ -775,15 +776,15 @@ class Bus:
                     self.BME[bme_key]['dig_H5'] = ((value[4] >> 4) & 0x0F) | (value[5] << 4)
                     self.BME[bme_key]['dig_H6'] =  self.byte2signed(value[6]) # 0xE7
                     self.BME[bme_key]['flag7'] = True
-                # print(self.BME)
+                # pprint(self.BME)
 
             elif device_type == 'BME280':
                 # print(self.mapiotype[board_id][logic_io]['type_io'], self.mapiotype[board_id][logic_io]['device_type'] )
 
                 T_Raw,H_Raw,P_Raw = self.getBME280(board_id, logic_io, value, )
                 # print("UNCOMPENSATE:", T_Raw, H_Raw, P_Raw)
-                bme_key = '{}-{}'.format(board_id, logic_io-1)
-                # pprint(self.BME)
+                logic_io_calibration = self.mapiotype[board_id][logic_io]['logic_io_calibration']
+                bme_key = '{}-{}'.format(board_id, logic_io_calibration)
                 # print("bme_key:", bme_key)
                 if (bme_key in self.BME) and self.BME[bme_key]['flag26'] and self.BME[bme_key]['flag7']:
                     # pprint(self.BME[bme_key])
