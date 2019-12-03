@@ -268,6 +268,7 @@ class Bus:
             'PCA9535':      {'pin':   0,  'name':    'PCA9535'},
             'BME280A':      {'pin':   0,  'name':    'BME280'},
             'BME280B':      {'pin':   0,  'name':    'BME280'},
+            'BME280_CALIB': {'pin':  27,  'name':      'BME280_CALIB'},
             'TSL2561':      {'pin':   0,  'name':    'TSL2561'},
             'DS18B20':      {'pin':  35,  'name':    'DS18B20'},
             'TEMP_ATMEGA':  {'pin':  37,  'name':    'TEMP_ATMEGA'},
@@ -301,6 +302,7 @@ class Bus:
             'PCA9535':      {'pin':   0},
             'BME280':       {'pin':   27},
             'BME280B':      {'pin':   0},
+            'BME280_CALIB': {'pin':  27,  'name':      'BME280_CALIB'},
             'AM2320':       {'pin':   0},
             'TSL2561':      {'pin':   27},
             'VIRT1':        {'pin':  41,  'name':    'VIRT1'},
@@ -336,6 +338,7 @@ class Bus:
             'PCA9535':      {'pin':   0},
             'BME280':       {'pin':   0},
             'BME280B':      {'pin':   0},
+            'BME280_CALIB': {'pin':  27,  'name':      'BME280_CALIB'},
             'AM2320':       {'pin':   0},
             'TSL2561':      {'pin':   0},
         },
@@ -472,7 +475,8 @@ class Bus:
                         try:
                             pin = self.iomap[board_type][bb]['pin']
                         except:
-                            print("PIN NON TROVATO IN:", board_type, bb, self.iomap[board_type])
+                            # if bb != "BME280_CALIB":
+                            print("NOME LABEL {} NON TROVATO NELLA DEFINIZIONE DELLA BOARD TIPO: {}:".format(bb, board_type, self.iomap[board_type]))
                             pin = 0
 
                         if pin>0:
