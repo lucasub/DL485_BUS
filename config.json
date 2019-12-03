@@ -1,89 +1,655 @@
-{
-    "BOARD1": {
-        "GENERAL_BOARD": {
-            "board_address": 1,
-            "board_type": 1,
-            "enable": true,
-            "name": "DL485M",
-            "overwrite_text": 0
-        },
-        "PD3": {
-            "description": "Sensore temperatura",
-            "device_type": "DS18B20",
-            "enable": true,
-            "logic_io": 3,
-            "name": "DL18B20",
-            "time_refresh": 300
-        },
-        "PD4": {
-            "description": "Test OUT",
-            "device_type": "DIGITAL_OUT",
-            "enable": true,
-            "logic_io": 4,
-            "name": "OUT",
-            "time_refresh": 300
-        },
-        "PE0": {
-            "description": "",
-            "device_type": "DIGITAL_IN",
-            "enable": true,
-            "logic_io": 5,
-            "name": "IN NO PULLUP",
-            "time_refresh": 300
-        },
-        "PE1": {
-            "description": "",
-            "device_type": "DIGITAL_IN_PULLUP",
-            "enable": true,
-            "logic_io": 6,
-            "name": "IN PULLUP",
-            "time_refresh": 300
-        },
-        "TEMP_ATMEGA": {
-            "description": "Temperatura MICRO",
-            "device_type": "TEMP_ATMEGA",
-            "enable": true,
-            "logic_io": 2,
-            "name": "Temp Micro",
-            "time_refresh": 300
-        },
-        "VIN": {
-            "description": "Tensione ingresso",
-            "device_type": "VINR1R2",
-            "enable": true,
-            "logic_io": 1,
-            "name": "VIN",
-            "rgnd": 470,
-            "rvcc": 12000,
-            "time_refresh": 300
-        },
-        "TSL2561":{//i2c
-            "enable": 1,
-            "logic_io": 7,
-            "device_type": "TSL2561",
-            "time_refresh": 600,//TTSL2561
-            "address": "0x72",
-            "name": "TSL2561",
-            "description": "Sensore Luminosità",
-            "dtype": "Illumination"
-        }
-    },
-    "GENERAL_NET": {
-        "board_address": 2,
-        "bus_baudrate": "19200",
-        "bus_port": "/dev/ttyAMA0",
-        "max_board_address": 20
-    },
+// File di configurazione DL485
+// COMMENTI DEVONO INIZIARE SOLO CON // OPPURE con  #
+
+#   Tipo di dispositivi disponibili su Domoticz
+// "Air Quality"
+// "Alert"
+// "Barometer"
+// "Counter Incremental"
+// "Current/Ampere"
+// "Current (Single)"
+// "Custom"
+// "Distance"
+// "Gas"
+// "Humidity"
+// "Illumination"
+// "kWh"
+// "Leaf Wetness"
+// "Percentage"
+// "Pressure"
+// "Rain"
+// "Selector Switch"
+// "Soil Moisture"
+// "Solar Radiation"
+// "Sound Level"
+// "Switch"
+// "Temperature"
+// "Temp+Hum"
+// "Temp+Hum+Baro"
+// "Text"
+// "Usage"
+// "UV"
+// "Visibility"
+// "Voltage"
+// "Waterflow"
+// "Wind"
+// "Wind+Temp+Chill"
+
+# Descrizione PLC
+# All'interno delle singole board è presente un PLC che può essere attivato tramite la funzione desiderata (es. toggle_on)
+
+#    plc_function:       => Funzione associata al PLC relativa a quell'uscita
+#       disable         => PLC disabilitato
+#       equal           => funzione uguale. Ad esempio uscita = ingresso
+#       and             => funzione AND
+#       or              => funzione OR
+#       xor             => funzione XOR
+#       odd             => funzione dispari. Uscita a 1 se gli ingressi a 1 sono dispari
+#       toggle_on       => fa il toggle sul fronte ON dell'ingresso
+#       toggle_off      => fa il toggle sul fronte OFF dell'ingresso
+#       toggle_on_off   => fa il toggle sul fronte OFF e ON dell'ingresso
+#       timer           => timer uscita
+#       power_on        => Uscita per comandare il rele di reset alimentazione RAPBERRY quando non risponde sulla seriale per un certo tempo.
+
+#    inverted            => uscita negata
+#        0               => non invertita
+#        1               => invertita
+#
+
+
+
+
+{ //inizio file
+    # Tipi di Board disponibili. Non modificare
     "TYPEB": {
+        "DL485M": 1,
+        "DL485B": 2,
+        "DL485Pold": 3, //scheda tipo 3 vecchia sostituita con 5
+        "DL485R": 4,
+        "DL485P": 5,
         "1": "DL485M",
         "2": "DL485B",
         "3": "DL485Pold",
         "4": "DL485R",
-        "5": "DL485P",
-        "DL485B": 2,
-        "DL485M": 1,
-        "DL485P": 5,
-        "DL485Pold": 3,
-        "DL485R": 4
-    }
-}
+        "5": "DL485P"
+    },
+
+    # Configurazione generale del BUS
+    "GENERAL_NET": {
+        "bus_port": "/dev/ttyAMA0", # Porta seriale Raspberry PI
+        "bus_baudrate": 19200, // Velocità BUS e seriale
+        "max_board_address": 24, // Numero massimo di Board presenti sul BUS
+        "board_address": 2 // ID assegnato a Raspberry. Deve avere l'ID della scheda collegata alla seriale di Raspberry PI +1
+    },
+    "BOARD4": {
+        "GENERAL_BOARD": {
+            "name": "SCHEDA RELE", // Nome della BOARD
+            "board_type": 4, // Tipo di Board: Vedi TYPEB
+            "enable": 0 // Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+        },
+        //         Tensione alimentazione BOARD
+        "VIN": { // Tensione alimentazione BOARD
+            "enable": 0, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 1800, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINR1R2",
+            "rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            "rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            "name": "Vin", // Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione alimentazione scheda" // Descrizione che verrà riportato su DOMOTICZ
+        },
+        "TEMP_ATMEGA": {
+            "enable": 0,
+            "logic_io": 2,
+            "time_refresh": 1800,
+            "device_type": "TEMP_ATMEGA",
+            "name": "TEMP_ATMEGA",
+            "description": "Temperatura Board ATMEGA328PB"
+        },
+
+        "SDA": {
+            "enable": 0,
+            "logic_io": 9,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "filter": 1,
+            "time_refresh": 3000,
+            "name": "SDA",
+            "description": "Ingresso SDA"
+        },
+        "SCL": {
+            "enable": 0,
+            "logic_io": 10,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "filter": 1,
+            "time_refresh": 3000,
+            "name": "SCL",
+            "description": "Ingresso SCL"
+        },
+        "IO1": {
+            "enable": 0,
+            "logic_io": 11,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "filter": 1,
+            "time_refresh": 3000,
+            "name": "IO1",
+            "description": "Ingresso IO1"
+        },
+        "IO2": {
+            "enable": 0,
+            "logic_io": 12,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "filter": 1,
+            "time_refresh": 3000,
+            "name": "IO2",
+            "description": "Ingresso IO2"
+        },
+        "IO3": {
+            "enable": 0,
+            "logic_io": 13,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "filter": 1,
+            "time_refresh": 3000,
+            "name": "IO3",
+            "description": "Ingresso IO3"
+        },
+        "IO4": {
+            "enable": 0,
+            "logic_io": 14,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "filter": 0,
+            "time_refresh": 3000,
+            "name": "IO4",
+            "description": "Ingresso IO4"
+        },
+        "OUT2": {
+            "enable": 0,
+            "logic_io": 4,
+            "device_type": "DIGITAL_OUT_PWM",
+            "filter": 1,
+            "time_refresh": 3000,
+            "default_startup_value": 0, //valore preset uscita prima del primo calcolo
+            "plc_function": "counter_up",
+            "plc_counter_mode": 0, // contatore semplice
+            "plc_counter_filter": 0, // non usato
+            "plc_counter_timeout": 65535, // escluso
+            "plc_linked_board_id_logic_io": ["*-12","*-13"], //io logico ingressi analogici
+            "name": "VIRT",
+            "description": "Virtuale"
+        },
+        "BME280":{//i2c
+            "enable": 1,
+            "logic_io": 11,
+            "device_type": "BME280",
+            "time_refresh": 60,//TBME280
+            "address": "0xEC",
+            "altitude": 76, //Altitudine sappada
+            "offset_pression": 0,
+            "round_pression": 1,
+            "offset_temperature": 0,
+            "round_temperature": 1,
+            "offset_humidity":0,
+            "round_humidity": 1,
+            "name": "BME280",
+            "description": "Sensore T+U+B bagno",
+            "dtype": "Temp+Hum+Baro"
+        },
+        "BME280_CALIB":{//i2c
+            "enable": 1,
+            "logic_io": 10,
+            "device_type": "BME280_CALIB",
+            "time_refresh": 60,//TBME280
+            "address": "0xEC",
+            "name": "BME280",
+            "description": "Sensore T+U+B bagno",
+            "dtype": "Temp+Hum+Baro"
+        }
+    },
+
+    "BOARD1": {
+        //         Configurazione generale della BOARD
+        "GENERAL_BOARD": {
+            "name": "SCHEDA MASTER", // Nome della BOARD
+            "board_type": 1, // Tipo di Board: Vedi TYPEB
+            "enable": 0 // Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+        },
+        //         Tensione alimentazione BOARD
+        "VIN": { // Tensione alimentazione BOARD
+            "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINR1R2",
+            "rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            "rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            "name": "Vin", // Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione alimentazione scheda" // Descrizione che verrà riportato su DOMOTICZ
+        },
+        "TEMP_ATMEGA": {
+            "enable": 1,
+            "logic_io": 2,
+            "time_refresh": 1800,
+            "device_type": "TEMP_ATMEGA",
+            "name": "TEMP_ATMEGA",
+            "description": "Temperatura Board ATMEGA328PB"
+        },
+        "PD3": {
+            "enable": 0,
+            "logic_io": 3,
+            "device_type": "DS18B20",
+            "time_refresh": 2000,
+            "name": "DS18B20",
+            "description": "Sensore Temperatura",
+            "dtype": "Temperature"
+        },
+        "PD4": {
+            "enable": 1,
+            "logic_io": 4,
+            "device_type": "DIGITAL_OUT",
+            "default_startup_filter_value": 1,
+            "time_refresh": 2000,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "filter": 20,
+            "inverted": 1,
+            "name": "pulsante",
+            "description": "pulsantexxx",
+            "dtype": "Switch"
+        }
+    }, //fine board
+    // Definizione della BOARD con ID n.3. Sul BUS ogni Board deve avere un ID univoco
+    "BOARD3": {
+        // Configurazione generale della BOARD
+        "GENERAL_BOARD": {
+            "name": "SCHEDA CONTATORE", // Nome della BOARD
+            "board_type": 1, // Tipo di Board: Vedi TYPEB
+            "enable": 2 // Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+        },
+        // Tensione alimentazione BOARD
+        "VIN": { // Tensione alimentazione BOARD
+            "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 20, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINR1R2",
+            "rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            "rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            "name": "Vin", // Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione alimentazione scheda" // Descrizione che verrà riportato su DOMOTICZ
+        },
+        "TEMP_ATMEGA": {
+            "enable": 1,
+            "logic_io": 2,
+            "time_refresh": 30,
+            "device_type": "TEMP_ATMEGA",
+            "name": "TEMP_ATMEGA",
+            "description": "Temperatura Board ATMEGA328PB"
+        },
+        "PD3": {
+            "enable": 1,
+            "logic_io": 3,
+            "device_type": "DS18B20",
+            "time_refresh": 30,
+            "name": "DS18B20",
+            "description": "Sensore Temperatura",
+            "dtype": "Temperature"
+        },
+        "PD4": {
+            "enable": 1,
+            "logic_io": 4,
+            "device_type": "DS18B20",
+            "time_refresh": 30,
+            "name": "DS18B20",
+            "description": "Sensore Temperatura",
+            "dtype": "Temperature"
+        },
+        "PC0": {
+            "enable": 1,
+            "logic_io": 5,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "default_startup_filter_value": 1,
+            "time_refresh": 20,
+            "n_refresh_on": 1,
+            "n_refresh_off": 1,
+            "filter": 20,
+            "inverted": 1,
+            "name": "pulsante",
+            "description": "pulsantexxx",
+            "dtype": "Switch"
+        }
+    }, //fine board
+    // Definizione della BOARD con ID n.3. Sul BUS ogni Board deve avere un ID univoco
+    "BOARD5": { // EX5
+        // Configurazione generale della BOARD
+        "GENERAL_BOARD": {
+            "name": "SCHEDA CONTATORE", // Nome della BOARD
+            "board_type": 5, // Tipo di Board: Vedi TYPEB
+            "enable": 2 // Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+        },
+        "VIN": { // Tensione alimentazione BOARD
+            "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINR1R2",
+            "rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            "rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            "name": "Vin", // Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione alimentazione scheda" // Descrizione che verrà riportato su DOMOTICZ
+        },
+        "TEMP_ATMEGA": {
+            "enable": 1,
+            "logic_io": 2,
+            "time_refresh": 600,
+            "device_type": "TEMP_ATMEGA",
+            "name": "TEMP_ATMEGA",
+            "description": "Temperatura Board ATMEGA328PB"
+        },
+        "PB2": {
+            "enable": 1,
+            "logic_io": 3,
+            "device_type": "DS18B20",
+            "pullup": 1,
+            "time_refresh": 600,
+            // "write_ee": [],
+            "name": "DS18B20",
+            "description": "Sensore Temperatura",
+            "dtype": "Temperature"
+        },
+        "PE2": { // Tensione analogica rilavata dal TA
+            "enable": 1,
+            "logic_io": 10,
+            "device_type": "VINKMKA",
+            "kmul": 1,
+            "kadd": 0,
+            "time_refresh": 600,
+            "name": "Corrente",
+            "description": "Misura corrente",
+            "dtype": "Current (Single)"
+        },
+        "PB1": { // Fotoresistenza Counter
+            "enable": 1,
+            "logic_io": 11,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "time_refresh": 600,
+            "filter": 5,
+            "inverted": 0,
+            "name": "FOTO R",
+            "description": "LDR State",
+            "dtype": "Switch"
+        },
+        "PC0": {
+            "enable": 1,
+            "logic_io": 12,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 600,
+            "plc_function": "counter_up",
+            "plc_linked_board_id_logic_io": [
+                "*-11"
+            ],
+            "counter_mode": 0,
+            "counter_filter": 0, // non usato
+            "counter_timeout": 65535, // escluso
+            "name": "WATTORA",
+            "description": "WATT per ORA",
+            "dtype": "Counter Incremental" // contatore
+        },
+        "PC1": {
+            "enable": 1,
+            "logic_io": 13,
+            "device_type": "DIGITAL_OUT",
+            "default_startup_value": 0,
+            "inverted": 1,
+            "filter": 10,
+            "time_refresh": 600,
+            "plc_function": "powermeter",
+            "counter_mode": 27, // b11011 memoria del valore precendente e aggiorna dato a periodo ottenuto, azzera tempo ad ogni start a conteggio finito. Considera end come nuovo start, end su fronte ON
+            "powermeter_k": 60000, // numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
+            "kmul": 6,
+            "kadd": 0,
+            "counter_filter": 0, // non usato
+            "counter_timeout": 500, // 5 secondi
+            "plc_linked_board_id_logic_io": [
+                "*-11"
+            ],
+            "name": "POWER METER",
+            "description": "POWER METER",
+            "dtype": "Current/Ampere"
+        },
+        "PC2": {
+            "enable": 1,
+            "logic_io": 14,
+            "device_type": "DIGITAL_OUT",
+            "default_startup_value": 0,
+            "inverted": 1,
+            "filter": 127,
+            "time_refresh": 600,
+            "plc_function": "time_meter",
+            "counter_mode": 27, // b11011
+            "counter_filter": 0, // non usato
+            "counter_timeout": 65535, // 5 secondi
+            "plc_linked_board_id_logic_io": [
+                "*-11"
+            ],
+            "name": "time_meter",
+            "description": "time_meter",
+            "dtype": "Current (Single)"
+        }
+    },
+    "BOARD7": { //board di prova per video
+        // Configurazione generale della BOARD
+        "GENERAL_BOARD": {
+            "name": "BUS", // Nome della BOARD
+            "board_type": 5, // Tipo di Board: Vedi TYPEB
+            "enable": 2 // Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+        },
+        "VIN": { // Tensione alimentazione BOARD
+            "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "direction": "input", // Valori: input, output. Direzione dell' IO
+            "device_type": "VINR1R2", // Valori: analog, digital, i2c, onewire, disable. Tipo IO
+            "time_refresh": 1800, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "Rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            "Rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            "name": "Vin", // Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione alimentazione scheda" // Descrizione che verrà riportato su DOMOTICZ
+        },
+        "TEMP_ATMEGA": {
+            "enable": 1,
+            "logic_io": 2,
+            "device_type": "TEMP_ATMEGA",
+            "time_refresh": 1800,
+            "name": "TEMP_ATMEGA",
+            "description": "Temperatura Board ATMEGA328PB"
+        },
+        // 4 ingressi digitali 3,4,5,6
+        "PD5": {
+            "enable": 1,
+            "logic_io": 3,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "pullup": 3,
+            "time_refresh": 1800,
+            "filter": 20,
+            "inverted": 1,
+            "name": "FINESTRA1",
+            "description": "finestra 1"
+        },
+        "PE2": {
+            "enable": 1,
+            "logic_io": 4,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "pullup": 3,
+            "time_refresh": 1800,
+            "filter": 20,
+            "inverted": 1,
+            "name": "FINESTRA2",
+            "description": "finestra 2"
+        },
+        "PB1": {
+            "enable": 1,
+            "logic_io": 5,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "time_refresh": 1800,
+            "filter": 20,
+            "inverted": 1,
+            "name": "PULSLUCESALOTTO",
+            "description": "PULS LUCE SALOTTO"
+        },
+        "PB4": {
+            "enable": 1,
+            "logic_io": 6,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "time_refresh": 1800,
+            "filter": 20,
+            "inverted": 1,
+            "name": "PULSLUCECORRIDOIO",
+            "description": "puls luce corridoio"
+        },
+        // uscite digitali
+        "PE1": {
+            "enable": 1,
+            "logic_io": 7,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 1800,
+            "plc_function": "equal",
+            "plc_linked_board_id_logic_io": [
+                "*-3"
+            ],
+            "name": "FINAPE",
+            "description": "LED FINESTRA1 APERTA"
+        },
+        "PB2": {
+            "enable": 1,
+            "logic_io": 10,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 1800,
+            "plc_function": "equal",
+            "plc_linked_board_id_logic_io": [
+                "*-4"
+            ],
+            "name": "FINAPE",
+            "description": "LED FINESTRA2 APERTA"
+        },
+        "PD3": { # PD3
+            "enable": 0,
+            "logic_io": 8,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 1800,
+            "default_startup_value": 1,
+            "plc_function": "or",
+            "plc_linked_board_id_logic_io": [
+                "*-3",
+                "*-4"
+            ],
+            "name": "ORFINAPE",
+            "description": "OR FINESTRE APERTE"
+        },
+        "PD6": { # PD6
+            "enable": 1,
+            "logic_io": 9,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 1800,
+            "plc_function": "equal",
+            "plc_linked_board_id_logic_io": [
+                "!*-8"
+            ], //! inverte ingresso
+            "plc_time_unit": 0.01,
+            "plc_delay_on_off": 100,
+            "plc_delay_off_on": 200,
+            "name": "ABILCOND",
+            "description": "ABILITA CONDIZIONATORE"
+        },
+        "PB5": {
+            "enable": 1,
+            "logic_io": 11,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 1800,
+            "plc_function": "toggle_on",
+            "plc_linked_board_id_logic_io": [
+                "*-5"
+            ],
+            "name": "LUCESALOTTO",
+            "description": "LUCE SALOTTO"
+        },
+        "PB3": {
+            "enable": 1,
+            "logic_io": 12,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 1800,
+            "plc_function": "timer", //timer
+            "plc_time_unit": 1, //imposta unita di tempo timer in secondi
+            "plc_mode_timer": 49, //128+49 innesca su fronte ON e spegne se timer innescato
+            "plc_timer_n_transitions": 2,
+            "plc_time_on": 4, // 4 secondi per tempo a ON
+            "plc_time_off": 0,
+            "plc_linked_board_id_logic_io": [
+                "*-6"
+            ],
+            "name": "LUCECORRIDOIO",
+            "description": "LUCE CORRIDOIO"
+        },
+        // sensori i2c
+        "BME280": {
+            "enable": 0,
+            "logic_io": 13,
+            "device_type": "BME280",
+            "time_refresh": 1800,
+            "address": "0xEC",
+            "name": "BME280",
+            "description": "Sensore T+U+B bagno"
+        },
+        "TSL2561": {
+            "enable": 0,
+            "logic_io": 14,
+            "device_type": "TSL2561",
+            "time_refresh": 1800,
+            "address": "0x72",
+            "name": "TSL2561",
+            "description": "Sensore Luminosità"
+        },
+        // sensori 1wire
+        "PC0": {
+            "enable": 1,
+            "logic_io": 15,
+            "device_type": "DS18B20",
+            "time_refresh": 60,
+            "device_name": "DS18B20",
+            "name": "DS18B20 Secco",
+            "description": "Sensore Temperatura SECCO"
+        },
+        "PC1": {
+            "enable": 1,
+            "logic_io": 16,
+            "device_type": "DS18B20",
+            "time_refresh": 60,
+            "name": "DS18B20 Umido",
+            "description": "Sensore Temperatura UMIDO"
+        },
+        "PC2": {
+            "enable": 1,
+            "logic_io": 17,
+            "device_type": "DS18B20",
+            "time_refresh": 600,
+            "kadd": -0.3,
+            "name": "Temp.ACQUA",
+            "description": "Sensore Temperatura Acqua"
+        },
+        "VIRT1": {
+            "enable": 1,
+            "logic_io": 18,
+            "device_type": "PSYCHROMETER",
+            "plc_linked_board_id_logic_io": [
+                "*-16",
+                "*-15"
+            ], // Sensore umido e sensore secco
+            "name": "PSYCHROMETER",
+            "description": "PSYCHROMETER"
+        },
+        "AM2320": { # Dobrebbe dare errore
+            "enable": 0,
+            "logic_io": 8,
+            "device_type": "AM2320",
+            "time_refresh": 1800,
+            "address": "0xB8",
+            "name": "AM2320",
+            "description": "Sensore T+U bagno",
+            "dtype": "Temp+Hum"
+        }
+    } //fine board 7
+} //fine file
