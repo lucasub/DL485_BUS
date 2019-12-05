@@ -15,6 +15,8 @@ import json
 import re
 import curses
 from struct import unpack, unpack_from
+# from TSL2561 import tsl2561_calculate
+from TSL2561 import tsl2561_calculate
 
 class Log:
     def __init__(self, file='log.txt', logstate=0):
@@ -522,6 +524,8 @@ class Bus:
                             'round_temperature': int(self.config[b][bb].get('round_temperature', 1)),  
                             'offset_humidity': int(self.config[b][bb].get('offset_humidity', 0)),  # OFFSET temperature
                             'round_humidity': int(self.config[b][bb].get('round_humidity', 0)),  
+                            'lux_gain': int(self.config[b][bb].get('lux_gain', 0)),  
+                            'lux_integration': int(self.config[b][bb].get('lux_integration', 0)),  
                             'only_fronte_off': int(self.config[b][bb].get('only_fronte_off', 0)),
                             'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
                             'overwrite_text': overwrite_text,
@@ -683,7 +687,7 @@ class Bus:
 
                         # print("****************",value);
                     #print(value)
-                    value = round((((value * kmul) + kadd)+ self.mapiotype[board_id][logic_io]['offset_temperature']), 4)
+                    
 
                     bio = '%s-%s' %(board_id, logic_io)
                     if bio in self.mapproc:
@@ -722,6 +726,7 @@ class Bus:
                                 self.status[board_id_linked]['io'][logic_io_linked - 1] = round(umidita_relativa_percentuale, 1)
                             else:
                                 print('PSYCHROMETER ERROR: Temp1 or Temp2 have None value')
+                    value = round((((value * kmul) + kadd)+ self.mapiotype[board_id][logic_io]['offset_temperature']), self.mapiotype[board_id][logic_io]['round_temperature'])
                     return value
                 else:
                     # print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
@@ -854,24 +859,13 @@ class Bus:
                 # print("TSL2561 Data:", value)
                 ch0 = value[0] + (value[1] * 256)
                 ch1 = value[2] + (value[3] * 256)
-                if ch0 > 0:
-                    a = ch1 / ch0
-                    if a <= 0.5:
-                        lux = (0.0304 * ch0) - (0.062 * ch0 * (a ** 1.4))
-                    elif a <= 0.61:
-                        lux = (0.0224 * ch0) - (0.031 * ch1)
-                    elif a <= 0.8:
-                        lux = (0.0128 * ch0) - (0.0153 * ch1)
-                    elif a <= 1.3:
-                        lux = (0.00146 * ch0) - (0.001122 * ch1)
-                    else:
-                        lux = 0
-                else:
-                    lux = 0
-                # print("LUX:%s, CH0:%s, CH1:%s, A:%s" %(lux, ch0, ch1, a) )
-                value = round(lux, 1)
-                # return (value * kmul) + kadd
-                return adjust(value)
+
+                lux_gain = self.mapiotype[board_id][logic_io]['lux_gain']
+                lux_integration = self.mapiotype[board_id][logic_io]['lux_integration']
+        
+                # value = self.calculateLux(iGain, tInt, ch0, ch1, IC_Package)
+                lux = tsl2561_calculate(lux_gain, lux_integration, ch0, ch1, 'T')
+                return round(adjust(lux), 0)
 
             elif device_type == 'TEMP_ATMEGA':
                 value = (value[0] + (value[1] * 256)) - 270 + 25
@@ -948,15 +942,14 @@ class Bus:
 
         print("\n", "-" * 83, "STATUS IO", "-" * 83)
         print(" ID Name        board_type  IO: ", end='')
-        for i in range(1, 30):  # estremo superiore viene escluso
-            print("{:>4} ".format(i), end='')
+        for i in range(1, 20):  # estremo superiore viene escluso
+            print("{:>6} ".format(i), end='')
         print()
         for b in self.status:
-            print("{:>3} {:<11} {} {:>5}     ".format(b, self.status[b]['name'][:11], self.status[b]['board_type'], self.status[b]['boardtypename'])," ", end='')
+            print("{:>3} {:<11} {} {:>6}     ".format(b, self.status[b]['name'][:11], self.status[b]['board_type'], self.status[b]['boardtypename'])," ", end='')
 
-            for i in self.status[b]['io']:
-
-                print("{:>5}".format(str(i)), end='')
+            for i in self.status[b]['io'][:20]:
+                print(" {:>6}".format(str(i)), end='')
             print()
         print("-" * 83, "END STATUS", "-" * 83, "\n")
 
@@ -2007,21 +2000,35 @@ class Bus:
 
                 elif device_type == 'TSL2561':
                     # print("CONFIGURAZIONE TSL2561")
+                    lux_gain = self.mapiotype[board_id][logic_io]['lux_gain']
+                    lux_integration = self.mapiotype[board_id][logic_io]['lux_integration']
+                    if lux_gain not in [0, 1]:
+                        print("ERROR TSL2561 lux_gain={}. Deve essere 0 o 1 ".format(lux_gain))
+                        sys.exit()
+                    if lux_integration not in [0, 1, 2]:
+                        print("ERROR TSL2561 lux_integration={}. Deve essere 0, 1, 2 ".format(lux_integration))
+                        sys.exit()
+                    
+
                     if self.EEPROM_LANGUAGE == 0:
                         i2cconf = []
-                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC]))
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC])) #0x72 address dispositivo
                         i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 32, 0x72 | 1  ]))
 
-                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 17, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x80]))
-                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 21, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03]))
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 17, [3 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x80])) #scrive registro 0
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 21, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03])) #alimenta tsl2561
 
                     elif self.EEPROM_LANGUAGE == 1:
                         i2cconf = []
-                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC]))
-                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 32, 0x72 | 1  ]))
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC])) #0x72 address dispositivo poi legge a Word (A) partendo da indirizzo (C)
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 32, 0x72 | 1  ,0]))#legge 4 byte
 
-                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 17, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x80]))
-                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 21, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03, 0, 0]))
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 18, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xA0])) #scrive registro 0
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 22, [4 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03, (lux_gain*16)|lux_integration, 0,0]) )#alimenta tsl2561
+
+                        # i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 26, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x81])) #scrive registro 1
+                        # i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 30, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x12, 0, 0]) )#guadagmo max e tempo 400ms
+                        #80=>A0 per scrivere 2 byte, byte 0x03 0x12
 
                     msg.extend(i2cconf)
                     # print("CONFIGURAZIONE I2C:", i2cconf)

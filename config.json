@@ -194,6 +194,18 @@
             "name": "BME280",
             "description": "Sensore T+U+B bagno",
             "dtype": "Temp+Hum+Baro"
+        },
+        
+        "TSL2561": { //i2c
+            "enable": 1,
+            "logic_io": 3,
+            "device_type": "TSL2561",
+            "lux_gain": 1, // 0=1x, 1=16X
+            "lux_integration": 1, // 0=13.7 msec, 1=101 msec, 2=402 msec
+            "time_refresh": 60,
+            "address": "0x72", // Indirizzo TSL2561
+            "name": "TSL2561",
+            "description": "Sensore Luminosità"
         }
 
     },
