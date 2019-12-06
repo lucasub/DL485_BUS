@@ -126,7 +126,7 @@ class Bus:
         'AM2320':               {'type_io':'i2c',           'direction':'input',    'dtype':'Temp+Hum',         'pullup':0},
         'BME280':               {'type_io':'i2c',           'direction':'input',    'dtype':'Temp+Hum+Baro',    'pullup':1},
         'BME280_CALIB':         {'type_io':'i2c',           'direction':'input',    'dtype':'Temp+Hum+Baro',    'pullup':1},
-        'TSL2561':              {'type_io':'i2c',           'direction':'input',    'dtype':'Light',            'pullup':0},
+        'TSL2561':              {'type_io':'i2c',           'direction':'input',    'dtype':'Illumination',     'pullup':0},
         'VINR1R2':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
         'VINKMKA':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
         'DIGITAL_OUT':          {'type_io':'digital',       'direction':'output',   'dtype':'Switch',           'pullup':0},
@@ -134,9 +134,9 @@ class Bus:
         'DIGITAL_IN':           {'type_io':'digital',       'direction':'input',    'dtype':'Switch',           'pullup':0},
         'DIGITAL_IN_PULLUP':    {'type_io':'digital',       'direction':'input',    'dtype':'Switch',           'pullup':1},
         'ANALOG_IN':            {'type_io':'analog',        'direction':'input',    'dtype':'Switch',           'pullup':0},
-        'PSYCHROMETER':         {'type_io':'',              'direction':'input',    'dtype':'Humidity',          'pullup':0},
-        'TEMP_ATMEGA':          {'type_io':'temp_atmega',   'direction':'input',    'dtype':'Temperature',       'pullup':0},
-        'VIRTUAL':              {'type_io':'discrete',      'direction':'output',   'dtype':'Temperature',       'pullup':0},
+        'PSYCHROMETER':         {'type_io':'',              'direction':'input',    'dtype':'Humidity',         'pullup':0},
+        'TEMP_ATMEGA':          {'type_io':'temp_atmega',   'direction':'input',    'dtype':'Temperature',      'pullup':0},
+        'VIRTUAL':              {'type_io':'discrete',      'direction':'output',   'dtype':'Temperature',      'pullup':0},
     }
 
     i2c_const = {  # Const I2C
@@ -519,13 +519,13 @@ class Bus:
                             'logic_io_calibration': self.config[b][bb].get('logic_io_calibration', 0),
                             'altitude': int(self.config[b][bb].get('altitude', 0)),  # OFFSET altitudine
                             'offset_pression': int(self.config[b][bb].get('offset_pression', 0)),  # OFFSET pression
-                            'round_pression': int(self.config[b][bb].get('round_pression', 0)),  
+                            'round_pression': int(self.config[b][bb].get('round_pression', 0)),
                             'offset_temperature': int(self.config[b][bb].get('offset_temperature', 0)),  # OFFSET temperature
-                            'round_temperature': int(self.config[b][bb].get('round_temperature', 1)),  
+                            'round_temperature': int(self.config[b][bb].get('round_temperature', 1)),
                             'offset_humidity': int(self.config[b][bb].get('offset_humidity', 0)),  # OFFSET temperature
-                            'round_humidity': int(self.config[b][bb].get('round_humidity', 0)),  
-                            'lux_gain': int(self.config[b][bb].get('lux_gain', 0)),  
-                            'lux_integration': int(self.config[b][bb].get('lux_integration', 0)),  
+                            'round_humidity': int(self.config[b][bb].get('round_humidity', 0)),
+                            'lux_gain': int(self.config[b][bb].get('lux_gain', 0)),
+                            'lux_integration': int(self.config[b][bb].get('lux_integration', 0)),
                             'only_fronte_off': int(self.config[b][bb].get('only_fronte_off', 0)),
                             'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
                             'overwrite_text': overwrite_text,
@@ -626,10 +626,10 @@ class Bus:
         except:
             print("ERROR ADC_value", VIN, rvcc, rgnd)
             return 0
-    
+
     def byteLSMS2uint(self, byteLS, byteMS):
         return byteLS + (byteMS * 256)
-    
+
     def byteLSMS2int(self, byteLS, byteMS):
         if byteMS > 127:
             return -32768 + (byteLS + ((byteMS - 128) * 256))
@@ -687,7 +687,7 @@ class Bus:
 
                         # print("****************",value);
                     #print(value)
-                    
+
 
                     bio = '%s-%s' %(board_id, logic_io)
                     if bio in self.mapproc:
@@ -840,9 +840,9 @@ class Bus:
                 T = round(T, self.mapiotype[board_id][logic_io]['round_temperature'])
                 H += self.mapiotype[board_id][logic_io]['offset_humidity']
                 H = round(H, self.mapiotype[board_id][logic_io]['round_humidity'])
-                
+
                 # print(T,H,P, self.mapiotype[board_id][logic_io]['round_humidity'])
-                
+
                 return [T,H,P]
 
             elif device_type == 'AM2320':
@@ -862,7 +862,7 @@ class Bus:
 
                 lux_gain = self.mapiotype[board_id][logic_io]['lux_gain']
                 lux_integration = self.mapiotype[board_id][logic_io]['lux_integration']
-        
+
                 # value = self.calculateLux(iGain, tInt, ch0, ch1, IC_Package)
                 lux = tsl2561_calculate(lux_gain, lux_integration, ch0, ch1, 'T')
                 return round(adjust(lux), 0)
@@ -2008,7 +2008,7 @@ class Bus:
                     if lux_integration not in [0, 1, 2]:
                         print("ERROR TSL2561 lux_integration={}. Deve essere 0, 1, 2 ".format(lux_integration))
                         sys.exit()
-                    
+
 
                     if self.EEPROM_LANGUAGE == 0:
                         i2cconf = []
