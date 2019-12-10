@@ -212,73 +212,99 @@ class Bus:
         38: {'name': 'AM2320',      'fisic_io':   18,    'function': ['AM2320']},
         39: {'name': 'BME280_CALIB','fisic_io':   18,    'function': []},
         41: {'name': 'VIRT1',       'fisic_io':   40,    'function': ['VIRTUAL1']},
-        42: {'name': 'VIRT2',       'fisic_io':   40,    'function': ['VIRTUAL2']},
-        43: {'name': 'VIRT3',       'fisic_io':   40,    'function': ['VIRTUAL3']},
-        44: {'name': 'VIRT4',       'fisic_io':   40,    'function': ['VIRTUAL4']},
-        45: {'name': 'VIRT5',       'fisic_io':   40,    'function': ['VIRTUAL5']},
-
     }
 
     iomap = { # MAP IO of board in base al tipoboard 1,2,3,4,5
         1: {  # DL485M
-            'PB0':          {'pin':  12,  'name':   'IO4'},
-            'PB1':          {'pin':  13,  'name':   'IO5'},
-            'PB2':          {'pin':  14,  'name':   'IO8'},
-            'PB3':          {'pin':  15,  'name':   'IO15'},
-            'PB4':          {'pin':  16,  'name':   'IO13'},
-            'PB5':          {'pin':  17,  'name':   'IO14'},
-            'PD3':          {'pin':   1,  'name':   'IO6'},
-            'PD4':          {'pin':   2,  'name':   'IO7'},
-            'PC0':          {'pin':  23,  'name':   'IO9'},
-            'PC1':          {'pin':  24,  'name':   'IO10'},
-            'PC2':          {'pin':  25,  'name':   'IO11'},
-            'PC3':          {'pin':  26,  'name':   'IO12'},
-            'PC4':          {'pin':  27,  'name':   'IO11'},
-            'PC5':          {'pin':  28,  'name':   'IO12'},
-            'PE0':          {'pin':   3,  'name':   'SDA'},
-            'PE1':          {'pin':   6,  'name':   ''},
-            'PE2':          {'pin':  19,  'name':   ''},
-            'VIN':          {'pin':  22,  'name':   'VIN'},
-            'PCA9535':      {'pin':  27,  'name':   'PCA9535'},
-            'BME280':       {'pin':  27,  'name':   'BME280'},
-            'BME280_CALIB': {'pin':  27,  'name':   'BME280_CALIB'},
-            'BME280B':      {'pin':  27,  'name':   'BME280'},
-            'AM2320':       {'pin':  27,  'name':   'AM2320'},
-            'TSL2561':      {'pin':  27,  'name':   'TSL2561'},
-            'DS18B20-1':    {'pin':  35,  'name':   'DS18B20'},
-            'DS18B20-2':    {'pin':  35,  'name':   'DS18B20'},
-            'DS18B20-3':    {'pin':  35,  'name':   'DS18B20'},
-            'DS18B20-4':    {'pin':  35,  'name':   'DS18B20'},
-            'DS18B20-5':    {'pin':  35,  'name':   'DS18B20'},
-            'DS18B20-6':    {'pin':  35,  'name':   'DS18B20'},
-            'DS18B20-7':    {'pin':  35,  'name':   'DS18B20'},
-            'TEMP_ATMEGA':  {'pin':  37,  'name':   'TEMP_ATMEGA'},
-            'DS18B20-6':    {'pin':  35,  'name':   'DS18B20'},
+            'PB0':          {'pin':   12,  'name':     'IO4'},
+            'PB1':          {'pin':   13,  'name':     'IO5'},
+            'PB2':          {'pin':   14,  'name':     'IO8'},
+            'PB3':          {'pin':   15,  'name':     'IO15'},
+            'PB4':          {'pin':   16,  'name':     'IO13'},
+            'PB5':          {'pin':   17,  'name':     'IO14'},
+            'PD3':          {'pin':    1,  'name':     'IO6'},
+            'PD4':          {'pin':    2,  'name':     'IO7'},
+            'PC0':          {'pin':   23,  'name':     'IO9'},
+            'PC1':          {'pin':   24,  'name':     'IO10'},
+            'PC2':          {'pin':   25,  'name':     'IO11'},
+            'PC3':          {'pin':   26,  'name':     'IO12'},
+            'PC4':          {'pin':   27,  'name':     'IO11'},
+            'PC5':          {'pin':   28,  'name':     'IO12'},
+            'PE0':          {'pin':    3,  'name':     'SDA'},
+            'PE1':          {'pin':    6,  'name':     ''},
+            'PE2':          {'pin':   19,  'name':     ''},
+            'VIN':          {'pin':   22,  'name':     'VIN'},
+            'PCA9535':      {'pin':   27,  'name':     'PCA9535'},
+            'BME280':       {'pin':   27,  'name':     'BME280'},
+            'BME280_CALIB': {'pin':   27,  'name':     'BME280_CALIB'},
+            'BME280B':      {'pin':   27,  'name':     'BME280'},
+            'AM2320':       {'pin':   27,  'name':     'AM2320'},
+            'TSL2561':      {'pin':   27,  'name':     'TSL2561'},
+            'DS18B20-1':    {'pin':   35,  'name':     'DS18B20'},
+            'DS18B20-2':    {'pin':   35,  'name':     'DS18B20'},
+            'DS18B20-3':    {'pin':   35,  'name':     'DS18B20'},
+            'DS18B20-4':    {'pin':   35,  'name':     'DS18B20'},
+            'DS18B20-5':    {'pin':   35,  'name':     'DS18B20'},
+            'DS18B20-6':    {'pin':   35,  'name':     'DS18B20'},
+            'DS18B20-7':    {'pin':   35,  'name':     'DS18B20'},
+            'TEMP_ATMEGA':  {'pin':   37,  'name':     'TEMP_ATMEGA'},
+            'DS18B20-6':    {'pin':   35,  'name':     'DS18B20'},
+            'VIRT1':        {'pin':   41,  'name':     'VIRT1'},
+            'VIRT2':        {'pin':   41,  'name':     'VIRT2'},
+            'VIRT3':        {'pin':   41,  'name':     'VIRT3'},
+            'VIRT4':        {'pin':   41,  'name':     'VIRT4'},
+            'VIRT5':        {'pin':   41,  'name':     'VIRT5'},
+            'VIRT6':        {'pin':   41,  'name':     'VIRT6'},
+            'VIRT7':        {'pin':   41,  'name':     'VIRT7'},
+            'VIRT8':        {'pin':   41,  'name':     'VIRT8'},
+            'VIRT9':        {'pin':   41,  'name':     'VIRT9'},
+            'I2C1':         {'pin':   27,  'name':     'I2C1'},
+            'I2C2':         {'pin':   27,  'name':     'I2C2'},
+            'I2C3':         {'pin':   27,  'name':     'I2C3'},
+            'I2C4':         {'pin':   27,  'name':     'I2C4'},
+            'I2C5':         {'pin':   27,  'name':     'I2C5'},
+            'I2C6':         {'pin':   27,  'name':     'I2C6'},
+            'I2C7':         {'pin':   27,  'name':     'I2C7'},
+            'I2C8':         {'pin':   27,  'name':     'I2C8'},
+            'I2C9':         {'pin':   27,  'name':     'I2C9'},            
         },
 
         2: {  # DL485B
-            'IO1':          {'pin':  23,  'name':    'IO1',       'function': ['I', 'O', 'A']},
-            'IO2':          {'pin':  24,  'name':    'IO2',       'function': ['I', 'O', 'A']},
-            'IO3':          {'pin':  25,  'name':    'IO3',       'function': ['I', 'O', 'A']},
-            'IO4':          {'pin':  26,  'name':    'IO4',       'function': ['I', 'O', 'A']},
-            'OUT1':         {'pin':   3,  'name':    'RELE1',     'function': ['O']},
-            'OUT2':         {'pin':   2,  'name':    'RELE2',     'function': ['O']},
-            'OUT3':         {'pin':   1,  'name':    'RELE3',     'function': ['O']},
-            'VIN':          {'pin':  22,  'name':    'VIN',       'function': ['VIN']},
-            'SDA':          {'pin':  27,  'name':    'SDA',       'function': ['SDA']},
-            'SCL':          {'pin':  28,  'name':    'SCL',       'function': ['SCL']},
-            'PCA9535':      {'pin':   0,  'name':    'PCA9535'},
-            'BME280A':      {'pin':   0,  'name':    'BME280'},
-            'BME280B':      {'pin':   0,  'name':    'BME280'},
-            'BME280_CALIB': {'pin':  27,  'name':      'BME280_CALIB'},
-            'TSL2561':      {'pin':   0,  'name':    'TSL2561'},
-            'DS18B20':      {'pin':  35,  'name':    'DS18B20'},
-            'TEMP_ATMEGA':  {'pin':  37,  'name':    'TEMP_ATMEGA'},
-            'VIRT1':        {'pin':  41,  'name':    'VIRT1'},
-            'VIRT2':        {'pin':  42,  'name':    'VIRT2'},
-            'VIRT3':        {'pin':  43,  'name':    'VIRT3'},
-            'VIRT4':        {'pin':  44,  'name':    'VIRT4'},
-            'VIRT5':        {'pin':  45,  'name':    'VIRT5'},
+            'IO1':          {'pin':   23,  'name':     'IO1'},
+            'IO2':          {'pin':   24,  'name':     'IO2'},
+            'IO3':          {'pin':   25,  'name':     'IO3'},
+            'IO4':          {'pin':   26,  'name':     'IO4'},
+            'OUT1':         {'pin':    3,  'name':     'RELE1'},
+            'OUT2':         {'pin':    2,  'name':     'RELE2'},
+            'OUT3':         {'pin':    1,  'name':     'RELE3'},
+            'VIN':          {'pin':   22,  'name':     'VIN'},
+            'SDA':          {'pin':   27,  'name':     'SDA'},
+            'SCL':          {'pin':   28,  'name':     'SCL'},
+            'PCA9535':      {'pin':    0,  'name':     'PCA9535'},
+            'BME280A':      {'pin':    0,  'name':     'BME280'},
+            'BME280B':      {'pin':    0,  'name':     'BME280'},
+            'BME280_CALIB': {'pin':   27,  'name':     'BME280_CALIB'},
+            'TSL2561':      {'pin':    0,  'name':     'TSL2561'},
+            'DS18B20':      {'pin':   35,  'name':     'DS18B20'},
+            'TEMP_ATMEGA':  {'pin':   37,  'name':     'TEMP_ATMEGA'},
+            'VIRT1':        {'pin':   41,  'name':     'VIRT1'},
+            'VIRT2':        {'pin':   41,  'name':     'VIRT2'},
+            'VIRT3':        {'pin':   41,  'name':     'VIRT3'},
+            'VIRT4':        {'pin':   41,  'name':     'VIRT4'},
+            'VIRT5':        {'pin':   41,  'name':     'VIRT5'},
+            'VIRT6':        {'pin':   41,  'name':     'VIRT6'},
+            'VIRT7':        {'pin':   41,  'name':     'VIRT7'},
+            'VIRT8':        {'pin':   41,  'name':     'VIRT8'},
+            'VIRT9':        {'pin':   41,  'name':     'VIRT9'},
+            'I2C1':         {'pin':   27,  'name':     'I2C1'},
+            'I2C2':         {'pin':   27,  'name':     'I2C2'},
+            'I2C3':         {'pin':   27,  'name':     'I2C3'},
+            'I2C4':         {'pin':   27,  'name':     'I2C4'},
+            'I2C5':         {'pin':   27,  'name':     'I2C5'},
+            'I2C6':         {'pin':   27,  'name':     'I2C6'},
+            'I2C7':         {'pin':   27,  'name':     'I2C7'},
+            'I2C8':         {'pin':   27,  'name':     'I2C8'},
+            'I2C9':         {'pin':   27,  'name':     'I2C9'},
         },
 
         5: {  # DL485P V.2.2
@@ -307,43 +333,26 @@ class Bus:
             'BME280_CALIB': {'pin':  27,  'name':      'BME280_CALIB'},
             'AM2320':       {'pin':   0},
             'TSL2561':      {'pin':   27},
-            'VIRT1':        {'pin':  41,  'name':    'VIRT1'},
-            'VIRT2':        {'pin':  42,  'name':    'VIRT2'},
-            'VIRT3':        {'pin':  43,  'name':    'VIRT3'},
-            'VIRT4':        {'pin':  44,  'name':    'VIRT4'},
-            'VIRT5':        {'pin':  45,  'name':    'VIRT5'},
+            'VIRT1':        {'pin':   41,  'name':     'VIRT1'},
+            'VIRT2':        {'pin':   41,  'name':     'VIRT2'},
+            'VIRT3':        {'pin':   41,  'name':     'VIRT3'},
+            'VIRT4':        {'pin':   41,  'name':     'VIRT4'},
+            'VIRT5':        {'pin':   41,  'name':     'VIRT5'},
+            'VIRT6':        {'pin':   41,  'name':     'VIRT6'},
+            'VIRT7':        {'pin':   41,  'name':     'VIRT7'},
+            'VIRT8':        {'pin':   41,  'name':     'VIRT8'},
+            'VIRT9':        {'pin':   41,  'name':     'VIRT9'},
+            'I2C1':         {'pin':   27,  'name':     'I2C1'},
+            'I2C2':         {'pin':   27,  'name':     'I2C2'},
+            'I2C3':         {'pin':   27,  'name':     'I2C3'},
+            'I2C4':         {'pin':   27,  'name':     'I2C4'},
+            'I2C5':         {'pin':   27,  'name':     'I2C5'},
+            'I2C6':         {'pin':   27,  'name':     'I2C6'},
+            'I2C7':         {'pin':   27,  'name':     'I2C7'},
+            'I2C8':         {'pin':   27,  'name':     'I2C8'},
+            'I2C9':         {'pin':   27,  'name':     'I2C9'},
         },
 
-        3: {  # DL485P OLD VERIONS 2.1
-            'SDA':          {'pin':  27},
-            'SCL':          {'pin':  28},
-            'PD7':          {'pin':  11},
-            'PD6':          {'pin':  10},
-            'PB0':          {'pin':  12},
-            'PB1':          {'pin':  13},
-            'PD3':          {'pin':   1},
-            'PD4':          {'pin':   2},
-            'PB2':          {'pin':  14},
-            'PC0':          {'pin':  23},
-            'PC1':          {'pin':  24},
-            'PC2':          {'pin':  25},
-            'PC3':          {'pin':  26},
-            'PB4':          {'pin':  16},
-            'PB5':          {'pin':  17},
-            'PB3':          {'pin':  15},
-            'PE0':          {'pin':   3},
-            'PE1':          {'pin':   6},
-            'PE2':          {'pin':  19},
-            'PE3':          {'pin':  22},
-            'VIN':          {'pin':  22, 'function': ['VIN']},
-            'TEMP_ATMEGA':  {'pin':  37},
-            'PCA9535':      {'pin':   0},
-            'BME280':       {'pin':   0},
-            'BME280B':      {'pin':   0},
-            'BME280_CALIB': {'pin':  27,  'name':      'BME280_CALIB'},
-            'AM2320':       {'pin':   0},
-            'TSL2561':      {'pin':   0},
-        },
 
         4: {  # Board DL485R
             'IO1':          {'pin':  15,   'name':     'IO1',       'function': ['I', 'O', 'A']},
@@ -356,17 +365,30 @@ class Bus:
             'SDA':          {'pin':  27,  'name':      'SDA',       'function': ['SDA']},
             'SCL':          {'pin':  28,  'name':      'SCL',       'function': ['SCL']},
             'PCA9535':      {'pin':   0,  'name':      'PCA9535'},
-            'BME280':       {'pin':   27,  'name':     'BME280'},
+            'BME280':       {'pin':  27,  'name':      'BME280'},
             'BME280_CALIB': {'pin':  27,  'name':      'BME280_CALIB'},
-            'BME280A':      {'pin':   0,  'name':      'BME280'},
+            'BME280A':      {'pin':   0,  'name':      'BME280A'},
             'TSL2561':      {'pin':  27,  'name':      'TSL2561'},
             'DS18B20':      {'pin':  35,  'name':      'DS18B20'},
-            'TEMP_ATMEGA':  {'pin':  37,  'name' :     'TEMP_ATMEGA'},
-            'VIRT1':        {'pin':  41,  'name' :     'VIRT1'},
-            'VIRT2':        {'pin':  42,  'name' :     'VIRT2'},
-            'VIRT3':        {'pin':  43,  'name' :     'VIRT3'},
-            'VIRT4':        {'pin':  44,  'name' :     'VIRT4'},
-            'VIRT5':        {'pin':  45,  'name' :     'VIRT5'},
+            'TEMP_ATMEGA':  {'pin':  37,  'name':      'VIRT1'},
+            'VIRT1':        {'pin':  41,  'name':      'VIRT1'},
+            'VIRT2':        {'pin':  41,  'name':      'VIRT2'},
+            'VIRT3':        {'pin':  41,  'name':      'VIRT3'},
+            'VIRT4':        {'pin':  41,  'name':      'VIRT4'},
+            'VIRT5':        {'pin':  41,  'name':      'VIRT5'},
+            'VIRT6':        {'pin':  41,  'name':      'VIRT6'},
+            'VIRT7':        {'pin':  41,  'name':      'VIRT7'},
+            'VIRT8':        {'pin':  41,  'name':      'VIRT8'},
+            'VIRT9':        {'pin':  41,  'name':      'VIRT9'},
+            'I2C1':         {'pin':  27,  'name':      'I2C1'},
+            'I2C2':         {'pin':  27,  'name':      'I2C2'},
+            'I2C3':         {'pin':  27,  'name':      'I2C3'},
+            'I2C4':         {'pin':  27,  'name':      'I2C4'},
+            'I2C5':         {'pin':  27,  'name':      'I2C5'},
+            'I2C6':         {'pin':  27,  'name':      'I2C6'},
+            'I2C7':         {'pin':  27,  'name':      'I2C7'},
+            'I2C8':         {'pin':  27,  'name':      'I2C8'},
+            'I2C9':         {'pin':  27,  'name':      'I2C9'},
         },
     }
 
@@ -393,7 +415,7 @@ class Bus:
         self.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo boards attive)
         self.bus_baudrate = int(self.config['GENERAL_NET']['bus_baudrate'])  # Legge la velocità del BUS
         self.bus_port = self.config['GENERAL_NET']['bus_port']  # Legge la porta del BUS di Raspberry PI
-        self.TIME_PRINT_LOG = 10  # intervallo di tempo in secondi per la stampa periodica del log a schermo
+        self.TIME_PRINT_LOG = 6  # intervallo di tempo in secondi per la stampa periodica del log a schermo
         self.nowtime = self.oldtime = 0
         self.RXtrama = []
         self.TXmsg = []  # Lista che contiene le liste da trasmettere sul BUS
@@ -471,21 +493,23 @@ class Bus:
                         if 'device_type' in self.config[b][bb]:
                             device_type = self.config[b][bb]['device_type']
                         else:
-                            print("DEVICE NAME NON DEFINITO IN FILE JASON: board_id: %s - logic_io: %s - io_name: %s" %(b, logic_io, bb))
+                            print("DEVICE_TYPE NON DEFINITO IN FILE JSON: board_id: %s - logic_io: %s - io_name: %s" %(b, logic_io, bb))
+                            print("----------------------------\nVALORI AMMESSI PER device_type su FILE JSON.\nValori validi:\n")
+                            for k in self.device_type_dict.keys():
+                                print(k)
                             sys.exit()
 
                         try:
                             pin = self.iomap[board_type][bb]['pin']
                         except:
-                            # if bb != "BME280_CALIB":
-                            print("NOME LABEL {} NON TROVATO NELLA DEFINIZIONE DELLA BOARD TIPO: {}:".format(bb, board_type, self.iomap[board_type]))
+                            print("NOME LABEL {} NON TROVATO NELLA DEFINIZIONE DELLA BOARD TIPO: {}:".format(bb, board_type), self.iomap[board_type])
                             pin = 0
 
                         if pin>0:
                             try:
                                 fisic_io = self.mapmicro[self.iomap[board_type][bb]['pin']]['fisic_io']
                             except:
-                                print("IO FISICO NON TROVATO")
+                                
                                 fisic_io = 99
                         else:
                             fisic_io = 99
@@ -493,6 +517,7 @@ class Bus:
 
                         direction = self.device_type_dict[device_type].get('direction')
                         if not direction:
+                            print("VALORI AMMESSI: ", self.device_type_dict[device_type])
                             raise("ERROR: direcrtion NOT DEFINE!!!")
 
                         self.mapiotype[board_id][logic_io] = {
@@ -543,7 +568,7 @@ class Bus:
                             'plc_tmax_on': int(self.config[b][bb].get('plc_tmax_on', 65535)),
                             'plc_counter_filter': self.config[b][bb].get('plc_counter_filter', 0),
                             'plc_counter_min_period_time': int(self.config[b][bb].get('plc_counter_min_period_time', 0)),
-                            'plc_counter_mode': int(self.config[b][bb].get('plc_counter_mode', 0)), #  rinominare in plc_counter_mode (tipo conteggio timer PLC)
+                            'plc_counter_mode': int(self.config[b][bb].get('plc_counter_mode', 0)),
                             'plc_time_unit': float(self.config[b][bb].get('plc_time_unit', 1)), # default 1 secondo
                             'plc_timer_n_transitions': int(self.config[b][bb].get('plc_timer_n_transitions', 0)),
                             'plc_preset_input': int(self.config[b][bb].get('plc_preset_input', 0)),
@@ -721,18 +746,20 @@ class Bus:
                                     print("PSYCHROMETER WARNING: Umidità < 0,  Set umidità=0")
                                     umidita_relativa_percentuale = 0
                                 umidita_specifica_alla_saturazione = 0.622 * pressione_vapore_saturo_temperatura_sensore_asciutto / pressione_approssimata_all_altezza
-                                umidita_specifica = umidita_relativa_percentuale*umidita_specifica_alla_saturazione / 100
+                                # umidita_specifica = umidita_relativa_percentuale*umidita_specifica_alla_saturazione / 100
                                 print("PSYCHROMETER HUMIDITY: {}".format(round(umidita_relativa_percentuale, 1)))
                                 self.status[board_id_linked]['io'][logic_io_linked - 1] = round(umidita_relativa_percentuale, 1)
                             else:
                                 print('PSYCHROMETER ERROR: Temp1 or Temp2 have None value')
                     value = round((((value * kmul) + kadd)+ self.mapiotype[board_id][logic_io]['offset_temperature']), self.mapiotype[board_id][logic_io]['round_temperature'])
+                    if self.mapiotype[board_id][logic_io]['round_temperature'] == 0:
+                        return int(value)
                     return value
                 else:
                     # print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
                     return None
 
-            elif type_io == 'digital' and plc_function == 'powermeter' :
+            elif plc_function == 'powermeter' :
                 # print(plc_function, value)
                 value = value[0] + (value[1] * 256)
                 # return (value * kmul) + kadd
@@ -740,7 +767,16 @@ class Bus:
 
             elif type_io == 'digital' and plc_function == 'time_meter' :
                 # print(plc_function, value)
-                return value[0] + (value[1] * 256)
+                return value[0] + (value[1] * 256)      
+
+            elif plc_function in ['counter_up', 'counter_dw', 'counter_up_dw'] :
+                # print(plc_function, value)
+                flag_signed = self.mapiotype[board_id][logic_io]['plc_counter_mode'] & 2
+                value = value[0] + (value[1] * 256)
+                if flag_signed:
+                    if value >= 32768:
+                        value -= 65536 
+                return value
 
             elif type_io == 'analog' and device_type == 'ANALOG_IN':
                 if len(value) >= 2: # Attenzione: lasciare  altrimenti se si passa dalla configurazione DIGITAL_IN in ANALOG_IN, puo' dare errore
@@ -836,12 +872,18 @@ class Bus:
                 P /= (0.9877**(self.mapiotype[board_id][logic_io]['altitude'] / 100)) # Compensazione altitudine
                 P += self.mapiotype[board_id][logic_io]['offset_pression'] # Offset pressione
                 P = round(P, self.mapiotype[board_id][logic_io]['round_pression'])
+                if self.mapiotype[board_id][logic_io]['round_pression'] == 0:
+                    P = int(P)
                 T += self.mapiotype[board_id][logic_io]['offset_temperature']
                 T = round(T, self.mapiotype[board_id][logic_io]['round_temperature'])
+                if self.mapiotype[board_id][logic_io]['round_temperature'] == 0:
+                    T = int(T)
                 H += self.mapiotype[board_id][logic_io]['offset_humidity']
                 H = round(H, self.mapiotype[board_id][logic_io]['round_humidity'])
+                if self.mapiotype[board_id][logic_io]['round_humidity'] == 0:
+                    H = int(H)
 
-                # print(T,H,P, self.mapiotype[board_id][logic_io]['round_humidity'])
+                print(T,H,P, self.mapiotype[board_id][logic_io]['round_humidity'])
 
                 return [T,H,P]
 
@@ -881,7 +923,7 @@ class Bus:
                 if device_type == 'VINR1R2':
                     value = round((value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0), 1)
                 else:
-                    print("----------------------", value)
+                    # print("----------------------", value)
                     value = round((value[0] + (value[1] * 256)) * kmul + kadd, 1)
 
                 bio = '%s-%s' %(board_id, logic_io)
@@ -919,7 +961,6 @@ class Bus:
                 # b5: fronte ON da trasmettere
                 # value = value[0]
                 # value_io = value & 1
-
                 value = value[0]
                 return value
 
@@ -960,11 +1001,11 @@ class Bus:
         """
         return ['{:02X}'.format(a) for a in msg]
 
-    def serold(self, port='/dev/ttyAMA0', baudrate=9600):
-        """
-        Instance of serial
-        """
-        return arduinoserial.SerialPort(port, baudrate)
+    # def serold(self, port='/dev/ttyAMA0', baudrate=9600):
+    #     """
+    #     Instance of serial
+    #     """
+    #     return arduinoserial.SerialPort(port, baudrate)
 
     def ser(self, port='/dev/ttyAMA0', baudrate=19200):
         """
@@ -1107,7 +1148,6 @@ class Bus:
                 # print("+++++++++++++++++", self.buffricn, self.buffricnapp)
                 self.seven2eight()
             self.buffricnlung += 1
-#            print("-----------------", self.buffricn, self.buffricnapp)
             return []
 
     def eight2seven(self, msg):
@@ -1137,7 +1177,6 @@ class Bus:
         """
         Codifica byte messaggio con bit sincronismo, e codice di fine trama piu crc finale
         """
-
         app = 0
 
         bytedatrasm = []
@@ -1888,14 +1927,16 @@ class Bus:
                             plc_counter_filter = self.mapiotype[board_id][logic_io]['plc_counter_filter']
                             plc.append(plc_counter_filter)
                             plc_counter_timeout = self.mapiotype[board_id][logic_io]['plc_counter_timeout']
-                            # print("----------------------", board_id, logic_io, plc_counter_timeout)
-                            # plc.append(plc_counter_timeout & 255)
-                            # plc.append(plc_counter_timeout >> 8)
-                            plcapp = list(self.calcAddressLsMs8(plc_counter_timeout))
-                            # print("plcapp", plcapp)
-                            plc += plcapp
-                            # print("///////////////////", plc)
-
+                            plc += list(self.calcAddressLsMs8(plc_counter_timeout))
+                            
+                        elif sbyte8 in ['counter_up_dw']:
+                            """ ingresso dispari incrementa - ingresso pari decrementa """
+                            plc_counter_mode = self.mapiotype[board_id][logic_io]['plc_counter_mode']
+                            plc.append(plc_counter_mode)
+                            plc_counter_filter = self.mapiotype[board_id][logic_io]['plc_counter_filter']
+                            plc.append(plc_counter_filter)
+                            plc_counter_timeout = self.mapiotype[board_id][logic_io]['plc_counter_timeout']
+                            plc += list(self.calcAddressLsMs8(plc_counter_timeout))
 
                         elif sbyte8 == 'time_meter':
                             plc_counter_mode = self.mapiotype[board_id][logic_io]['plc_counter_mode']
@@ -1903,8 +1944,6 @@ class Bus:
                             plc_counter_filter = self.mapiotype[board_id][logic_io]['plc_counter_filter']
                             plc.append(plc_counter_filter)
                             plc_counter_timeout = self.mapiotype[board_id][logic_io]['plc_counter_timeout']
-                            # plc.append(plc_counter_timeout & 255)
-                            # plc.append(plc_counter_timeout >> 8)
                             plc += list(self.calcAddressLsMs8(plc_counter_timeout))
 
                         elif sbyte8 == 'powermeter':
@@ -1913,21 +1952,15 @@ class Bus:
                             plc_counter_filter = self.mapiotype[board_id][logic_io]['plc_counter_filter']
                             plc.append(plc_counter_filter)
                             plc_counter_timeout = self.mapiotype[board_id][logic_io]['plc_counter_timeout']
-                            # plc.append(plc_counter_timeout & 255)
-                            # plc.append(plc_counter_timeout >> 8)
                             plc += list(self.calcAddressLsMs8(plc_counter_timeout))
                             plc_counter_min_period_time = self.mapiotype[board_id][logic_io]['plc_counter_min_period_time']
                             plc.append(plc_counter_min_period_time)
                             powermeter_k = self.mapiotype[board_id][logic_io]['powermeter_k']
-                            # plc.append(powermeter_k & 255)
-                            # plc.append(powermeter_k >> 8)
-                            #plc += [powermeter_k & 255, powermeter_k >> 8]
                             plc += list(self.calcAddressLsMs8(powermeter_k))
 
                         elif sbyte8 in  ['and', 'nand',   'or', 'nor', 'xor', 'nxor', 'odd', 'even', 'toggle_off', 'toggle_on', 'toggle_on_off']:
                             plc.append(plc_time_unit_app)
                             plc.append(0) # Numero massimo di commutazioni (ignorato)
-
                             plc_tmax_on = self.mapiotype[board_id][logic_io]['plc_tmax_on']
                             plc += list(self.calcAddressLsMs8(plc_tmax_on))
 

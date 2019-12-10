@@ -135,50 +135,54 @@
             "description": "Ingresso IO1"
         },
         "IO2": {
-            "enable": 0,
+            "enable": 1,
             "logic_io": 12,
             "device_type": "DIGITAL_IN_PULLUP",
-            "filter": 1,
+            "filter": 10,
             "time_refresh": 3000,
             "name": "IO2",
             "description": "Ingresso IO2"
         },
         "IO3": {
-            "enable": 0,
+            "enable": 1,
             "logic_io": 13,
             "device_type": "DIGITAL_IN_PULLUP",
-            "filter": 1,
+            "filter": 10,
             "time_refresh": 3000,
             "name": "IO3",
             "description": "Ingresso IO3"
         },
-        "OUT2": {
-            "enable": 0,
-            "logic_io": 4,
-            "device_type": "DIGITAL_OUT_PWM",
-            "filter": 1,
-            "time_refresh": 3000,
-            "default_startup_value": 0, //valore preset uscita prima del primo calcolo
-            "plc_function": "counter_up",
-            "plc_counter_mode": 0, // contatore semplice
-            "plc_counter_filter": 0, // non usato
-            "plc_counter_timeout": 65535, // escluso
-            "plc_linked_board_id_logic_io": ["*-12","*-13"], //io logico ingressi analogici
-            "name": "VIRT",
-            "description": "Virtuale"
-        },
-        "BME280_CALIB":{//i2c
+        "VIRT1": {
             "enable": 1,
+            "logic_io": 4,
+            "device_type": "VIRTUAL",
+            "filter": 1,
+            "time_refresh": 100,
+            "default_startup_value": 0, //valore preset uscita prima del primo calcolo
+            "plc_function": "powermeter",
+            "plc_counter_mode": 27, // b11011 memoria del valore precendente e aggiorna dato a periodo ottenuto, azzera tempo ad ogni start a conteggio finito. Considera end come nuovo start, end si fronte ON
+            "powermeter_k": 60000, // numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
+            "plc_time_unit": 0.01, // Centesimi di secondo
+            "plc_counter_timeout": 500, // 5 secondi
+            "kmul": 6,
+            "kadd": 0,
+            "plc_linked_board_id_logic_io": ["*-13"], //io logico ingressi analogici
+            "name": "VIRT",
+            "description": "Virtuale",
+            "dtype": "kWh"
+        },
+        "I2C2":{//i2c
+            "enable": 0,
             "logic_io": 14, // Attenzione: LOGIC_IO della calibrazione deve essere appena precedente al LOGIC_IO del BME associato
             "device_type": "BME280_CALIB",
             "time_refresh": 60,//TBME280
             "address": "0xEC",
             "name": "BME280",
             "description": "Sensore T+U+B bagno",
-            "dtype": "Temp+Hum+Baro"
+            "dtype": "None"
         },
-        "BME280":{//i2c
-            "enable": 1,
+        "I2C1":{//i2c
+            "enable": 0,
             "logic_io": 11,
             "device_type": "BME280",
             "logic_io_calibration": 14,
@@ -196,8 +200,8 @@
             "dtype": "Temp+Hum+Baro"
         },
         
-        "TSL2561": { //i2c
-            "enable": 1,
+        "I2C3": { //i2c
+            "enable": 0,
             "logic_io": 3,
             "device_type": "TSL2561",
             "lux_gain": 1, // 0=1x, 1=16X
@@ -207,7 +211,6 @@
             "name": "TSL2561",
             "description": "Sensore Luminosità"
         }
-
     },
 
     "BOARD1": {
