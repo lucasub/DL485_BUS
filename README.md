@@ -54,6 +54,8 @@ Vedere a questo indirizzo <a href="https://www.domocontrol.info/wiki">Domocontro
 
 Software per creare la configurazione dei vari dipositivi <a href="https://dl485.dmy-tek.it">DL485</a>
 
+<img src="document/image/DL485_configuration.png" width="500px" />
+
 ### Esecuzione del programma
 
 Da terminale:
