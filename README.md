@@ -2,10 +2,10 @@ DL485 BUS Library
 =================
 
 <div>
-    <img src="document/image/DL485P.png" width="200px" style="float:left;" />
-    <img src="document/image/DL485M.png" width="200px" style="float:left;" />
-    <img src="document/image/DL485B.png" width="200px" style="float:left;" />
-    <img src="document/image/DL485R.png" width="200px" style="float:left;" />
+    <img src="document/image/DL485P.png" style="float:left; max-width:22%;" />
+    <img src="document/image/DL485M.png" style="float:left; max-width:22%;" />
+    <img src="document/image/DL485B.png" style="float:left; max-width:22%;" />
+    <img src="document/image/DL485R.png" style="float:left; max-width:22%;" />
 </div>
 
 ## English
