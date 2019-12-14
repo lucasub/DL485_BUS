@@ -2,10 +2,10 @@ DL485 BUS Library
 =================
 
 <div>
-    <img src="document/image/DL485P.png" width="22%" style="float:left; width:22%;" />
-    <img src="document/image/DL485M.png" width="22%" style="float:left; width:22%;" />
-    <img src="document/image/DL485B.png" width="22%" style="float:left; width:22%;" />
-    <img src="document/image/DL485R.png" width="22%" style="float:left; width:22%;" />
+    <img src="document/image/DL485P.png" width="22%" style="float:left;" />
+    <img src="document/image/DL485M.png" width="22%" style="float:left;" />
+    <img src="document/image/DL485B.png" width="22%" style="float:left;" />
+    <img src="document/image/DL485R.png" width="22%" style="float:left;" />
 </div>
 
 ## English
@@ -25,11 +25,15 @@ Verificare che siano installati python3 e git
 
 Prelevare i file tramite il comando
 
+```
 git clone https://github.com/lucasub/DL485_BUS.git
+```
 
 Entrare nella cartella DL485_BUS con
 
+```
 cd DL485_BUS
+```
 
 All'interno sono presenti alcuni file tra cui:
 - dl485p.py -> libreria
@@ -45,7 +49,9 @@ Vedere a questo indirizzo <a href="https://www.domocontrol.info/wiki">Domocontro
 
 Da terminale:
 
+```
 python3 dl485.py p
+```
 
 Verrà mostrato a video tutte le fasi con la programmazione e la ricezione dei vari dati
 
