@@ -16,17 +16,12 @@ Libreria per gestione schede domotiche serie DL485x
 
 Verificare che siano installati python3 e git
 
-Prelevare i file tramite il comando
-
-'''
+Prelevare i file tramite il comando:
 git clone https://github.com/lucasub/DL485_BUS.git
-'''
 
-Entrare nella cartella DL485_BUS con
 
-'''
+Entrare nella cartella DL485_BUS con:
 cd DL485_BUS
-'''
 
 All'interno sono presenti alcuni file tra cui:
 - dl485p.py -> libreria
