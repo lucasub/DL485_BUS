@@ -89,7 +89,7 @@
         },
         //         Tensione alimentazione BOARD
         "VIN": { // Tensione alimentazione BOARD
-            "enable": 0, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 1800, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "VINR1R2",
@@ -99,31 +99,12 @@
             "description": "Tensione alimentazione scheda" // Descrizione che verrà riportato su DOMOTICZ
         },
         "TEMP_ATMEGA": {
-            "enable": 0,
+            "enable": 1,
             "logic_io": 2,
             "time_refresh": 1800,
             "device_type": "TEMP_ATMEGA",
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB"
-        },
-
-        "SDA": {
-            "enable": 0,
-            "logic_io": 9,
-            "device_type": "DIGITAL_IN_PULLUP",
-            "filter": 1,
-            "time_refresh": 3000,
-            "name": "SDA",
-            "description": "Ingresso SDA"
-        },
-        "SCL": {
-            "enable": 0,
-            "logic_io": 10,
-            "device_type": "DIGITAL_IN_PULLUP",
-            "filter": 1,
-            "time_refresh": 3000,
-            "name": "SCL",
-            "description": "Ingresso SCL"
         },
         "IO1": {
             "enable": 0,
@@ -172,8 +153,8 @@
             "dtype": "kWh"
         },
         "I2C2":{//i2c
-            "enable": 0,
-            "logic_io": 14, // Attenzione: LOGIC_IO della calibrazione deve essere appena precedente al LOGIC_IO del BME associato
+            "enable": 1,
+            "logic_io": 9, // Attenzione: LOGIC_IO della calibrazione deve essere appena precedente al LOGIC_IO del BME associato
             "device_type": "BME280_CALIB",
             "time_refresh": 60,//TBME280
             "address": "0xEC",
@@ -182,10 +163,10 @@
             "dtype": "None"
         },
         "I2C1":{//i2c
-            "enable": 0,
-            "logic_io": 11,
+            "enable": 1,
+            "logic_io": 8,
             "device_type": "BME280",
-            "logic_io_calibration": 14,
+            "logic_io_calibration": 9,
             "time_refresh": 60,//TBME280
             "address": "0xEC",
             "altitude": 76, //Altitudine sappada
@@ -201,8 +182,8 @@
         },
         
         "I2C3": { //i2c
-            "enable": 0,
-            "logic_io": 3,
+            "enable": 1,
+            "logic_io": 7,
             "device_type": "TSL2561",
             "lux_gain": 1, // 0=1x, 1=16X
             "lux_integration": 1, // 0=13.7 msec, 1=101 msec, 2=402 msec

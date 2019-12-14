@@ -144,6 +144,7 @@ class Bus:
         'NON_CONCATENA': 0,
         'BYTE_OPZIONI_LETTURA': 64,
         'BYTE_OPZIONI_SCRITTURA': 0,
+        # 'BYTE_OPZIONI_RESET_I2C': ???? ,
         'FLAG_PAUSA': 0x20, #definizione per vecchio linguaggio
     }
     if EEPROM_LANGUAGE == 1:  # nuovo linguaggio
@@ -792,35 +793,96 @@ class Bus:
                 if len(value) == 26: # value from 0x88 to 0xA1
                     # print("CALIBRAZIONE BME--->>>>>", value)
                     # [101, 109, 65, 103, 50, 0, 54, 146, 12, 214, 208, 11, 9, 32, 56, 255, 249, 255, 172, 38, 10, 216, 189, 16, 0, 75]
-                    self.BME[bme_key]['dig_T1'] = self.byteLSMS2uint(value[0], value[1]) #  0x88
-                    self.BME[bme_key]['dig_T2'] = self.byteLSMS2int(value[2], value[3]) #  0x8A
-                    self.BME[bme_key]['dig_T3'] = self.byteLSMS2int(value[4], value[5]) #  0x8C
+                    
+                    flag_ok=True
 
-                    self.BME[bme_key]['dig_P1'] = self.byteLSMS2uint(value[6], value[7]) #  0x8E
-                    self.BME[bme_key]['dig_P2'] = self.byteLSMS2int(value[8], value[9]) #  0x90
-                    self.BME[bme_key]['dig_P3'] = self.byteLSMS2int(value[10], value[11]) #  0x92
-                    self.BME[bme_key]['dig_P4'] = self.byteLSMS2int(value[12], value[13]) #  0x94
-                    self.BME[bme_key]['dig_P5'] = self.byteLSMS2int(value[14], value[15]) #  0x96
-                    self.BME[bme_key]['dig_P6'] = self.byteLSMS2int(value[16], value[17]) #  0x98
-                    self.BME[bme_key]['dig_P7'] = self.byteLSMS2int(value[18], value[19]) #  0x9A
-                    self.BME[bme_key]['dig_P8'] = self.byteLSMS2int(value[20], value[21]) #  0x9C
-                    self.BME[bme_key]['dig_P9'] = self.byteLSMS2int(value[22], value[23]) #  0x9E
-                    self.BME[bme_key]['dig_H1'] = value[25] #  0xA1
-                    self.BME[bme_key]['flag26'] = True
+                    if self.BME[bme_key].get('dig_T1') != self.byteLSMS2uint(value[0], value[1]): 
+                        flag_ok = False
+                        self.BME[bme_key]['dig_T1'] = self.byteLSMS2uint(value[0], value[1]) #  0x88
+                    
+                    if self.BME[bme_key].get('dig_T2') != self.byteLSMS2int(value[2], value[3]): 
+                        flag_ok = False
+                        self.BME[bme_key]['dig_T2'] = self.byteLSMS2int(value[2], value[3]) #  0x8A
+
+                    if self.BME[bme_key].get('dig_T3') != self.byteLSMS2int(value[4], value[5]): 
+                        flag_ok = False
+                        self.BME[bme_key]['dig_T3'] = self.byteLSMS2int(value[4], value[5]) #  0x8C
+
+                    if self.BME[bme_key].get('dig_P1') != self.byteLSMS2uint(value[6], value[7]): #  0x8E: 
+                        flag_ok = False
+                        self.BME[bme_key]['dig_P1'] = self.byteLSMS2uint(value[6], value[7]) #  0x8E
+                    
+                    if self.BME[bme_key].get('dig_P2') != self.byteLSMS2int(value[8], value[9]): #  0x90 
+                        flag_ok = False                    
+                        self.BME[bme_key]['dig_P2'] = self.byteLSMS2int(value[8], value[9]) #  0x90
+                    
+                    if self.BME[bme_key].get('dig_P3') != self.byteLSMS2int(value[10], value[11]): #  0x92
+                        flag_ok = False                    
+                        self.BME[bme_key]['dig_P3'] = self.byteLSMS2int(value[10], value[11]) #  0x92
+                    
+                    if self.BME[bme_key].get('dig_P4') != self.byteLSMS2int(value[12], value[13]): #  0x94
+                        flag_ok = False                    
+                        self.BME[bme_key]['dig_P4'] = self.byteLSMS2int(value[12], value[13]) #  0x94
+                    
+                    if self.BME[bme_key].get('dig_P5') != self.byteLSMS2int(value[14], value[15]): #  0x96
+                        flag_ok = False                    
+                        self.BME[bme_key]['dig_P5'] = self.byteLSMS2int(value[14], value[15]) #  0x96
+
+                    if self.BME[bme_key].get('dig_P6') != self.byteLSMS2int(value[16], value[17]): #  0x98
+                        flag_ok = False                                        
+                        self.BME[bme_key]['dig_P6'] = self.byteLSMS2int(value[16], value[17]) #  0x98
+                        
+                    if self.BME[bme_key].get('dig_P7') != self.byteLSMS2int(value[18], value[19]): #  0x9A
+                        flag_ok = False                    
+                        self.BME[bme_key]['dig_P7'] = self.byteLSMS2int(value[18], value[19]) #  0x9A
+                    
+                    if self.BME[bme_key].get('dig_P8') != self.byteLSMS2int(value[20], value[21]): #  0x9C
+                        flag_ok = False                    
+                        self.BME[bme_key]['dig_P8'] = self.byteLSMS2int(value[20], value[21]) #  0x9C
+                        
+                    if self.BME[bme_key].get('dig_P9') != self.byteLSMS2int(value[22], value[23]): #  0x9E
+                        flag_ok = False                        
+                        self.BME[bme_key]['dig_P9'] = self.byteLSMS2int(value[22], value[23]) #  0x9E
+                        
+                    if self.BME[bme_key].get('dig_H1') != value[25]: #  0xA1
+                        flag_ok = False                        
+                        self.BME[bme_key]['dig_H1'] = value[25] #  0xA1
+                    
+                    self.BME[bme_key]['flag26'] = flag_ok
 
                 if len(value) == 7: # value from 0xE1 to 0xE7
                     # print("CALIBRAZIONE BME--->>>>>", value)
-                    self.BME[bme_key]['dig_H2'] =  self.byteLSMS2int(value[0], value[1]) #  0xE1
-                    self.BME[bme_key]['dig_H3'] = value[2] # 0xE3
+                    
+                    flag_ok=True
+                    if self.BME[bme_key].get('dig_H2') !=  self.byteLSMS2int(value[0], value[1]): #  0xE1:
+                        flag_ok = False 
+                        self.BME[bme_key]['dig_H2'] =  self.byteLSMS2int(value[0], value[1]) #  0xE1
+                    
+                    if self.BME[bme_key].get('dig_H3') != value[2]: # 0xE3:
+                        flag_ok = False 
+                        self.BME[bme_key]['dig_H3'] = value[2] # 0xE3
 
                     h4 = self.byte2signed(value[3])
                     h4 = h4 << 4
-                    self.BME[bme_key]['dig_H4'] = h4 | (value[4] & 0x0f)
+                    
+                    if self.BME[bme_key].get('dig_H4') != h4 | (value[4] & 0x0f):
+                        flag_ok = False 
+                        self.BME[bme_key]['dig_H4'] = h4 | (value[4] & 0x0f)
                     h5 = self.byte2signed(value[5]) # 0xE6
-                    self.BME[bme_key]['dig_H5'] = (h5 << 4) | ((value[4] >> 4) & 0x0f)
-                    self.BME[bme_key]['dig_H5'] = ((value[4] >> 4) & 0x0F) | (value[5] << 4)
-                    self.BME[bme_key]['dig_H6'] =  self.byte2signed(value[6]) # 0xE7
-                    self.BME[bme_key]['flag7'] = True
+                    
+                    if self.BME[bme_key].get('dig_H5') != (h5 << 4) | ((value[4] >> 4) & 0x0f):
+                        flag_ok = False 
+                        self.BME[bme_key]['dig_H5'] = (h5 << 4) | ((value[4] >> 4) & 0x0f)
+                    
+                    if self.BME[bme_key].get('dig_H5') != ((value[4] >> 4) & 0x0F) | (value[5] << 4):
+                        flag_ok = False 
+                        self.BME[bme_key]['dig_H5'] = ((value[4] >> 4) & 0x0F) | (value[5] << 4)
+                    
+                    if self.BME[bme_key].get('dig_H6') !=  self.byte2signed(value[6]): # 0xE7
+                        flag_ok = False 
+                        self.BME[bme_key]['dig_H6'] =  self.byte2signed(value[6]) # 0xE7
+                    
+                    self.BME[bme_key]['flag7'] = flag_ok
                 # pprint(self.BME)
 
             elif device_type == 'BME280':
@@ -1998,20 +2060,26 @@ class Bus:
                         msg.append(self.writeEEnIOoffset(board_id, logic_io, 22, [4 | self.i2c_const['NON_CONCATENA'], 3, 0xec, 0xf4, 0x8f]))  # Inizializzazione BME temperatura + pressione  (Oversampling)
                     elif self.EEPROM_LANGUAGE == 1:
                         # print("EEPROM_LANGUAGE NEW")
-                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3, 1 | 8, 0xec, 0xf7]))  # F7 indirizzo di inizio lettura
-                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 64, 0xec | 1, 0]))  # 64 = 8 byte da leggere, 0=fine programma
+                        # msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3, 1 | 8, 0xec, 0xf7]))  # F7 indirizzo di inizio lettura
+                        # msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 64, 0xec | 1, 0]))  # 64 = 8 byte da leggere, 0=fine programma
 
-                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 18, [4, 3 | 32, 0xec, 0xf2, 0x03]))  # Inizializzazione BME e Oversampling umidità
-                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 23, [4, 3, 0xec, 0xf4, 0x8f, 0]))  # Inizializzazione BME temperatura + pressione  (Oversampling)
+                        # msg.append(self.writeEEnIOoffset(board_id, logic_io, 18, [4, 3 | 32, 0xec, 0xf2, 0x03]))  # Inizializzazione BME e Oversampling umidità
+                        # msg.append(self.writeEEnIOoffset(board_id, logic_io, 23, [4, 3, 0xec, 0xf4, 0x8f, 0]))  # Inizializzazione BME temperatura + pressione  (Oversampling)
+
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [4, 3 | 32, 0xec, 0xf2, 0x03]))  # Inizializzazione BME e Oversampling umidità
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 15, [4, 3, 0xec, 0xf4, 0x8f]))  # Inizializzazione BME temperatura + pressione  (Oversampling)
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 20, [3, 1 | 8, 0xec, 0xf7]))  # F7 indirizzo di inizio lettura
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 24, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3|64, 0xec | 1, 0, 0]))  # 64 = 8 byte da leggere, 0=fine programma
+
 
                 elif device_type == 'BME280_CALIB':
                     if self.EEPROM_LANGUAGE == 0:
                         print("ERRORE - MANCA DEFINIZIONE LINGUAGGIO VECCHIO")
                     elif self.EEPROM_LANGUAGE == 1:
-                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3, 1 | 8, 0xec, 0x88]))
-                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 208, 0xec | 1]))  # 208: lettura I2C. 26 byte da leggere da indirizzo 0x88
-                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 17, [3, 1 | 8, 0xec, 0xE1]))
-                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 21, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 56, 0xec | 1, 0]))  # 56: lettura I2C. 7 byte da indirizzo E1
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1|8|32, 0xec, 0x88]))  # 1=start iniziale | termina per dare start senza stop | reset I2C prima di iniziare
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3|208, 0xec | 1]))  # 208: lettura I2C. 26 byte da leggere da indirizzo 0x88
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 17, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1|8, 0xec, 0xE1]))
+                        msg.append(self.writeEEnIOoffset(board_id, logic_io, 21, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3|56, 0xec | 1, 0]))  # 56: lettura I2C. 7 byte da indirizzo E1
 
                 elif device_type == 'AM2320':
                     print("CONFIGURAZIONE AM2320")
@@ -2053,15 +2121,18 @@ class Bus:
 
                     elif self.EEPROM_LANGUAGE == 1:
                         i2cconf = []
-                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC])) #0x72 address dispositivo poi legge a Word (A) partendo da indirizzo (C)
-                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 32, 0x72 | 1  ,0]))#legge 4 byte
+                        # i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC])) #0x72 address dispositivo poi legge a Word (A) partendo da indirizzo (C)
+                        # i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 32, 0x72 | 1  ,0]))#legge 4 byte
 
-                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 18, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xA0])) #scrive registro 0
-                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 22, [4 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03, (lux_gain*16)|lux_integration, 0,0]) )#alimenta tsl2561
+                        # i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 18, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xA0])) #scrive registro 0
+                        # i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 22, [4 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03, (lux_gain*16)|lux_integration, 0,0]) )#alimenta tsl2561
 
-                        # i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 26, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0x81])) #scrive registro 1
-                        # i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 30, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x12, 0, 0]) )#guadagmo max e tempo 400ms
-                        #80=>A0 per scrivere 2 byte, byte 0x03 0x12
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xA0])) #scrive registro 0
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 14, [4 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0x72, 0x03, (lux_gain*16)|lux_integration]) )#alimenta tsl2561
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 19, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC])) #0x72 address dispositivo poi legge a Word (A) partendo da indirizzo (C)
+                        i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 23, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3|32, 0x72|1 , 0, 0]))#legge 4 byte
+
+                        
 
                     msg.extend(i2cconf)
                     # print("CONFIGURAZIONE I2C:", i2cconf)
