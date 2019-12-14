@@ -39,7 +39,14 @@ All'interno sono presenti alcuni file tra cui:
 - dl485p.py -> libreria
 - config.json -> contiene tutta la configurazione delle schede
 - TSL2561.py -> modulo per la gestione del sensore luminosità
+- requirements.txt con tutte le dipendenze
 - README.md -> questo file che descrive il sistema e l'installazione
+
+Per installare tutte le dipendenze:
+
+```
+pip3 install -r requirements.txt
+```
 
 ### Impostazione del file di configurazione config.json
 
