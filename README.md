@@ -52,6 +52,8 @@ pip3 install -r requirements.txt
 
 Vedere a questo indirizzo <a href="https://www.domocontrol.info/wiki">Domocontrol Wiki</a>
 
+Software per creare la configurazione dei vari dipositivi <a href="https://dl485.dmy-tek.it">DL485</a>
+
 ### Esecuzione del programma
 
 Da terminale:
