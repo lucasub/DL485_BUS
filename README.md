@@ -60,6 +60,17 @@ Da terminale:
 python3 dl485.py p
 ```
 
+<img src="document/image/DL485_execute.png" width="500px" style="float:left;" />
+
+Invio configurazione
+
+<img src="document/image/DL485_invio_configurazione.png" width="500px" style="float:left;" />
+
+Monitoraggio degli I/O e sensori
+
+<img src="document/image/DL485_monitor.png" width="500px" style="float:left;" />
+
+
 Verrà mostrato a video tutte le fasi con la programmazione e la ricezione dei vari dati
 
 
