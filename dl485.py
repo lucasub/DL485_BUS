@@ -788,7 +788,7 @@ class Bus:
                 bme_key = '{}-{}'.format(board_id, logic_io)
 
                 if bme_key not in self.BME:
-                    self.BME = {bme_key: {}}
+                    self.BME[bme_key] = {}
 
                 if len(value) == 26: # value from 0x88 to 0xA1
                     # print("CALIBRAZIONE BME--->>>>>", value)
