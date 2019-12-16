@@ -267,7 +267,7 @@ class Bus:
             'I2C6':         {'pin':   27,  'name':     'I2C6'},
             'I2C7':         {'pin':   27,  'name':     'I2C7'},
             'I2C8':         {'pin':   27,  'name':     'I2C8'},
-            'I2C9':         {'pin':   27,  'name':     'I2C9'},            
+            'I2C9':         {'pin':   27,  'name':     'I2C9'},
         },
 
         2: {  # DL485B
@@ -394,6 +394,7 @@ class Bus:
     }
 
     def __init__(self, config_file_name, logstate=0):
+        self.log = Log('log.txt', logstate)  # Instazia la classe Log
         self.buffricnlung = 0  # Lenght RX buffer
         self.buffricn = []  # Buffer RX trama
         self.appcrc = []  # Per calcolo CRC
@@ -416,14 +417,13 @@ class Bus:
         self.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo boards attive)
         self.bus_baudrate = int(self.config['GENERAL_NET']['bus_baudrate'])  # Legge la velocità del BUS
         self.bus_port = self.config['GENERAL_NET']['bus_port']  # Legge la porta del BUS di Raspberry PI
-        self.TIME_PRINT_LOG = 6  # intervallo di tempo in secondi per la stampa periodica del log a schermo
+        self.TIME_PRINT_LOG = 4  # intervallo di tempo in secondi per la stampa periodica del log a schermo
         self.nowtime = self.oldtime = 0
         self.RXtrama = []
         self.TXmsg = []  # Lista che contiene le liste da trasmettere sul BUS
         self.board_ready = {}
         self.BUFF_MSG_TX = {} # dizionario dei messaggi trasmessi indicizzato secondo indirizzo destinatario
         self.NLOOPTIMEOUT = 4  # numero di giri del loop dopo i quali si ritrasmettera il messaggio
-        self.log = Log('log.txt', logstate)  # Instazia la classe Log
         self.Connection = self.ser(self.bus_port, self.bus_baudrate)  # Setup serial
         self.ping = self.ping()  # init variabile di appoggio con ping di questo nodo
         self.BME = {}
@@ -458,7 +458,7 @@ class Bus:
                     self.status[board_id]['io'] = [0] * len(self.iomap[board_type])
                     self.status[board_id]['boardtypename'] = self.config['TYPEB']["%s" %board_type]
                 except:
-                    print("BOARD TYPE %s non esistente" %board_type)
+                    self.log.write("BOARD TYPE %s non esistente" %board_type)
                     sys.exit()
 
                 board_enable = 0
@@ -469,7 +469,7 @@ class Bus:
                         overwrite_text = self.config[b][bb].get('overwrite_text', 0) # Overtwrite Name and Description of Domoticz device with config.json
                         # pprint(self.config[b][bb])
                         if not board_enable:
-                            print("BOARD DISABILItata", b)
+                            self.log.write("BOARD DISABILItata {}".format(b))
 
 
                 for bb in self.config[b]:
@@ -478,12 +478,12 @@ class Bus:
                     if not 'GENERAL_BOARD' in bb:
                         enable = self.config[b][bb].get('enable', 0)
                         if not enable:
-                            print("IO DISABILITATO", self.config[b][bb].get('logic_io', 0))
+                            self.log.write("IO DISABILITATO {}".format(self.config[b][bb].get('logic_io', 0)))
                             continue
 
                         logic_io = int(self.config[b][bb].get('logic_io', 0))
                         if not logic_io:
-                            print("LOGIC_IO non impostato, boardid=",b, bb)
+                            self.log.write("LOGIC_IO non impostato, boardid=",b, bb)
                             sys.exit()
 
                         if not board_id in self.mapiotype: self.mapiotype[board_id] = {}
@@ -494,23 +494,23 @@ class Bus:
                         if 'device_type' in self.config[b][bb]:
                             device_type = self.config[b][bb]['device_type']
                         else:
-                            print("DEVICE_TYPE NON DEFINITO IN FILE JSON: board_id: %s - logic_io: %s - io_name: %s" %(b, logic_io, bb))
-                            print("----------------------------\nVALORI AMMESSI PER device_type su FILE JSON.\nValori validi:\n")
+                            self.log.write("DEVICE_TYPE NON DEFINITO IN FILE JSON: board_id: %s - logic_io: %s - io_name: %s" %(b, logic_io, bb))
+                            self.log.write("----------------------------\nVALORI AMMESSI PER device_type su FILE JSON.\nValori validi:\n")
                             for k in self.device_type_dict.keys():
-                                print(k)
+                                self.log.write(k)
                             sys.exit()
 
                         try:
                             pin = self.iomap[board_type][bb]['pin']
                         except:
-                            print("NOME LABEL {} NON TROVATO NELLA DEFINIZIONE DELLA BOARD TIPO: {}:".format(bb, board_type), self.iomap[board_type])
+                            self.log.write("NOME LABEL {} NON TROVATO NELLA DEFINIZIONE DELLA BOARD TIPO: {}:".format(bb, board_type), self.iomap[board_type])
                             pin = 0
 
                         if pin>0:
                             try:
                                 fisic_io = self.mapmicro[self.iomap[board_type][bb]['pin']]['fisic_io']
                             except:
-                                
+
                                 fisic_io = 99
                         else:
                             fisic_io = 99
@@ -518,7 +518,7 @@ class Bus:
 
                         direction = self.device_type_dict[device_type].get('direction')
                         if not direction:
-                            print("VALORI AMMESSI: ", self.device_type_dict[device_type])
+                            self.log.write("VALORI AMMESSI: ", self.device_type_dict[device_type])
                             raise("ERROR: direcrtion NOT DEFINE!!!")
 
                         self.mapiotype[board_id][logic_io] = {
@@ -650,7 +650,7 @@ class Bus:
             value = VIN / (rvcc + rgnd) * rgnd * 930.0
             return round(value)
         except:
-            print("ERROR ADC_value", VIN, rvcc, rgnd)
+            self.log.write("ERROR ADC_value", VIN, rvcc, rgnd)
             return 0
 
     def byteLSMS2uint(self, byteLS, byteMS):
@@ -722,7 +722,7 @@ class Bus:
                         logic_io_linked = self.mapproc[bio]["logic_io"]
                         device_type_linked = self.mapiotype[board_id_linked][logic_io_linked]['device_type']
                         if device_type_linked =="PSYCHROMETER":
-                            print("PSYCHROMETER",self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"])
+                            self.log.write("PSYCHROMETER {}".format(self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"]))
                             io_linked = self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"]
                             t1 = io_linked[0].split("-")
                             t2 = io_linked[1].split("-")
@@ -741,17 +741,17 @@ class Bus:
                                 correzione_strumentale = pressione_vapore_aria_umida*(1-(temp_secco-temp_umido)/(temp_secco+50/(temp_secco+10**-10)))
                                 umidita_relativa_percentuale = (correzione_strumentale / pressione_vapore_saturo_temperatura_sensore_asciutto) * 100
                                 if umidita_relativa_percentuale > 100:
-                                    print("PSYCHROMETER WARNING: T_umido > T_secco. Set umidità=100")
+                                    self.log.write("PSYCHROMETER WARNING: T_umido > T_secco. Set umidità=100")
                                     umidita_relativa_percentuale = 100
                                 elif umidita_relativa_percentuale < 0:
-                                    print("PSYCHROMETER WARNING: Umidità < 0,  Set umidità=0")
+                                    self.log.write("PSYCHROMETER WARNING: Umidità < 0,  Set umidità=0")
                                     umidita_relativa_percentuale = 0
                                 umidita_specifica_alla_saturazione = 0.622 * pressione_vapore_saturo_temperatura_sensore_asciutto / pressione_approssimata_all_altezza
                                 # umidita_specifica = umidita_relativa_percentuale*umidita_specifica_alla_saturazione / 100
-                                print("PSYCHROMETER HUMIDITY: {}".format(round(umidita_relativa_percentuale, 1)))
+                                self.log.write("PSYCHROMETER HUMIDITY: {}".format(round(umidita_relativa_percentuale, 1)))
                                 self.status[board_id_linked]['io'][logic_io_linked - 1] = round(umidita_relativa_percentuale, 1)
                             else:
-                                print('PSYCHROMETER ERROR: Temp1 or Temp2 have None value')
+                                self.log.write('PSYCHROMETER ERROR: Temp1 or Temp2 have None value')
                     value = round((((value * kmul) + kadd)+ self.mapiotype[board_id][logic_io]['offset_temperature']), self.mapiotype[board_id][logic_io]['round_temperature'])
                     if self.mapiotype[board_id][logic_io]['round_temperature'] == 0:
                         return int(value)
@@ -768,7 +768,7 @@ class Bus:
 
             elif type_io == 'digital' and plc_function == 'time_meter' :
                 # print(plc_function, value)
-                return value[0] + (value[1] * 256)      
+                return value[0] + (value[1] * 256)
 
             elif plc_function in ['counter_up', 'counter_dw', 'counter_up_dw'] :
                 # print(plc_function, value)
@@ -776,7 +776,7 @@ class Bus:
                 value = value[0] + (value[1] * 256)
                 if flag_signed:
                     if value >= 32768:
-                        value -= 65536 
+                        value -= 65536
                 return value
 
             elif type_io == 'analog' and device_type == 'ANALOG_IN':
@@ -793,95 +793,95 @@ class Bus:
                 if len(value) == 26: # value from 0x88 to 0xA1
                     # print("CALIBRAZIONE BME--->>>>>", value)
                     # [101, 109, 65, 103, 50, 0, 54, 146, 12, 214, 208, 11, 9, 32, 56, 255, 249, 255, 172, 38, 10, 216, 189, 16, 0, 75]
-                    
+
                     flag_ok=True
 
-                    if self.BME[bme_key].get('dig_T1') != self.byteLSMS2uint(value[0], value[1]): 
+                    if self.BME[bme_key].get('dig_T1') != self.byteLSMS2uint(value[0], value[1]):
                         flag_ok = False
                         self.BME[bme_key]['dig_T1'] = self.byteLSMS2uint(value[0], value[1]) #  0x88
-                    
-                    if self.BME[bme_key].get('dig_T2') != self.byteLSMS2int(value[2], value[3]): 
+
+                    if self.BME[bme_key].get('dig_T2') != self.byteLSMS2int(value[2], value[3]):
                         flag_ok = False
                         self.BME[bme_key]['dig_T2'] = self.byteLSMS2int(value[2], value[3]) #  0x8A
 
-                    if self.BME[bme_key].get('dig_T3') != self.byteLSMS2int(value[4], value[5]): 
+                    if self.BME[bme_key].get('dig_T3') != self.byteLSMS2int(value[4], value[5]):
                         flag_ok = False
                         self.BME[bme_key]['dig_T3'] = self.byteLSMS2int(value[4], value[5]) #  0x8C
 
-                    if self.BME[bme_key].get('dig_P1') != self.byteLSMS2uint(value[6], value[7]): #  0x8E: 
+                    if self.BME[bme_key].get('dig_P1') != self.byteLSMS2uint(value[6], value[7]): #  0x8E:
                         flag_ok = False
                         self.BME[bme_key]['dig_P1'] = self.byteLSMS2uint(value[6], value[7]) #  0x8E
-                    
-                    if self.BME[bme_key].get('dig_P2') != self.byteLSMS2int(value[8], value[9]): #  0x90 
-                        flag_ok = False                    
+
+                    if self.BME[bme_key].get('dig_P2') != self.byteLSMS2int(value[8], value[9]): #  0x90
+                        flag_ok = False
                         self.BME[bme_key]['dig_P2'] = self.byteLSMS2int(value[8], value[9]) #  0x90
-                    
+
                     if self.BME[bme_key].get('dig_P3') != self.byteLSMS2int(value[10], value[11]): #  0x92
-                        flag_ok = False                    
+                        flag_ok = False
                         self.BME[bme_key]['dig_P3'] = self.byteLSMS2int(value[10], value[11]) #  0x92
-                    
+
                     if self.BME[bme_key].get('dig_P4') != self.byteLSMS2int(value[12], value[13]): #  0x94
-                        flag_ok = False                    
+                        flag_ok = False
                         self.BME[bme_key]['dig_P4'] = self.byteLSMS2int(value[12], value[13]) #  0x94
-                    
+
                     if self.BME[bme_key].get('dig_P5') != self.byteLSMS2int(value[14], value[15]): #  0x96
-                        flag_ok = False                    
+                        flag_ok = False
                         self.BME[bme_key]['dig_P5'] = self.byteLSMS2int(value[14], value[15]) #  0x96
 
                     if self.BME[bme_key].get('dig_P6') != self.byteLSMS2int(value[16], value[17]): #  0x98
-                        flag_ok = False                                        
+                        flag_ok = False
                         self.BME[bme_key]['dig_P6'] = self.byteLSMS2int(value[16], value[17]) #  0x98
-                        
+
                     if self.BME[bme_key].get('dig_P7') != self.byteLSMS2int(value[18], value[19]): #  0x9A
-                        flag_ok = False                    
+                        flag_ok = False
                         self.BME[bme_key]['dig_P7'] = self.byteLSMS2int(value[18], value[19]) #  0x9A
-                    
+
                     if self.BME[bme_key].get('dig_P8') != self.byteLSMS2int(value[20], value[21]): #  0x9C
-                        flag_ok = False                    
+                        flag_ok = False
                         self.BME[bme_key]['dig_P8'] = self.byteLSMS2int(value[20], value[21]) #  0x9C
-                        
+
                     if self.BME[bme_key].get('dig_P9') != self.byteLSMS2int(value[22], value[23]): #  0x9E
-                        flag_ok = False                        
+                        flag_ok = False
                         self.BME[bme_key]['dig_P9'] = self.byteLSMS2int(value[22], value[23]) #  0x9E
-                        
+
                     if self.BME[bme_key].get('dig_H1') != value[25]: #  0xA1
-                        flag_ok = False                        
+                        flag_ok = False
                         self.BME[bme_key]['dig_H1'] = value[25] #  0xA1
-                    
+
                     self.BME[bme_key]['flag26'] = flag_ok
 
                 if len(value) == 7: # value from 0xE1 to 0xE7
                     # print("CALIBRAZIONE BME--->>>>>", value)
-                    
+
                     flag_ok=True
                     if self.BME[bme_key].get('dig_H2') !=  self.byteLSMS2int(value[0], value[1]): #  0xE1:
-                        flag_ok = False 
+                        flag_ok = False
                         self.BME[bme_key]['dig_H2'] =  self.byteLSMS2int(value[0], value[1]) #  0xE1
-                    
+
                     if self.BME[bme_key].get('dig_H3') != value[2]: # 0xE3:
-                        flag_ok = False 
+                        flag_ok = False
                         self.BME[bme_key]['dig_H3'] = value[2] # 0xE3
 
                     h4 = self.byte2signed(value[3])
                     h4 = h4 << 4
-                    
+
                     if self.BME[bme_key].get('dig_H4') != h4 | (value[4] & 0x0f):
-                        flag_ok = False 
+                        flag_ok = False
                         self.BME[bme_key]['dig_H4'] = h4 | (value[4] & 0x0f)
                     h5 = self.byte2signed(value[5]) # 0xE6
-                    
+
                     if self.BME[bme_key].get('dig_H5') != (h5 << 4) | ((value[4] >> 4) & 0x0f):
-                        flag_ok = False 
+                        flag_ok = False
                         self.BME[bme_key]['dig_H5'] = (h5 << 4) | ((value[4] >> 4) & 0x0f)
-                    
+
                     if self.BME[bme_key].get('dig_H5') != ((value[4] >> 4) & 0x0F) | (value[5] << 4):
-                        flag_ok = False 
+                        flag_ok = False
                         self.BME[bme_key]['dig_H5'] = ((value[4] >> 4) & 0x0F) | (value[5] << 4)
-                    
+
                     if self.BME[bme_key].get('dig_H6') !=  self.byte2signed(value[6]): # 0xE7
-                        flag_ok = False 
+                        flag_ok = False
                         self.BME[bme_key]['dig_H6'] =  self.byte2signed(value[6]) # 0xE7
-                    
+
                     self.BME[bme_key]['flag7'] = flag_ok
                 # pprint(self.BME)
 
@@ -945,7 +945,7 @@ class Bus:
                 if self.mapiotype[board_id][logic_io]['round_humidity'] == 0:
                     H = int(H)
 
-                print(T,H,P, self.mapiotype[board_id][logic_io]['round_humidity'])
+                self.log.write(T,H,P, self.mapiotype[board_id][logic_io]['round_humidity'])
 
                 return [T,H,P]
 
@@ -1009,7 +1009,7 @@ class Bus:
                             # print("SPENTO")
                             """ Abilitare per spegnere RAPSBERRY PI """
                             #self.shutdownRequest()
-                        print("count = ", self.poweroff_voltage_counter)
+                        self.log.write("count = ", self.poweroff_voltage_counter)
 
                 #print("ANALOG VALUE:", value)
                 return value
@@ -1027,7 +1027,7 @@ class Bus:
                 return value
 
             elif device_type == 'PSICROMETRO':
-                print("PSICROMETRO")
+                self.log.write("PSICROMETRO")
 
             else:
                 # print("calculate ERROR: Tipo dispositivo NON trovato:", board_id, logic_io)
@@ -1043,18 +1043,19 @@ class Bus:
         Show to screen the IO status
         """
 
-        print("\n", "-" * 83, "STATUS IO", "-" * 83)
-        print(" ID Name        board_type  IO: ", end='')
-        for i in range(1, 20):  # estremo superiore viene escluso
-            print("{:>6} ".format(i), end='')
-        print()
+        self.log.write("-" * 83 + "STATUS IO" + "-" * 83)
+
+        msg = " ID Name        board_type  IO:"
+        for i in range(1, 21):  # estremo superiore viene escluso
+            msg += "{:>6} ".format(i)
+
         for b in self.status:
-            print("{:>3} {:<11} {} {:>6}     ".format(b, self.status[b]['name'][:11], self.status[b]['board_type'], self.status[b]['boardtypename'])," ", end='')
+            msg += "\n{:>3} {:<11} {}  {:>6}     ".format(b, self.status[b]['name'][:11], self.status[b]['board_type'], self.status[b]['boardtypename'])
 
             for i in self.status[b]['io'][:20]:
-                print(" {:>6}".format(str(i)), end='')
-            print()
-        print("-" * 83, "END STATUS", "-" * 83, "\n")
+                msg += " {:>6}".format(str(i))
+        self.log.write(msg)
+        self.log.write("-" * 83 + "END STATUS" + "-" * 83 + "\n")
 
 
     def int2hex(self, msg):
@@ -1130,7 +1131,7 @@ class Bus:
         app = inSerial
 
         if self.buffricnlung > 100:  # Errore 3
-            print("ERR 3 Pacchetto troppo lungo")
+            self.log.write("ERR 3 Pacchetto troppo lungo")
             self.labinitric()
             return []
 
@@ -1187,18 +1188,18 @@ class Bus:
                     return(ric)
 
             else:
-                print(self.buffricn," * ",self.buffricnapp)
-                print(" PRIMO CRC ERRATO, calcolato - ricevuto",self.crcric, inSerial, ", len buffricn=",len(self.buffricn),self.buffricnlung)
+                self.log.write(str(self.buffricn) + " * " + str(self.buffricnapp))
+                self.log.write("PRIMO CRC ERRATO, calcolato - ricevuto" + str(self.crcric) + str(inSerial) + " len buffricn=" + str(len(self.buffricn)) + str(self.buffricnlung))
                 self.labinitric()
                 return []
 
         elif inSerial == 0:  # Errore 1
-            print("ERR 1: Tre 0 ricevuti, byte=", hex(inSerial))
+            self.log.write("ERR 1: Tre 0 ricevuti, byte={}".format(hex(inSerial)))
             self.labinitric()
             return []
 
         elif inSerial == 0x38:  # Errore 2
-            print("ERR 2: Tre 1 ricevuti, byte=", hex(inSerial))
+            self.log.write("ERR 2: Tre 1 ricevuti, byte={}".format(hex(inSerial)))
             self.labinitric()
             return []
 
@@ -1521,7 +1522,7 @@ class Bus:
         messageTx.append(b.readI2C(4, 1, 0b10001, [0xec | 1]))  # Lettura dei primi 2 byte umidità
 
         """
-        print("Return Configuration PCA9535")
+        self.log.write("Return Configuration PCA9535")
         msg = [5, 3, 0x4e, 2, 0x0a, 0xa0]
 
     def getBME280(self, board_id, logic_io, value):
@@ -1585,11 +1586,11 @@ class Bus:
                     break
 
                 if appbe != 1:
-                    print("ERRORE CAMPO board enable, BOARD: ", board_id)
+                    self.log.write("ERRORE CAMPO board enable, BOARD: {}".format(board_id))
                     break
 
 
-                print("ABILITATI: BOARD:", board_id, "LOGIC_IO:",logic_io)
+                self.log.write("ABILITATI: BOARD:{} LOGIC_IO:{}".format(board_id,logic_io))
 
                 if flagreset:
                     flagreset = False
@@ -1606,7 +1607,7 @@ class Bus:
                 write_ee = self.mapiotype[board_id][logic_io]['write_ee']
 
                 if logic_io >= 30:
-                    print("Configurazione board ERROR: logic_io non può essere superiore a 29. logic_io=%s", logic_io)
+                    self.log.write("Configurazione board ERROR: logic_io non può essere superiore a 29. logic_io={}".fomat(logic_io))
                     continue
 
 
@@ -1624,17 +1625,16 @@ class Bus:
 
                 if device_type == "PSYCHROMETER":  # PSYCHROMETER è calcolato da DL485.py in base a 2 temperature. Nessuna configurazione da inviare
                     if len(plc_linked_board_id_logic_io) != 2:
-                        print("PSYCHROMETER CONFIGURATION ERROR: Need 2 TEMPERATURE value linked")
+                        self.log.write("PSYCHROMETER CONFIGURATION ERROR: Need 2 TEMPERATURE value linked")
                         sys.exit()
                     # print("plc_linked_board_id_logic_io", plc_linked_board_id_logic_io)
-                    print("PSYCHROMETER",message_conf_app )
+                    self.log.write("PSYCHROMETER {}".format(message_conf_app))
                     continue
 
 
                 # print("type_io: %s - device_type: %s" %(type_io, device_type))
 
                 #if not enable: type_io = 'disable' # Non fa configurazione se enable = 0
-                print("")
 
                 if type_io == 'analog' or type_io == 'temp_atmega':
                     byte1 |= 0b10
@@ -1649,7 +1649,7 @@ class Bus:
                 elif type_io == 'disable':
                     byte1 |= 0b00000
                 else:
-                    print("Configurazione boards: ERROR: type_io non riconosciuto. BOARD_ID:%s - logic_io:%s - type_io:%s" %(board_id, logic_io, type_io))
+                    self.log.write("Configurazione boards: ERROR: type_io non riconosciuto. BOARD_ID:{} - logic_io:{} - type_io:{}".format(board_id, logic_io, type_io))
                     continue
 
                 # print("Configurazione boards: boards:%s, logic_io:%s" %(boardname, logic_io))
@@ -1672,7 +1672,7 @@ class Bus:
                     byte2, byte3 = self.calcAddressLsMs8(default_startup_value)
                 else:
                     byte2 = byte3 = 0
-                    print("ERROR: DIRECTION su configurazione non riconosciuto. IO: %s" %board_id)
+                    self.log.write("ERROR: DIRECTION su configurazione non riconosciuto. IO: {}".format(board_id))
                     # continue
 
                 if type_io == 'analog' or type_io == 'digital':
@@ -1809,7 +1809,7 @@ class Bus:
                 }
 
                 sbyte8 = self.mapiotype[board_id][logic_io]['plc_function']
-                print("PLC_FUNCTION:************************", plc_function[sbyte8], sbyte8)
+                self.log.write("PLC_FUNCTION:************************ {} {}".format(plc_function[sbyte8], sbyte8))
 
                 if sbyte8 == "disable":
                     # print("PLC DISABILITATO", logic_io, plc_function[sbyte8])
@@ -1914,7 +1914,7 @@ class Bus:
 
                             plc_timer_n_transitions = self.mapiotype[board_id][logic_io]['plc_timer_n_transitions']
                             if plc_timer_n_transitions > 255:
-                                print("ERRORE CONFIGURATION: plc_timer_n_transitions 0...255")
+                                self.log.write("ERRORE CONFIGURATION: plc_timer_n_transitions 0...255")
                                 sys.exit()
                             plc.append(plc_timer_n_transitions)
 
@@ -1990,7 +1990,7 @@ class Bus:
                             plc.append(plc_counter_filter)
                             plc_counter_timeout = self.mapiotype[board_id][logic_io]['plc_counter_timeout']
                             plc += list(self.calcAddressLsMs8(plc_counter_timeout))
-                            
+
                         elif sbyte8 in ['counter_up_dw']:
                             """ ingresso dispari incrementa - ingresso pari decrementa """
                             plc_counter_mode = self.mapiotype[board_id][logic_io]['plc_counter_mode']
@@ -2046,7 +2046,7 @@ class Bus:
 
                 #if type_io == 'i2c':
                 if device_type == 'PCA9535':
-                    print("==>> Inserisce trama di confgurazione I2C per PCA9535")
+                    self.log.write("==>> Inserisce trama di confgurazione I2C per PCA9535")
                     # msg.append(self.writeEE(board_id, eels + 10, eems, [5, 3, 0x4e, 2, 0x0a, 0xa0]))
                     # msg.append(self.writeEE(board_id, eels + 16, eems, [5, 3, 0x4e, 6, 0, 0])) # Impostare direzione OUT (inizializzazione)
                     # msg.append(self.writeEE(board_id, eels + 22, eems, [5, 3, 0x4e, 2, 0xa0, 0x0a]))
@@ -2104,10 +2104,10 @@ class Bus:
                     lux_gain = self.mapiotype[board_id][logic_io]['lux_gain']
                     lux_integration = self.mapiotype[board_id][logic_io]['lux_integration']
                     if lux_gain not in [0, 1]:
-                        print("ERROR TSL2561 lux_gain={}. Deve essere 0 o 1 ".format(lux_gain))
+                        self.log.write("ERROR TSL2561 lux_gain={}. Deve essere 0 o 1 ".format(lux_gain))
                         sys.exit()
                     if lux_integration not in [0, 1, 2]:
-                        print("ERROR TSL2561 lux_integration={}. Deve essere 0, 1, 2 ".format(lux_integration))
+                        self.log.write("ERROR TSL2561 lux_integration={}. Deve essere 0, 1, 2 ".format(lux_integration))
                         sys.exit()
 
 
@@ -2132,7 +2132,7 @@ class Bus:
                         i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 19, [3 | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 1, 0x72, 0xAC])) #0x72 address dispositivo poi legge a Word (A) partendo da indirizzo (C)
                         i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 23, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3|32, 0x72|1 , 0, 0]))#legge 4 byte
 
-                        
+
 
                     msg.extend(i2cconf)
                     # print("CONFIGURAZIONE I2C:", i2cconf)
@@ -2165,7 +2165,6 @@ class Bus:
                     if write_ee:
                         msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [32 | 3, 0, 0]))  # [32: Go_TO | 3: IO logico, 0: offset (0=10), 0=non ci sono altri programmi da eseguire ]
                     else:
-                        print("********************")
                         msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [32 | 3, 0, 0]))  # [32: Go_TO | 3: IO logico, 0: offset (0=10), 0=non ci sono altri programmi da eseguire ]
 
                 else:
@@ -2176,7 +2175,7 @@ class Bus:
             msg.append(self.boardReboot(0))
             # msg.append(self.boardReboot(0))
         else:
-            print("NESSUNA CONFIGURAZIONE BOARD DA INVIARE")
+            self.log.write("NESSUNA CONFIGURAZIONE BOARD DA INVIARE")
         #pprint(msg)
 
         return msg
@@ -2245,12 +2244,12 @@ class Bus:
 
                         if (len(msg)>1):
                            if (msg[1]==self.code['CLEARIO_REBOOT']):
-                                print("invio multiplo cleario_reboot")
+                                self.log.write("invio multiplo cleario_reboot")
                                 self.send_data_serial(self.Connection, msg2)  # invio multiplo per superare disturbi
                                 self.send_data_serial(self.Connection, msg2)  # invio multiplo per superare disturbi
 
                            if (msg[1]==self.code['CR_WR_EE']):  # inserisce solo se comando writeEE
-                                print("ATTESA FEEDBACK")
+                                self.log.write("ATTESA FEEDBACK")
                                 self.BUFF_MSG_TX[msg[2]] = [msg, self.NLOOPTIMEOUT+len(msg)]  # inserisce in dizionario messaggio originale per controllo feedback
 
         self.RXtrama[0] &= 0x3F  # Trasforma la trama di nodo occupato in libero (serve solo per la trasmissione)
@@ -2273,9 +2272,9 @@ class Bus:
                         self.log.write("{:<11} {:<18} {} {}".format(self.nowtime, 'VERIFICA OK', '', ''))
                         # print(" VERIFICA OK")
                         del self.BUFF_MSG_TX[self.RXtrama[0]]
-                    else: print(" ERR VERIFICA BUFF=", msgapp[3:]," TRAMARIC=", self.RXtrama[2:])
+                    else: self.log.write(" ERR VERIFICA BUFF={} TRAMARIC={}".format(msgapp[3:],self.RXtrama[2:]))
                 else:
-                    print(" ERR RICEVUTO FEEDBACK DI MSG MAI INVIATO")
+                    self.log.write(" ERR RICEVUTO FEEDBACK DI MSG MAI INVIATO")
 
             # if self.RXtrama[1] in [self.code['COMUNICA_IO'], self.code['CR_WR_OUT'] | 32]:  # COMUNICA_IO / Scrive valore USCITA
             if self.RXtrama[1] ==  self.code['COMUNICA_IO']:  # COMUNICA_IO / Scrive valore USCITA
@@ -2291,7 +2290,7 @@ class Bus:
                 try:
                     self.status[board_id]['io'][logic_io - 1] = value
                 except:
-                    print("chiave non trovata avviso1", self.RXtrama)
+                    self.log.write("chiave non trovata avviso1 {}".format(self.RXtrama))
 
                 self.log.write("{:<11} RX  {:<18} {} {}".format(self.nowtime, self.code[self.RXtrama[1]&0xDF], self.int2hex(self.RXtrama), self.RXtrama))
 
