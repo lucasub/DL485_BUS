@@ -5,7 +5,7 @@ Class protocol DL485
 """
 import sys
 import os
-print("Working PATH:", os.getcwd())
+# print("Working PATH:", os.getcwd())
 import serial
 from pprint import pprint
 import time
@@ -17,6 +17,10 @@ import curses
 from struct import unpack, unpack_from
 # from TSL2561 import tsl2561_calculate
 from TSL2561 import tsl2561_calculate
+
+import telepot
+from telepot.loop import MessageLoop
+from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 
 class Log:
     def __init__(self, file='log.txt', logstate=0):
@@ -44,12 +48,13 @@ quando IO disabilitato, non inserire sui dizionari della configurazione
 
 class Bus:
     EEPROM_LANGUAGE = 1  # 1=NEW,  0=old
+    BROADCAST = 0 # Invia il comando a tutti i nodi. Da inserire al posto dell'indirizzo Board
+
     code = {  # Dict with all COMAND
         0: 'INPUT',
         1: 'OUTPUT',
         2: 'CR_TRASPORTO_STR',
         3: 'CR_RD_PARAM_IO',  # Read parametro EEPROM 2 byte ricevuti
-        0: 'BROADCAST',  # Invia il comando a tutti i nodi. Da inserire al posto dell'indirizzo Board
         4: 'CR_RD_EE',  # Comando per leggere la EE
         5: 'CR_WR_PARAM_IO',  # Write parametro EEPROM 2 byte
         6: 'CR_WR_EE',  # Comando per scrivere la EE
@@ -67,7 +72,6 @@ class Bus:
         'OUTPUT': 1,
         'CR_TRASPORTO_STR': 2,
         'CR_RD_PARAM_IO': 3,  # Read parametro EEPROM 2 byte ricevuti
-        'BROADCAST': 0,  # Invia il comando a tutti i nodi. Da inserire al posto dell'indirizzo Board
         'CR_RD_EE': 4,  # Comando per leggere la EE
         'CR_WR_PARAM_IO': 5,  # Write parametro EEPROM 2 byte
         'CR_WR_EE': 6,  # Comando per scrivere la EE
@@ -249,7 +253,6 @@ class Bus:
             'DS18B20-6':    {'pin':   35,  'name':     'DS18B20'},
             'DS18B20-7':    {'pin':   35,  'name':     'DS18B20'},
             'TEMP_ATMEGA':  {'pin':   37,  'name':     'TEMP_ATMEGA'},
-            'DS18B20-6':    {'pin':   35,  'name':     'DS18B20'},
             'VIRT1':        {'pin':   41,  'name':     'VIRT1'},
             'VIRT2':        {'pin':   41,  'name':     'VIRT2'},
             'VIRT3':        {'pin':   41,  'name':     'VIRT3'},
@@ -427,7 +430,11 @@ class Bus:
         self.Connection = self.ser(self.bus_port, self.bus_baudrate)  # Setup serial
         self.ping = self.ping()  # init variabile di appoggio con ping di questo nodo
         self.BME = {}
-
+        self.telegram_enable = int(self.config['GENERAL_NET']['telegram_enable'])  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
+        self.telegram_token = self.config['GENERAL_NET']['telegram_token']  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
+        self.telegram_bot = False # Instance
+        self.initBot()
+        self.chat_id = ''
 
     def getJsonConfig(self, config_file_name):
         """
@@ -471,10 +478,7 @@ class Bus:
                         if not board_enable:
                             self.log.write("BOARD DISABILItata {}".format(b))
 
-
                 for bb in self.config[b]:
-                    #print(bb)
-                    # sys.exit()
                     if not 'GENERAL_BOARD' in bb:
                         enable = self.config[b][bb].get('enable', 0)
                         if not enable:
@@ -483,7 +487,7 @@ class Bus:
 
                         logic_io = int(self.config[b][bb].get('logic_io', 0))
                         if not logic_io:
-                            self.log.write("LOGIC_IO non impostato, boardid=",b, bb)
+                            self.log.write("LOGIC_IO non impostato, boardid={} {}".format(b, bb))
                             sys.exit()
 
                         if not board_id in self.mapiotype: self.mapiotype[board_id] = {}
@@ -503,7 +507,7 @@ class Bus:
                         try:
                             pin = self.iomap[board_type][bb]['pin']
                         except:
-                            self.log.write("NOME LABEL {} NON TROVATO NELLA DEFINIZIONE DELLA BOARD TIPO: {}:".format(bb, board_type), self.iomap[board_type])
+                            self.log.write("NOME LABEL {} NON TROVATO NELLA DEFINIZIONE DELLA BOARD TIPO: {}: {}".format(bb, board_type, self.iomap[board_type]))
                             pin = 0
 
                         if pin>0:
@@ -518,7 +522,7 @@ class Bus:
 
                         direction = self.device_type_dict[device_type].get('direction')
                         if not direction:
-                            self.log.write("VALORI AMMESSI: ", self.device_type_dict[device_type])
+                            self.log.write("VALORI AMMESSI: {}".format(self.device_type_dict[device_type]))
                             raise("ERROR: direcrtion NOT DEFINE!!!")
 
                         self.mapiotype[board_id][logic_io] = {
@@ -650,23 +654,31 @@ class Bus:
             value = VIN / (rvcc + rgnd) * rgnd * 930.0
             return round(value)
         except:
-            self.log.write("ERROR ADC_value", VIN, rvcc, rgnd)
+            self.log.write("ERROR ADC_value-> Vin:{} Rvcc:{} Rgng:{}".format(VIN, rvcc, rgnd))
             return 0
 
     def byteLSMS2uint(self, byteLS, byteMS):
+        """
+        Dati 2 byte (LS e MS) ritorna 1 WORD senza segno
+        """
         return byteLS + (byteMS * 256)
 
     def byteLSMS2int(self, byteLS, byteMS):
+        """
+        Dati 2 byte (LS e MS) ritorna 1 WORD con segno
+        """
         if byteMS > 127:
             return -32768 + (byteLS + ((byteMS - 128) * 256))
         return byteLS + (byteMS * 256)
-
+      
     def byte2signed(self, byte):
+        """
+        Ritorna Byte con segno
+        """
         if byte > 127:
             return -128 + byte
-
         return byte
-
+    
     def calculate(self, board_id, logic_io, value):
         """
         Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso:
@@ -701,7 +713,7 @@ class Bus:
             #     .format(board_id, logic_io, device_type, type_io, kmul, kadd, plc_function))
 
             if device_type == 'DS18B20':
-                # print(">>>>>>>>>>>>>>>>>>>>>>>>><<DS18B20", value)
+                # print(">>>>>>>>>>>>>>>>>>>>>>>>> DS18B20", value)
                 if len(value) < 9:
                     return None
                 crc = 0
@@ -709,11 +721,8 @@ class Bus:
                     crc = self.calcCrcDS(x, crc)
                 if crc == value[8]:
                     value = ((value[1] << 8) + value[0]) * 0.0625
-                    if value == 85: return None
-
-                        # print("****************",value);
-                    #print(value)
-
+                    if value == 85: 
+                        return None
 
                     bio = '%s-%s' %(board_id, logic_io)
                     if bio in self.mapproc:
@@ -746,7 +755,7 @@ class Bus:
                                 elif umidita_relativa_percentuale < 0:
                                     self.log.write("PSYCHROMETER WARNING: Umidità < 0,  Set umidità=0")
                                     umidita_relativa_percentuale = 0
-                                umidita_specifica_alla_saturazione = 0.622 * pressione_vapore_saturo_temperatura_sensore_asciutto / pressione_approssimata_all_altezza
+                                # umidita_specifica_alla_saturazione = 0.622 * pressione_vapore_saturo_temperatura_sensore_asciutto / pressione_approssimata_all_altezza
                                 # umidita_specifica = umidita_relativa_percentuale*umidita_specifica_alla_saturazione / 100
                                 self.log.write("PSYCHROMETER HUMIDITY: {}".format(round(umidita_relativa_percentuale, 1)))
                                 self.status[board_id_linked]['io'][logic_io_linked - 1] = round(umidita_relativa_percentuale, 1)
@@ -945,7 +954,7 @@ class Bus:
                 if self.mapiotype[board_id][logic_io]['round_humidity'] == 0:
                     H = int(H)
 
-                self.log.write(T,H,P, self.mapiotype[board_id][logic_io]['round_humidity'])
+                self.log.write("T:{} H:{} P:{}".format(T,H,P))
 
                 return [T,H,P]
 
@@ -1009,7 +1018,7 @@ class Bus:
                             # print("SPENTO")
                             """ Abilitare per spegnere RAPSBERRY PI """
                             #self.shutdownRequest()
-                        self.log.write("count = ", self.poweroff_voltage_counter)
+                        self.log.write("count={}".format(self.poweroff_voltage_counter))
 
                 #print("ANALOG VALUE:", value)
                 return value
@@ -1057,7 +1066,6 @@ class Bus:
         self.log.write(msg)
         self.log.write("-" * 83 + "END STATUS" + "-" * 83 + "\n")
 
-
     def int2hex(self, msg):
         """
         Convert list data from INT to HEX
@@ -1104,7 +1112,6 @@ class Bus:
         self.appcrc = []
         self.buffricnapp = []
 
-
     def seven2eight(self):
         """
         Trasforma la string ricevuta dalla seriale (dati a 7 bit) in byte da 8 bit
@@ -1128,8 +1135,6 @@ class Bus:
         """
         Calculate trama and return list with right values
         """
-        app = inSerial
-
         if self.buffricnlung > 100:  # Errore 3
             self.log.write("ERR 3 Pacchetto troppo lungo")
             self.labinitric()
@@ -1235,12 +1240,10 @@ class Bus:
             trama.append(resto)
         return trama
 
-
     def encodeMsgCalcCrcTx(self, msg):
         """
         Codifica byte messaggio con bit sincronismo, e codice di fine trama piu crc finale
         """
-        app = 0
 
         bytedatrasm = []
         self.crctrasm = self.INITCRC
@@ -1336,7 +1339,6 @@ class Bus:
         """
         address = (logic_io * 32) + offset
         return self.writeEEadd(board_id, address, data)
-
 
     def readIO(self, board_id, logic_io):
         """
@@ -1523,7 +1525,6 @@ class Bus:
 
         """
         self.log.write("Return Configuration PCA9535")
-        msg = [5, 3, 0x4e, 2, 0x0a, 0xa0]
 
     def getBME280(self, board_id, logic_io, value):
         """
@@ -1545,9 +1546,9 @@ class Bus:
         TXtrama = []
         if logic_io == 0:
             for x in range(1, 25):
-                msg = self.writeEEnIOoffset(board_id, logic_io, 0, [0,0])
+                msg = self.writeEEnIOoffset(board_id, x, 0, [0,0])
                 TXtrama.append(msg)
-                TXtrama.append(self.initIO(board_id, logic_io))
+                TXtrama.append(self.initIO(board_id, x))
 
         else:
             msg = self.writeEEnIOoffset(board_id, logic_io, 0, [0, 0])
@@ -1564,7 +1565,7 @@ class Bus:
         msg = []
         #pprint(self.mapiotype)
         #print("------------------------------------------")
-#        pprint(self.config)
+
         for board_id in self.mapiotype:
             flagreset = True
             #pprint(self.mapiotype[board_id])
@@ -1600,14 +1601,13 @@ class Bus:
 
                 #print(msg)
 
-                board_type = self.mapiotype[board_id][logic_io]['board_type']
-                boardname = self.mapiotype[board_id][logic_io]['name']
+                # board_type = self.mapiotype[board_id][logic_io]['board_type']
 
                 message_conf_app = []
                 write_ee = self.mapiotype[board_id][logic_io]['write_ee']
 
                 if logic_io >= 30:
-                    self.log.write("Configurazione board ERROR: logic_io non può essere superiore a 29. logic_io={}".fomat(logic_io))
+                    self.log.write("Configurazione board ERROR: logic_io non può essere superiore a 29. logic_io={}".format(logic_io))
                     continue
 
 
@@ -1652,7 +1652,6 @@ class Bus:
                     self.log.write("Configurazione boards: ERROR: type_io non riconosciuto. BOARD_ID:{} - logic_io:{} - type_io:{}".format(board_id, logic_io, type_io))
                     continue
 
-                # print("Configurazione boards: boards:%s, logic_io:%s" %(boardname, logic_io))
                 byte1 |= 0x40 #b6
 
                 direction = self.mapiotype[board_id][logic_io]['direction']
@@ -2052,7 +2051,7 @@ class Bus:
                     # msg.append(self.writeEE(board_id, eels + 22, eems, [5, 3, 0x4e, 2, 0xa0, 0x0a]))
                 elif device_type == 'BME280':
                     if self.EEPROM_LANGUAGE == 0:
-                        print("EEPROM_LANGUAGE OLD")
+                        # print("EEPROM_LANGUAGE OLD")
                         msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [3 | self.i2c_const['CONCATENA'], 1 | 8, 0xec, 0xf7]))  # 3|128: 128 per concatenare con prg. successivo), 32 reset +
                         msg.append(self.writeEEnIOoffset(board_id, logic_io, 14, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3 | 64, 0xec | 1]))  # 2|64: lettura I2C. 3+64: 8 byte da leggere
 
@@ -2082,7 +2081,6 @@ class Bus:
                         msg.append(self.writeEEnIOoffset(board_id, logic_io, 21, [2 | self.i2c_const['BYTE_OPZIONI_LETTURA'], 3|56, 0xec | 1, 0]))  # 56: lettura I2C. 7 byte da indirizzo E1
 
                 elif device_type == 'AM2320':
-                    print("CONFIGURAZIONE AM2320")
                     if self.EEPROM_LANGUAGE == 0:  # vecchio linguaggio
                         i2cconf = []
                         i2cconf.append(self.writeEEnIOoffset(board_id, logic_io, 10, [2 | self.i2c_const['CONCATENA'] | self.i2c_const['BYTE_OPZIONI_SCRITTURA'], 3, 0xb8]))  # 3|128: 128 per concatenare con prg. successivo), 32 reset +
@@ -2288,7 +2286,17 @@ class Bus:
                 value = self.calculate(board_id, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
                 # print("CALCULATE VALUE:", self.RXtrama[0], self.RXtrama[2], self.RXtrama[3:], value)
                 try:
-                    self.status[board_id]['io'][logic_io - 1] = value
+                    value_old = self.status[board_id]['io'][logic_io - 1]
+                    device_type = self.mapiotype[board_id][logic_io]['device_type']                                                
+                    if value_old != value:
+                        
+                        # print(device_type)
+                        self.status[board_id]['io'][logic_io - 1] = value
+                        res = "/BOARD{} : Valore aggiornato\n".format(board_id)
+                        res += '/{}_{}  {} => {}'.format(board_id, logic_io, value_old, value)
+                        
+                        # self.telegram_bot.sendMessage(self.chat_id, res)
+                        
                 except:
                     self.log.write("chiave non trovata avviso1 {}".format(self.RXtrama))
 
@@ -2301,6 +2309,7 @@ class Bus:
                     if apprx == 0x2D - 32:
                         """
                         Comando di errore ritornato: ID SCHEDA, COMANDO ERRORE (2D), COMANDO ARRIVATO (255 se non disponibile), IO Logico (255 se non disponibile), Tipo errore
+                        5 Byte: 0:Board_id - 1:Pacchetto_Errore - 3: - 4: Logic_io - 5:I2C Timeout
                         """
                         err = self.error[self.RXtrama[4]] if self.RXtrama[4] in self.error else 'ERRORE NON DEFINITO'
                     self.log.write("{:<11} RX  {:<18} {} {}".format(self.nowtime, self.code[apprx], self.int2hex(self.RXtrama), err))
@@ -2312,54 +2321,162 @@ class Bus:
         # else: print("RXPING",int2hex(self.RXtrama))
 
     def writeLog(self):
-            #  parte che stampa il log ogni TIME_PRINT_LOG e aggiorna le board presenti
-            if (not len(self.TXmsg)) and (self.nowtime - self.oldtime > self.TIME_PRINT_LOG):
-                self.oldtime = self.nowtime  # Not remove
-                self.TXmsg.append(self.ping)  # Not remove. Is neccesary to reset shutdown counter
-                # Routine che aggiorna le BOARD presenti sul BUS
-                board_to_remove = []
-                for k, v in self.board_ready.items():
-                    # b.log.write(v, b.nowtime-v, v)
-                    if (self.nowtime - v) > 5:  # rimuove board se i suoi pacchetti mancano da piu di 5 secondi
-                        board_to_remove.append(k)
-                for k in board_to_remove:
-                    del self.board_ready[k]
-                # b.BOARD_ADDRESS = max(list(b.board_ready.keys())) + 1
-                br = list(self.board_ready.keys())
-                br.sort()
-                self.log.write("{:<12} BOARD_READY           {:<18} ".format(int(self.nowtime), str(br)))
-                self.printStatus()  # Print status of IO
+        #  parte che stampa il log ogni TIME_PRINT_LOG e aggiorna le board presenti
+        if (not len(self.TXmsg)) and (self.nowtime - self.oldtime > self.TIME_PRINT_LOG):
+            self.oldtime = self.nowtime  # Not remove
+            self.TXmsg.append(self.ping)  # Not remove. Is neccesary to reset shutdown counter
+            # Routine che aggiorna le BOARD presenti sul BUS
+            board_to_remove = []
+            for k, v in self.board_ready.items():
+                # b.log.write(v, b.nowtime-v, v)
+                if (self.nowtime - v) > 5:  # rimuove board se i suoi pacchetti mancano da piu di 5 secondi
+                    board_to_remove.append(k)
+            for k in board_to_remove:
+                del self.board_ready[k]
+            # b.BOARD_ADDRESS = max(list(b.board_ready.keys())) + 1
+            br = list(self.board_ready.keys())
+            br.sort()
+            self.log.write("{:<12} BOARD_READY           {:<18} ".format(int(self.nowtime), str(br)))
+            self.printStatus()  # Print status of IO
+
+    """ Telegram BOT """
+    def initBot(self):
+        if self.telegram_enable:
+            print("Bot Telegram begin")
+            self.telegram_bot = telepot.Bot(self.telegram_token)
+            MessageLoop(self.telegram_bot, {'chat': self.handle, 'callback_query': self.on_callback_query} ).run_as_thread()
+
+    def handle(self, msg):
+        # print(msg)
+        content_type, chat_type, chat_id = telepot.glance(msg, flavor="chat")
+        self.chat_id = chat_id
+        # print(content_type)
+        # chat_id = msg['chat']['id']
+        nameuser = msg['chat']['first_name']
+        print(nameuser)
+        if content_type != 'text':
+            self.telegram_bot.sendMessage(chat_id, 'Ammesso solo TESTO')
+            return
+        comand = msg['text']
+        print("telegram_bot Comand:", comand)
+        
+        if comand == '/INFO':
+            self.telegram_bot.sendMessage(chat_id, """
+Telegram Bot per Domoticz
+Interfaccia per intergire con DL485 Board, 
+schede per la Domotica su BUS RS485.
+Autori: Luca e Daniele
+Info su www.domocontrol.info/domocontrol-it/domotica
+            """)
+            self.telegram_bot.sendMessage(chat_id, """Comandi disponibili:
+    /INFO (informazioni)
+    /BOARD (info board presenti)
+                        
+            """)
+
+        elif comand == '/BOARD':
+            res = ''
+            for v in self.status:
+                # print(v, self.status[v], self.status[v]['name'])
+                res += '/BOARD{:<2} {}\n'.format(v, self.status[v]['name'])    
+            self.telegram_bot.sendMessage(chat_id, 'Board presenti: \n{}'.format(res))
+        
+        elif '/BOARD' in comand: # MOstra board presenti sul bus
+            bid = int(comand[6:])
+            res = 'I/O della Board {}\n'.format(comand)
+            lendict = len(self.mapiotype[bid])
+            for n in self.mapiotype[bid]:
+                # pprint(self.mapiotype[bid][n])
+                # pprint(self.status[bid]['io'])
+                dtype = self.mapiotype[bid][n]['dtype']
+                name = self.mapiotype[bid][n]['name']
+                logic_io = int(self.mapiotype[bid][n]['logic_io'])
+                value = self.status[bid]['io'][logic_io - 1]
+                device_type = self.mapiotype[bid][n]['device_type']
+                # print(comand, bid, logic_io, name, value)
+                add_slash = ' '
+                if device_type in ['DIGITAL_OUT']:
+                    value &= 1
+                    add_slash = '/'
+                res += '{}{}_{} {} {}\n'.format(add_slash, bid, logic_io, name, value)
+            
+            self.telegram_bot.sendMessage(chat_id, res)      
+
+        elif '_' in comand and '/' in comand: # Setta I/O
+            print(comand)
+            bl = comand[1:].split("_")
+            bid = int(bl[0])
+            logic_io = int(bl[1])
+            value = self.status[bid]['io'][logic_io - 1] & 1
+            value_new = 1 - value    
+            res = "/BOARD{} : Cambia il valore dell'uscita\n".format(bid)
+            res += '/{}_{}  {} => {}'.format(bid, logic_io, value, value_new)
+            
+            cmd = self.writeIO(bid, logic_io, [value_new])
+            print(cmd)
+            self.TXmsg.append(cmd)
+
+            self.telegram_bot.sendMessage(chat_id, res)  
+
+        elif '_' in comand: # Setta I/O
+            print(comand)
+            board_id, logic_io = comand[1:].split('_')
+            board_id = int(board_id)
+            logic_io = int(logic_io)
+            print(board_id, logic_io)
+            pprint(self.mapiotype[board_id][logic_io])
+
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                   [InlineKeyboardButton(text='Press me', callback_data='press')],
+               ])
+            self.telegram_bot.sendMessage(chat_id, '-', reply_markup=keyboard)    
+
+
+        # elif comand == '/R':
+        #     self.telegram_bot.sendMessage(chat_id, 'Leggi il valore di un I/O - Da Fare')
+        
+        # elif comand == '/S':
+        #     self.telegram_bot.sendMessage(chat_id, 'Scrivi il valore di un I/O - Da Fare')
+        
+        else:
+            self.telegram_bot.sendMessage(chat_id, """Comandi disponibili:
+    /INFO (informazioni)
+    /BOARD (info board presenti)
+                    
+            """)
+
+    def on_callback_query(self, msg):
+        query_id, from_id, query_data = telepot.glance(msg, flavor='callback_query')
+        print('Callback Query:', query_id, from_id, query_data)
+        self.telegram_bot.answerCallbackQuery(query_id, text="da completare")
+
 
 # END BUS Class
 
 # INIZIO PARTE MAIN
 if __name__ == '__main__':
-    print("*" * 20, "START DL485 program", "*" * 20)
-    if len(sys.argv) > 1:  # analisi parametro sulla riga di comando
-        # print(sys.argv)
-        if sys.argv[1] == 'w':  # stampa log su file
-            logstate = 1
-        elif sys.argv[1] == 'p':  # stampa a schermo
-            logstate = 2
-        elif sys.argv[1] == 'wp':  # stampa a schermo e su file
-            logstate = 3
-        else:  # parametro non valido
-            logstate = 0
-            print("errore parametro di riga non valido, parametri LOG: w=write to file, p=print, wp=write+print")
-            sys.exit()
-    else:
+    log = Log()
+    log.write("*" * 20 + "START DL485 program" + "*" * 20)
+    logstate = logwrite = logscreen = 0
+    if 'w' in sys.argv:  # stampa log su file
+        logwrite = 1
+    if 'p' in sys.argv:  # stampa a schermo
+        logscreen = 2
+    if len(sys.argv) < 2:
         logstate = 0
-        print("Programma senza richiesta di log su schermo/file. parametri possibili w (log su file), p (log a schermo), wp (log a schermo e file)", end="\n\n")
+        print("""Avvio programma DL485P \n
+        -------------------------------------
+        Parametri disponibili:
+        w = log su file,
+        p = log a schermo,
+        -------------------------------------
+            """ )
 
-
-
+    logstate = logwrite | logscreen # Set logstate
     config_file_name = "./config.json"  # specifica nome file di configurazione
     b = Bus(config_file_name, logstate)  # Istanza la classe bus
-#    log = Log('log.txt', logstate)  # Instazia la classe Log
 
-
-    # righe da eseguire dopo aver specificato il file di configurazione
-    print("BUS_BAUDRATE:%s, BUS_PORT:%s, BOARD_ADDRESS:%s" %(b.bus_baudrate, b.bus_port, b.BOARD_ADDRESS))
+    log.write("BUS_BAUDRATE:{}, BUS_PORT:{}, BOARD_ADDRESS:{}".format(b.bus_baudrate, b.bus_port, b.BOARD_ADDRESS))
 
     """ Reset parametri SCHEDE """
     # se serve si resetta una o tutte le schede con le tre righe sotto
@@ -2370,9 +2487,8 @@ if __name__ == '__main__':
     """ Configurazione SCHEDE in base al file in config_file_name """
     # reset = b.resetEE(0, 0)
     # b.TXmsg += reset
-
     b.TXmsg += b.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
-    pprint(b.TXmsg)
+    # pprint(b.TXmsg)
 
     b.oldtime = int(time.time()) - 10  # init oldtime per stampe dizionario con i/o per stampa subito al primo loop
 
@@ -2382,6 +2498,7 @@ if __name__ == '__main__':
         res = b.Connection.read()
 
     while 1:
+
         RXbytes = b.Connection.read() #legge uno o piu caratteri del buffer seriale
 
         if not RXbytes: continue  # seriale senza caratteri non entra nel for sotto
@@ -2398,10 +2515,9 @@ if __name__ == '__main__':
             b.writeLog()
 
             b.RXtrama = []  # Azzera trama ricezione
+
             time.sleep(0.0005)  # Delay per non occupare tutta la CPU
-
-
-    log.write("FINE SCRIPT")
+            
 
 """
 NOTE, TODO e BUGS
