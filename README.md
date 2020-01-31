@@ -21,31 +21,36 @@ Libreria per gestione schede domotiche serie DL485x
 
 ### Installazione
 
-Verificare che siano installati python3 e git
 
-Prelevare i file tramite il comando
-
+1. Aggiornare e Installare i seguenti pacchetti da terminale:
 ```
-git clone https://github.com/lucasub/DL485_BUS.git
-```
-
-Entrare nella cartella DL485_BUS con
-
-```
-cd DL485_BUS
+sudo apt update
+sudo apt upgrade
+sudo apt install python3-dev python3-serial git python3-pip
 ```
 
-All'interno sono presenti alcuni file tra cui:
+2. Installare la libreria DL485_BUS
+```
+cd /home/pi/
+git clone https://github.com/lucasub/DL485_BUS.git DL485_BUS
+```
+
+3. Entrare nella cartella DL485_BUS con
+
+```
+cd ~/DL485_BUS
+```
+
+4. All'interno sono presenti alcuni file tra cui:
 - dl485p.py -> libreria
 - config.json -> contiene tutta la configurazione delle schede
 - TSL2561.py -> modulo per la gestione del sensore luminosità
 - requirements.txt con tutte le dipendenze
 - README.md -> questo file che descrive il sistema e l'installazione
 
-Per installare tutte le dipendenze:
-
+5. Installare le dipendenze con il comando: 
 ```
-pip3 install -r requirements.txt
+sudo pip3 install -r requirements.txt
 ```
 
 ### Impostazione del file di configurazione config.json

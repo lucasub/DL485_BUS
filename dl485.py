@@ -126,21 +126,28 @@ class Bus:
     }
 
     device_type_dict = {
-        'DS18B20':              {'type_io':'onewire',       'direction':'input',    'dtype':'Temperature',      'pullup':1},
         'AM2320':               {'type_io':'i2c',           'direction':'input',    'dtype':'Temp+Hum',         'pullup':0},
+        'ANALOG_IN':            {'type_io':'analog',        'direction':'input',    'dtype':'Switch',           'pullup':0},
         'BME280':               {'type_io':'i2c',           'direction':'input',    'dtype':'Temp+Hum+Baro',    'pullup':1},
         'BME280_CALIB':         {'type_io':'i2c',           'direction':'input',    'dtype':'Temp+Hum+Baro',    'pullup':1},
+        'DIGITAL_IN':           {'type_io':'digital',       'direction':'input',    'dtype':'Switch',           'pullup':0},
+        'DIGITAL_IN_PULLUP':    {'type_io':'digital',       'direction':'input',    'dtype':'Switch',           'pullup':1},
+        'DIGITAL_OUT':          {'type_io':'digital',       'direction':'output',   'dtype':'Switch',           'pullup':0},
+        'DIGITAL_OUT_PWM':      {'type_io':'analog',        'direction':'output',   'dtype':'Voltage',          'pullup':0},
+        'DS18B20':              {'type_io':'onewire',       'direction':'input',    'dtype':'Temperature',      'pullup':1},
+        'PSYCHROMETER':         {'type_io':'',              'direction':'input',    'dtype':'Humidity',         'pullup':0},
+        'RFID_CARD':            {'type_io':'',              'direction':'output',    'dtype':'Switch',          'pullup':0},
+        'RFID_UNIT':            {'type_io':'i2c',           'direction':'input',    'dtype':'Temperature',      'pullup':1},
+        'TEMP_ATMEGA':          {'type_io':'temp_atmega',   'direction':'input',    'dtype':'Temperature',      'pullup':0},
         'TSL2561':              {'type_io':'i2c',           'direction':'input',    'dtype':'Illumination',     'pullup':0},
         'VINR1R2':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
         'VINKMKA':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
-        'DIGITAL_OUT':          {'type_io':'digital',       'direction':'output',   'dtype':'Switch',           'pullup':0},
-        'DIGITAL_OUT_PWM':      {'type_io':'analog',        'direction':'output',   'dtype':'Voltage',          'pullup':0},
-        'DIGITAL_IN':           {'type_io':'digital',       'direction':'input',    'dtype':'Switch',           'pullup':0},
-        'DIGITAL_IN_PULLUP':    {'type_io':'digital',       'direction':'input',    'dtype':'Switch',           'pullup':1},
-        'ANALOG_IN':            {'type_io':'analog',        'direction':'input',    'dtype':'Switch',           'pullup':0},
-        'PSYCHROMETER':         {'type_io':'',              'direction':'input',    'dtype':'Humidity',         'pullup':0},
-        'TEMP_ATMEGA':          {'type_io':'temp_atmega',   'direction':'input',    'dtype':'Temperature',      'pullup':0},
         'VIRTUAL':              {'type_io':'discrete',      'direction':'output',   'dtype':'Temperature',      'pullup':0},
+        
+        
+        
+        
+        
     }
 
     i2c_const = {  # Const I2C
@@ -312,23 +319,26 @@ class Bus:
         },
 
         5: {  # DL485P V.2.2
+            'PB1':          {'pin':  13},
+            'PB2':          {'pin':  14},
+            'PB3':          {'pin':  15},
+            'PB4':          {'pin':  16},
+            'PB5':          {'pin':  17},
             'PC0':          {'pin':  23},
             'PC1':          {'pin':  24},
             'PC2':          {'pin':  25},
             'PC3':          {'pin':  26},
+            'PD3':          {'pin':   1},
+            'PD5':          {'pin':   9},
+            'PD6':          {'pin':  10},
+            'PE0':          {'pin':   3},
+            'PE1':          {'pin':   6},
+            'PE2':          {'pin':  19},
             'SDA':          {'pin':  27},
             'SCL':          {'pin':  28},
-            'PD3':          {'pin':   1},
             'PE0':          {'pin':   3},
-            'PD5':          {'pin':   9},
-            'PE2':          {'pin':  19},
             'PE1':          {'pin':   6},
-            'PD6':          {'pin':  10},
-            'PB2':          {'pin':  14},
-            'PB1':          {'pin':  13},
-            'PB5':          {'pin':  17},
-            'PB4':          {'pin':  16},
-            'PB3':          {'pin':  15},
+            'PE2':          {'pin':  19},
             'VIN':          {'pin':  22, 'function': ['VIN']},
             'TEMP_ATMEGA':  {'pin':  37},
             'PCA9535':      {'pin':   0},
@@ -526,6 +536,7 @@ class Bus:
                             raise("ERROR: direcrtion NOT DEFINE!!!")
 
                         self.mapiotype[board_id][logic_io] = {
+                            'altitude': int(self.config[b][bb].get('altitude', 0)),  # OFFSET altitudine
                             'board_enable': board_enable, # Abilitazione scheda
                             'board_type': board_type, # Tipo scheda
                             'default_startup_filter_value': int(self.config[b][bb].get('default_startup_filter_value', 0)), # 0 o 1
@@ -543,42 +554,41 @@ class Bus:
                             'kadd': self.config[b][bb].get('kadd', 0),
                             'kmul': self.config[b][bb].get('kmul', 1),
                             'logic_io': logic_io,
+                            'logic_io_calibration': self.config[b][bb].get('logic_io_calibration', 0),
+                            'lux_gain': int(self.config[b][bb].get('lux_gain', 0)),
+                            'lux_integration': int(self.config[b][bb].get('lux_integration', 0)),
                             'n_refresh_off': int(self.config[b][bb].get('n_refresh_off', 1)),
                             'n_refresh_on': int(self.config[b][bb].get('n_refresh_on', 1)),
                             'name': self.config[b][bb].get('name', 'NO Name'),
-                            'logic_io_calibration': self.config[b][bb].get('logic_io_calibration', 0),
-                            'altitude': int(self.config[b][bb].get('altitude', 0)),  # OFFSET altitudine
                             'offset_pression': int(self.config[b][bb].get('offset_pression', 0)),  # OFFSET pression
-                            'round_pression': int(self.config[b][bb].get('round_pression', 0)),
-                            'offset_temperature': int(self.config[b][bb].get('offset_temperature', 0)),  # OFFSET temperature
-                            'round_temperature': int(self.config[b][bb].get('round_temperature', 1)),
                             'offset_humidity': int(self.config[b][bb].get('offset_humidity', 0)),  # OFFSET temperature
-                            'round_humidity': int(self.config[b][bb].get('round_humidity', 0)),
-                            'lux_gain': int(self.config[b][bb].get('lux_gain', 0)),
-                            'lux_integration': int(self.config[b][bb].get('lux_integration', 0)),
+                            'offset_temperature': int(self.config[b][bb].get('offset_temperature', 0)),  # OFFSET temperature
                             'only_fronte_off': int(self.config[b][bb].get('only_fronte_off', 0)),
                             'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
                             'overwrite_text': overwrite_text,
                             'pin_label': bb,
                             'pin': pin,
+                            'plc_byte_list_io': [],
+                            'plc_counter_filter': self.config[b][bb].get('plc_counter_filter', 0),
+                            'plc_counter_min_period_time': int(self.config[b][bb].get('plc_counter_min_period_time', 0)),
+                            'plc_counter_mode': int(self.config[b][bb].get('plc_counter_mode', 0)),
                             'plc_counter_timeout': int(self.config[b][bb].get('plc_counter_timeout', 0)),
                             'plc_delay_off_on': int(self.config[b][bb].get('plc_delay_off_on', 0)),
                             'plc_delay_on_off': int(self.config[b][bb].get('plc_delay_on_off', 0)),
                             'plc_function': self.config[b][bb].get('plc_function', 'disable'),
                             'plc_linked_board_id_logic_io': self.config[b][bb].get('plc_linked_board_id_logic_io', []),
-                            'plc_byte_list_io': [],
+                            'plc_mode_timer': int(self.config[b][bb].get('plc_mode_timer', 0)),
                             'plc_params': self.config[b][bb].get('plc_params', 0),
+                            'plc_preset_input': int(self.config[b][bb].get('plc_preset_input', 0)),
+                            'plc_rfid_unit_tpolling_nocard': int(self.config[b][bb].get('plc_rfid_unit_tpolling_nocard', 10)),
+                            'plc_rfid_unit_tpolling_oncard': int(self.config[b][bb].get('plc_rfid_unit_tpolling_oncard', 10)),
+                            'plc_rfid_unit_mode': int(self.config[b][bb].get('plc_rfid_unit_mode', 33)),
                             'plc_time_off': int(self.config[b][bb].get('plc_time_off', 0)),
                             'plc_time_on': int(self.config[b][bb].get('plc_time_on', 0)),
-                            'plc_tmax_on': int(self.config[b][bb].get('plc_tmax_on', 65535)),
-                            'plc_counter_filter': self.config[b][bb].get('plc_counter_filter', 0),
-                            'plc_counter_min_period_time': int(self.config[b][bb].get('plc_counter_min_period_time', 0)),
-                            'plc_counter_mode': int(self.config[b][bb].get('plc_counter_mode', 0)),
                             'plc_time_unit': float(self.config[b][bb].get('plc_time_unit', 1)), # default 1 secondo
                             'plc_timer_n_transitions': int(self.config[b][bb].get('plc_timer_n_transitions', 0)),
-                            'plc_preset_input': int(self.config[b][bb].get('plc_preset_input', 0)),
-                            'plc_mode_timer': int(self.config[b][bb].get('plc_mode_timer', 0)),
-                            'plc_xor_input': 0,
+                            'plc_tmax_on': int(self.config[b][bb].get('plc_tmax_on', 65535)),
+                            'plc_xor_input': 0,                           
                             'power_on_timeout' : int(self.config[b][bb].get('power_on_timeout',0)) ,
                             'power_on_tmin_off' : int(self.config[b][bb].get('power_on_tmin_off', 0)),
                             'power_on_voltage_off' : float(self.config[b][bb].get('power_on_voltage_off', 0)),
@@ -586,6 +596,9 @@ class Bus:
                             'powermeter_k': int(self.config[b][bb].get('powermeter_k', 0)),
                             'pullup': self.config[b][bb].get('pullup', self.device_type_dict[device_type].get('pullup', 0)),
                             'rgnd': int(self.config[b][bb].get('rgnd', 100000)),
+                            'round_humidity': int(self.config[b][bb].get('round_humidity', 0)),
+                            'round_pression': int(self.config[b][bb].get('round_pression', 0)),
+                            'round_temperature': int(self.config[b][bb].get('round_temperature', 1)),
                             'rvcc': int(self.config[b][bb].get('rvcc', 1)),
                             'time_refresh': int(self.config[b][bb].get('time_refresh', 3000)),
                             'type_io': self.device_type_dict[device_type].get('type_io'),
@@ -1785,6 +1798,8 @@ class Bus:
                     'last_change_all': 29,
                     'nlast_change_all': 29 | 128,
                     'power_on': 30, # Funzione che gestische l'alimentazione raspberry
+                    'rfid_unit': 31,
+                    'rfid_card': 32,
                     'counter_up': 32,
                     'counter_dw': 33,
                     'counter_up_dw': 34,
@@ -1825,7 +1840,7 @@ class Bus:
 
                     # plc_linked_board_id_logic_io = self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io'] # già calcolato sopra
 
-                    plc_time_unit = self.mapiotype[board_id][logic_io]['plc_time_unit']
+                    plc_time_unit = self.mapiotype[board_id][logic_io]['plc_time_unit'] # Byte PLC Time Unit 
                     # Unità di tempo
                     plc_time_unit_app = 0
                     if plc_time_unit == 1:
@@ -1838,7 +1853,17 @@ class Bus:
                         plc_time_unit_app = 0xC0
 
 
-                    if sbyte8 == 'power_on':
+                    if sbyte8 == 'rfid_unit':
+                            plc_rfid_unit_tpolling_nocard = self.mapiotype[board_id][logic_io]['plc_rfid_unit_tpolling_nocard']
+                            plc.append(plc_rfid_unit_tpolling_nocard)
+                            plc_rfid_unit_tpolling_oncard = self.mapiotype[board_id][logic_io]['plc_rfid_unit_tpolling_oncard']
+                            plc.append(plc_rfid_unit_tpolling_oncard)
+                            plc_rfid_unit_mode = self.mapiotype[board_id][logic_io]['plc_rfid_unit_mode']
+                            plc.append(plc_rfid_unit_mode)
+                    elif sbyte8 == 'rfid_card':
+                            pass
+
+                    elif sbyte8 == 'power_on':
                         appboardid = self.mapiotype[board_id][logic_io]['plc_byte_list_io'][0]
                         applogicio = self.mapiotype[board_id][logic_io]['plc_byte_list_io'][1]
 
@@ -2028,17 +2053,16 @@ class Bus:
                         elif sbyte8 in  ['or_transition_on', 'nor_transition_on', 'or_transition_on_single', 'nor_transition_on_single', 'or_transition_on_multi', 'nor_transition_on_multi', 'or_transition_on_sum', 'nor_transition_on_sum' ]:
                             pass
 
+
                         else:
                             self.log.write('FUNZIONE PLC NON TROVATA: %s' %sbyte8)
                             sys.exit()
 
                     plclen = len(plc)
-                    # print("CONFIGURAZIONE PLC =======>>>>>: ", sbyte8, plc)
                     plc.reverse()
 
                     plc_EE_start = (logic_io * 32) + 32 - plclen
                     plc_data = self.writeEEadd(board_id, plc_EE_start, plc)
-                    # print("<<<<<<<<<<<<<<<<<<<============PLC_DATA:", sbyte8, plc_function[sbyte8], plc_data)
                     msg.append(plc_data)
 
                 # Configurazione relativa ai sensori I2C e OneWire
