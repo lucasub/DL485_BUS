@@ -148,7 +148,8 @@ class Bus:
         'DS18B20':              {'type_io':'onewire',       'direction':'input',    'dtype':'Temperature',      'pullup':1},
         'PSYCHROMETER':         {'type_io':'',              'direction':'input',    'dtype':'Humidity',         'pullup':0},
         'RFID_CARD':            {'type_io':'',              'direction':'output',    'dtype':'Switch',          'pullup':0},
-        'RFID_UNIT':            {'type_io':'i2c',           'direction':'input',    'dtype':'Temperature',      'pullup':1},
+        'RFID_UNIT':            {'type_io':'i2c',           'direction':'input',    'dtype':'Text',             'pullup':1},
+        
         'TEMP_ATMEGA':          {'type_io':'temp_atmega',   'direction':'input',    'dtype':'Temperature',      'pullup':0},
         'TSL2561':              {'type_io':'i2c',           'direction':'input',    'dtype':'Illumination',     'pullup':0},
         'VINR1R2':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
@@ -724,10 +725,10 @@ class Bus:
         """
         
         # if command == 12 | 32 and 1 == 2:
-            # print("====************************************>>>>> CALCULATE: command:{} board_id: {}, logic_io: {}, value: {}".format(command, board_id, logic_io, value))
-            # print(self.get_board_type)
-            # return 0
-            # return self.get_board_type[board_id]
+        #     print("====************************************>>>>> CALCULATE: command:{} board_id: {}, logic_io: {}, value: {}".format(command, board_id, logic_io, value))
+        #     print(self.get_board_type)
+        #     return 0
+        #     return self.get_board_type[board_id]
 
 
         if board_id in self.mapiotype and logic_io in self.mapiotype[board_id]:
@@ -1066,6 +1067,10 @@ class Bus:
             elif device_type == 'PSICROMETRO':
                 self.log.write("PSICROMETRO")
 
+            elif device_type == 'RFID_CARD':
+                print('----------->>>>>>>>>>DEVICE: RFID_CARD')
+                value = value[-6:]
+
             else:
                 # print("calculate ERROR: Tipo dispositivo NON trovato:", board_id, logic_io)
                 return value
@@ -1228,7 +1233,7 @@ class Bus:
 
             else:
                 self.log.write(str(self.buffricn) + " * " + str(self.buffricnapp))
-                self.log.write("PRIMO CRC ERRATO, calcolato - ricevuto" + str(self.crcric) + str(inSerial) + " len buffricn=" + str(len(self.buffricn)) + str(self.buffricnlung))
+                self.log.write("{:<11} PRIMO CRC ERRATO       calcolato {} ricevuto {} len buffricn={} {}".format(self.nowtime, self.crcric, inSerial, len(self.buffricn), self.buffricnlung))
                 self.labinitric()
                 return []
 
@@ -2267,7 +2272,7 @@ class Bus:
             # msg.append(self.boardReboot(0))
         else:
             self.log.write("NESSUNA CONFIGURAZIONE BOARD DA INVIARE")
-        pprint(msg)
+        # pprint(msg)
 
         return msg
 
@@ -2338,7 +2343,7 @@ class Bus:
 
                         if (len(msg)>1):
                            if (msg[1]==self.code['CLEARIO_REBOOT']):
-                                self.log.write("{:<11} REBOOT                  Invio multiplo cleario_reboot".format(self.nowtime))
+                                self.log.write("{:<11} REBOOT                 Invio multiplo cleario_reboot".format(self.nowtime))
                                 self.send_data_serial(self.Connection, msg2)  # invio multiplo per superare disturbi
                                 self.send_data_serial(self.Connection, msg2)  # invio multiplo per superare disturbi
 
@@ -2370,7 +2375,7 @@ class Bus:
                 else:
                     self.log.write(" ERR RICEVUTO FEEDBACK DI MSG MAI INVIATO")
 
-            # if self.RXtrama[1] in [self.code['COMUNICA_IO'], self.code['CR_WR_OUT'] | 32]:  # COMUNICA_IO / Scrive valore USCITA
+            # if self.RXtrama[1] in [self.code['COMUNICA_IO'], self.code['CR_WR_OUT'] | 32 ]:  # COMUNICA_IO / Scrive valore USCITA
             if self.RXtrama[1] in [ self.code['COMUNICA_IO'], self.code['RFID'] ]:  # COMUNICA_IO / Scrive valore USCITA
                 """
                 Comunicazione variazione IO della stessa BOARD
@@ -2419,19 +2424,22 @@ class Bus:
                 logic_io = self.RXtrama[2]
                 value = self.RXtrama[3:]
 
+                # pprint(self.config)
+
+
                 if not self.RXtrama[0] in self.get_board_type:
-                    self.get_board_type[self.RXtrama[0]] = {}
-                self.get_board_type[board_id]['board_id'] = self.RXtrama[0]
-                self.get_board_type[board_id]['board_type'] = self.RXtrama[2]
-                self.get_board_type[board_id]['io_number'] = self.RXtrama[3]
-                self.get_board_type[board_id]['data_firmware'] = '{:02}/{:02}/{:2}'.format(self.RXtrama[4], self.RXtrama[5], self.RXtrama[6])
-                self.get_board_type[board_id]['protection'] = self.byte2active(self.RXtrama[7], 1)
-                self.get_board_type[board_id]['plc'] =  self.byte2active(self.RXtrama[7], 2)
-                self.get_board_type[board_id]['power_on'] =  self.byte2active(self.RXtrama[7], 3)
-                self.get_board_type[board_id]['pwm'] =  self.byte2active(self.RXtrama[7], 4)
-                self.get_board_type[board_id]['onewire'] =  self.byte2active(self.RXtrama[7], 5)
-                self.get_board_type[board_id]['i2c'] =  self.byte2active(self.RXtrama[7], 6)
-                self.get_board_type[board_id]['rfid'] =  self.byte2active(self.RXtrama[7], 7)
+                    self.get_board_type[self.RXtrama[0]]        = {}
+                self.get_board_type[board_id]['board_id']       = self.RXtrama[0]
+                self.get_board_type[board_id]['board_type']     = "{} - {}".format(self.RXtrama[2], self.config['TYPEB'][str(self.RXtrama[2])])
+                self.get_board_type[board_id]['io_number']      = self.RXtrama[3]
+                self.get_board_type[board_id]['data_firmware']  = '{:02}/{:02}/{:2}'.format(self.RXtrama[4], self.RXtrama[5], self.RXtrama[6])
+                self.get_board_type[board_id]['protection']     = self.byte2active(self.RXtrama[7], 1)
+                self.get_board_type[board_id]['plc']            = self.byte2active(self.RXtrama[7], 2)
+                self.get_board_type[board_id]['power_on']       = self.byte2active(self.RXtrama[7], 3)
+                self.get_board_type[board_id]['pwm']            = self.byte2active(self.RXtrama[7], 4)
+                self.get_board_type[board_id]['onewire']        = self.byte2active(self.RXtrama[7], 5)
+                self.get_board_type[board_id]['i2c']            = self.byte2active(self.RXtrama[7], 6)
+                self.get_board_type[board_id]['rfid']           = self.byte2active(self.RXtrama[7], 7)
                 # pprint(self.get_board_type)
                 
             elif self.RXtrama[1] & 32: # è feedback
@@ -2666,7 +2674,7 @@ if __name__ == '__main__':
     """ Configurazione SCHEDE in base al file in config_file_name """
     # reset = b.resetEE(0, 0)
     # b.TXmsg += reset
-    b.TXmsg += b.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
+    # b.TXmsg += b.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
     # pprint(b.TXmsg)
     b.TXmsg += [b.getBoardType(0)] # GetTypeBoard Informations
 
