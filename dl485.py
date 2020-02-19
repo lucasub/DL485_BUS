@@ -50,7 +50,7 @@ class Bus:
     EEPROM_LANGUAGE = 1  # 1=NEW,  0=old
     BROADCAST = 0 # Invia il comando a tutti i nodi. Da inserire al posto dell'indirizzo Board
 
-    code = {  # Dict with all COMAND
+    code = {  # Dict with all COMMAND
         0: 'INPUT',
         1: 'OUTPUT',
         2: 'CR_TRASPORTO_STR',
@@ -62,11 +62,21 @@ class Bus:
         8: 'CR_WR_OUT',  # Scrivi valore uscita
         10: 'CR_INIT_SINGOLO_IO',  # Mandare per aggiunare singola configurazione IO oppure REBOOT totale
         11: 'CR_REBOOT',  # Fa il reboot della scheda
-        12: 'CR_GET_TIPO_BOARD',  # Ritorna il tipo di board
+        12: 'CR_GET_BOARD_TYPE',  # Ritorna il tipo di board
+        # 1: Board_id
+        # 2: Get tipo board 
+        # 3: Tipo board (1: morsetti)
+        # 4: Numero IO a boardo
+        # 5: Giorno
+        # 6: Mese
+        # 7: anno
+        # 8: Byte: b0: protezione attiva, b1: PLC, b2: PowerOn, b3: PWM out, b5: OneWire, b6: I2C, b7: RFID
+        #
         13: 'ERRORE',  # Errore generico
         14: 'COMUNICA_IO',  # Mitt. COmando comunica IO, N. ingresso, valore inresso
         15: 'I2C ACK',  # Mitt. COmando comunica IO, N. ingresso, valore inresso
         16: 'CLEARIO_REBOOT', #cancella area io e fa reboot
+        18: 'RFID', # comunicazione del pacchetto RDIF
 
         'INPUT': 0,
         'OUTPUT': 1,
@@ -79,11 +89,12 @@ class Bus:
         'CR_WR_OUT': 8,  # Scrivi valore uscita
         'CR_INIT_SINGOLO_IO': 10,  # Mandare per aggiunare singola configurazione IO oppure REBOOT totale
         'CR_REBOOT': 11,  # Fa il reboot della scheda
-        'CR_GET_TIPO_BOARD': 12,  # Ritorna il tipo di board
+        'CR_GET_BOARD_TYPE': 12,  # Ritorna il tipo di board
         'ERRORE': 13,  # Errore generico
         'COMUNICA_IO': 14,  # Mitt. COmando comunica IO, N. ingresso, valore inresso
         'I2C ACK': 15,  # Mitt. COmando comunica IO, N. ingresso, valore inresso
-        'CLEARIO_REBOOT': 16
+        'CLEARIO_REBOOT': 16,
+        'RFID': 18,
     }
 
     disable_io = 0x3e
@@ -142,12 +153,7 @@ class Bus:
         'TSL2561':              {'type_io':'i2c',           'direction':'input',    'dtype':'Illumination',     'pullup':0},
         'VINR1R2':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
         'VINKMKA':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
-        'VIRTUAL':              {'type_io':'discrete',      'direction':'output',   'dtype':'Temperature',      'pullup':0},
-        
-        
-        
-        
-        
+        'VIRTUAL':              {'type_io':'discrete',      'direction':'output',   'dtype':'Temperature',      'pullup':0},        
     }
 
     i2c_const = {  # Const I2C
@@ -407,7 +413,10 @@ class Bus:
     }
 
     def __init__(self, config_file_name, logstate=0):
+        self.system = '' # Variabile con il sistema che instanzia la classe (Domoticz, Home Assistence, ....)
         self.log = Log('log.txt', logstate)  # Instazia la classe Log
+        self.boardbadcounter_n = 10 # Numero di conteggi prima che la board venga disabilitata
+        self.boardbadcounter = [self.boardbadcounter_n for x in range(64)] # Contatore SCHEDE che non rispondono. Per evitare che la configurazione si blocchi
         self.buffricnlung = 0  # Lenght RX buffer
         self.buffricn = []  # Buffer RX trama
         self.appcrc = []  # Per calcolo CRC
@@ -415,7 +424,6 @@ class Bus:
         self.crcric = self.INITCRC
         self.crctrasm = 0x55
         self.BOARD_ADDRESS = 0
-        self.MAX_BOARD_ADDRESS = 63
         self.config = {}  # Configuration dict
         self.status = {}  # Stauts of all IO Board
         self.buffricnapp = []  # Contiene i primi 7 byte per poi completarli con i bit residui (b7)
@@ -426,25 +434,28 @@ class Bus:
         self.poweron_linked = 0
         self.getJsonConfig(config_file_name)
         self.BOARD_ADDRESS = int(self.config['GENERAL_NET']['board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
-        self.MAX_BOARD_ADDRESS = int(self.config['GENERAL_NET']['max_board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
+        self.MAX_BOARD_ADDRESS = int(self.config['GENERAL_NET'].get('max_board_address', 63))  # Legge ID assegnato a Raspberry PI per accedere al Bus
         self.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo boards attive)
         self.bus_baudrate = int(self.config['GENERAL_NET']['bus_baudrate'])  # Legge la velocità del BUS
         self.bus_port = self.config['GENERAL_NET']['bus_port']  # Legge la porta del BUS di Raspberry PI
         self.TIME_PRINT_LOG = 4  # intervallo di tempo in secondi per la stampa periodica del log a schermo
-        self.nowtime = self.oldtime = 0
+        self.nowtime = self.oldtime = int(time.time())
         self.RXtrama = []
         self.TXmsg = []  # Lista che contiene le liste da trasmettere sul BUS
         self.board_ready = {}
         self.BUFF_MSG_TX = {} # dizionario dei messaggi trasmessi indicizzato secondo indirizzo destinatario
         self.NLOOPTIMEOUT = 4  # numero di giri del loop dopo i quali si ritrasmettera il messaggio
-        self.Connection = self.ser(self.bus_port, self.bus_baudrate)  # Setup serial
+        self.Connection = False   # Setup serial
         self.ping = self.ping()  # init variabile di appoggio con ping di questo nodo
         self.BME = {}
-        self.telegram_enable = int(self.config['GENERAL_NET']['telegram_enable'])  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
-        self.telegram_token = self.config['GENERAL_NET']['telegram_token']  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
+        self.telegram_enable = int(self.config['GENERAL_NET'].get('telegram_enable', False))  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
+        self.telegram_token = self.config['GENERAL_NET'].get('telegram_token', False)  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
         self.telegram_bot = False # Instance
         self.initBot()
         self.chat_id = ''
+        self.get_board_type = {}
+        self.crondata = {} # DICT with periodic command
+        self.cronoldtime = self.nowtime + 10 # Non cambiare
 
     def getJsonConfig(self, config_file_name):
         """
@@ -466,11 +477,12 @@ class Bus:
         for b in self.config:
             if 'BOARD' in b:
                 board_id = int(b[5:])
+                self.status[board_id] = {} # Dict with all IO status
                 board_type = int(self.config[b]['GENERAL_BOARD']['board_type'])
-                name = self.config[b]['GENERAL_BOARD']['name']
-                self.status[board_id] = {}
                 self.status[board_id]['board_type'] = board_type
+                name = self.config[b]['GENERAL_BOARD']['name'] # Board name
                 self.status[board_id]['name'] = name
+                
                 try:
                     self.status[board_id]['io'] = [0] * len(self.iomap[board_type])
                     self.status[board_id]['boardtypename'] = self.config['TYPEB']["%s" %board_type]
@@ -484,15 +496,14 @@ class Bus:
                         board_enable = self.config[b][bb]['enable']  # Board enable
                         board_type = self.config[b][bb]['board_type']
                         overwrite_text = self.config[b][bb].get('overwrite_text', 0) # Overtwrite Name and Description of Domoticz device with config.json
-                        # pprint(self.config[b][bb])
                         if not board_enable:
-                            self.log.write("BOARD DISABILItata {}".format(b))
+                            self.log.write("{:<7} DISABILITATA".format(b))
 
                 for bb in self.config[b]:
                     if not 'GENERAL_BOARD' in bb:
                         enable = self.config[b][bb].get('enable', 0)
                         if not enable:
-                            self.log.write("IO DISABILITATO {}".format(self.config[b][bb].get('logic_io', 0)))
+                            self.log.write("{:<7} IO DISABILITATO {}".format(b, self.config[b][bb].get('logic_io', 0)))
                             continue
 
                         logic_io = int(self.config[b][bb].get('logic_io', 0))
@@ -539,6 +550,7 @@ class Bus:
                             'altitude': int(self.config[b][bb].get('altitude', 0)),  # OFFSET altitudine
                             'board_enable': board_enable, # Abilitazione scheda
                             'board_type': board_type, # Tipo scheda
+                            'rfid_card_code': self.config[b][bb].get('rfid_card_code'),
                             'default_startup_filter_value': int(self.config[b][bb].get('default_startup_filter_value', 0)), # 0 o 1
                             'default_startup_value': default_startup_value,  # Valore di default allo startup
                             'description': self.config[b][bb].get('description', 'NO description'),  # Descrizione IO
@@ -565,7 +577,7 @@ class Bus:
                             'offset_temperature': int(self.config[b][bb].get('offset_temperature', 0)),  # OFFSET temperature
                             'only_fronte_off': int(self.config[b][bb].get('only_fronte_off', 0)),
                             'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
-                            'overwrite_text': overwrite_text,
+                            'overwrite_text': overwrite_text,  # Overtwrite Domoticz name and description
                             'pin_label': bb,
                             'pin': pin,
                             'plc_byte_list_io': [],
@@ -580,9 +592,11 @@ class Bus:
                             'plc_mode_timer': int(self.config[b][bb].get('plc_mode_timer', 0)),
                             'plc_params': self.config[b][bb].get('plc_params', 0),
                             'plc_preset_input': int(self.config[b][bb].get('plc_preset_input', 0)),
+                            'plc_rfid_ack_wait': int(self.config[b][bb].get('plc_rfid_ack_wait', 50)),
                             'plc_rfid_unit_tpolling_nocard': int(self.config[b][bb].get('plc_rfid_unit_tpolling_nocard', 10)),
                             'plc_rfid_unit_tpolling_oncard': int(self.config[b][bb].get('plc_rfid_unit_tpolling_oncard', 10)),
                             'plc_rfid_unit_mode': int(self.config[b][bb].get('plc_rfid_unit_mode', 33)),
+                            'plc_rfid_unit_n_conf_refresh': int(self.config[b][bb].get('plc_rfid_unit_n_conf_refresh', 10)),
                             'plc_time_off': int(self.config[b][bb].get('plc_time_off', 0)),
                             'plc_time_on': int(self.config[b][bb].get('plc_time_on', 0)),
                             'plc_time_unit': float(self.config[b][bb].get('plc_time_unit', 1)), # default 1 secondo
@@ -606,7 +620,6 @@ class Bus:
 
                         }
 
-                        # print(self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io'])
                         app=[]
                         plc_xor_input = 0
                         plc_byte_list_io = []
@@ -630,10 +643,6 @@ class Bus:
                         self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io'] = app
                         self.mapiotype[board_id][logic_io]['plc_xor_input'] = plc_xor_input
                         self.mapiotype[board_id][logic_io]['plc_byte_list_io'] = plc_byte_list_io
-
-                        # print(self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io'],self.mapiotype[board_id][logic_io]['plc_xor_input'])
-
-        # pprint(self.mapproc)
 
     def make_inverted(self, board_id, logic_io, value):
         """
@@ -692,7 +701,7 @@ class Bus:
             return -128 + byte
         return byte
     
-    def calculate(self, board_id, logic_io, value):
+    def calculate(self, board_id, command, logic_io, value):
         """
         Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso:
             Temperature:
@@ -708,32 +717,38 @@ class Bus:
                 Power_on
             Digital:
                 Digital input
+
             PowerMeter
+            RFID
+            BOARD_TYPE
         """
-        # print("CALCULATE: board_id: %s, logic_io: %s, value: %s" %(board_id, logic_io, value))
+        
+        # if command == 12 | 32 and 1 == 2:
+            # print("====************************************>>>>> CALCULATE: command:{} board_id: {}, logic_io: {}, value: {}".format(command, board_id, logic_io, value))
+            # print(self.get_board_type)
+            # return 0
+            # return self.get_board_type[board_id]
+
 
         if board_id in self.mapiotype and logic_io in self.mapiotype[board_id]:
             kmul = self.mapiotype[board_id][logic_io]['kmul']
             kadd = self.mapiotype[board_id][logic_io]['kadd']
-
             adjust = lambda value : (value * kmul) + kadd # Funzione che aggiusta il risultato
-
             type_io = self.mapiotype[board_id][logic_io]['type_io']
             device_type = self.mapiotype[board_id][logic_io]['device_type']
             plc_function = self.mapiotype[board_id][logic_io]['plc_function']
 
-            # print("board_id: {:<5} logic_io: {:<5} device_type: {:<25} type_io: {:<25} kmul: {:<10} kadd: {:<10} plc_function: {:<10}"
-            #     .format(board_id, logic_io, device_type, type_io, kmul, kadd, plc_function))
+            # print("board_id: {:<5} logic_io: {:<5} device_type: {:<25} type_io: {:<25} kmul: {:<10} kadd: {:<10} plc_function: {:<10}".format(board_id, logic_io, device_type, type_io, kmul, kadd, plc_function))
 
             if device_type == 'DS18B20':
-                # print(">>>>>>>>>>>>>>>>>>>>>>>>> DS18B20", value)
+                # print(">> DS18B20", value)
                 if len(value) < 9:
                     return None
                 crc = 0
                 for x in value[0:8]:
                     crc = self.calcCrcDS(x, crc)
                 if crc == value[8]:
-                    value = ((value[1] << 8) + value[0]) * 0.0625
+                    value = float(((value[1] << 8) + value[0])) * 0.0625
                     if value == 85: 
                         return None
 
@@ -773,7 +788,7 @@ class Bus:
                                 self.log.write("PSYCHROMETER HUMIDITY: {}".format(round(umidita_relativa_percentuale, 1)))
                                 self.status[board_id_linked]['io'][logic_io_linked - 1] = round(umidita_relativa_percentuale, 1)
                             else:
-                                self.log.write('PSYCHROMETER ERROR: Temp1 or Temp2 have None value')
+                                self.log.write('PSYCHROMETER ERROR: Temp1 or Temp2 have None value')                    
                     value = round((((value * kmul) + kadd)+ self.mapiotype[board_id][logic_io]['offset_temperature']), self.mapiotype[board_id][logic_io]['round_temperature'])
                     if self.mapiotype[board_id][logic_io]['round_temperature'] == 0:
                         return int(value)
@@ -1010,7 +1025,7 @@ class Bus:
                     # print("----------------------", value)
                     value = round((value[0] + (value[1] * 256)) * kmul + kadd, 1)
 
-                bio = '%s-%s' %(board_id, logic_io)
+                bio = "{}-{}".format(board_id, logic_io)
                 if bio in self.mapproc:
                     #print (self.mapproc['%s-%s' %(board_id, logic_io)])
                     board_id_linked = self.mapproc['%s-%s' %(board_id, logic_io)]['board_id']
@@ -1075,6 +1090,8 @@ class Bus:
             msg += "\n{:>3} {:<11} {}  {:>6}     ".format(b, self.status[b]['name'][:11], self.status[b]['board_type'], self.status[b]['boardtypename'])
 
             for i in self.status[b]['io'][:20]:
+                if i.__class__ == dict:
+                    i = 'DICT'
                 msg += " {:>6}".format(str(i))
         self.log.write(msg)
         self.log.write("-" * 83 + "END STATUS" + "-" * 83 + "\n")
@@ -1098,7 +1115,11 @@ class Bus:
         return serial.Serial(port, baudrate)
 
     def send_data_serial(self, Connection, databyte):
-        Connection.write(bytes(databyte))  # invia alla seriale
+        # print("SEND BY SERIAL===>>", Connection, databyte)
+        if self.system == 'Domoticz':
+            Connection.Send(Message=bytes(databyte), Delay=0)
+        else:
+            Connection.write(bytes(databyte))  # invia alla seriale
 
     def calccrc(self, b, crc):
         """
@@ -1231,6 +1252,12 @@ class Bus:
             self.buffricnlung += 1
             return []
 
+    def byte2active(self, data, bit):
+        """
+        Return Active / Disactive from bit 0 / 1
+        """
+        return 'Activated' if int(data) & int(bit) > 0 else 'Disabled'
+
     def eight2seven(self, msg):
         """
         Convert 8 to 7 bytes with additional bytes.
@@ -1304,17 +1331,17 @@ class Bus:
         """
         return [self.BOARD_ADDRESS, self.code['CLEARIO_REBOOT'], board_id] # cancella prog io e fa reboot scheda
 
-    def getTypeBoard(self, board_id):
+    def getBoardType(self, board_id):
         """
         Ritorna: Tipo Board, Versione board, Data software: Day, Month, Year, configurazione software interna
         """
-        return [self.BOARD_ADDRESS, self.code['CR_GET_TIPO_BOARD'], board_id] # Get board type
+        return [self.BOARD_ADDRESS, self.code['CR_GET_BOARD_TYPE'], board_id] # Get board type
 
-    def setMaxBoardAddress(self, max_board_address):
+    def setMaxBoardAddress(self, board_id=0, max_board_address=63):
         """
         Setta il numero massimo di board presenti nella rete. Serve per velocizzare il loop
         """
-        return [self.BOARD_ADDRESS, self.code['CR_WR_EE'], 0, 6, 0, max_board_address] # Max Board Address
+        return [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, 6, 0, max_board_address] # Max Board Address
 
     def calcAddressLsMs8(self, address):
         """
@@ -1687,10 +1714,10 @@ class Bus:
                     self.log.write("ERROR: DIRECTION su configurazione non riconosciuto. IO: {}".format(board_id))
                     # continue
 
-                if type_io == 'analog' or type_io == 'digital':
-                    byte4 = self.mapiotype[board_id][logic_io]['n_refresh_on']  # Byte 4: rinfreschi rete sui fronti ON
-                    # print("----", self.mapiotype[board_id][logic_io]['n_refresh_on'], self.mapiotype[board_id][logic_io]['n_refresh_off'])
+                if type_io == 'analog' or type_io == 'digital' or device_type == 'RFID_UNIT':
+                    byte4 = self.mapiotype[board_id][logic_io]['n_refresh_on']  # Byte 4: rinfreschi rete sui fronti ON                   
                     byte4 |= self.mapiotype[board_id][logic_io]['n_refresh_off'] << 3  # Byte 4: rinfreschi rete sui fronti OFF
+                    # print("----", self.mapiotype[board_id][logic_io]['n_refresh_on'], self.mapiotype[board_id][logic_io]['n_refresh_off'])
                 else:
                     byte4 = 0
 
@@ -1858,10 +1885,44 @@ class Bus:
                             plc.append(plc_rfid_unit_tpolling_nocard)
                             plc_rfid_unit_tpolling_oncard = self.mapiotype[board_id][logic_io]['plc_rfid_unit_tpolling_oncard']
                             plc.append(plc_rfid_unit_tpolling_oncard)
+                            
+                            """
+                            plc_rfid_unit_mode
+
+                            8 BIT: 
+                                b0: se 1 evita invio in rete ACK 6 Byte per codice letto parte 1
+                                b1: se 1 evita invio in rete codice letto parte 1
+                                b2: se 1 evita invio in rete ACK 6 Byte per autenticate block
+                                b3: se 1 evita invio in rete risposta autenticate block
+                                b4: se 1 evita invio in rete ACK 6 Byte per codice letto parte 2
+                                b5: se 1 evita invio in rete codice letto parte 2
+                                b6: se 1 evita invio in rete ACK 6 Byte per configurazione
+                                b7: se 1 evita invio in rete risposta 8 byte configurazione
+                            """
                             plc_rfid_unit_mode = self.mapiotype[board_id][logic_io]['plc_rfid_unit_mode']
                             plc.append(plc_rfid_unit_mode)
+                            plc_rfid_ack_wait = self.mapiotype[board_id][logic_io]['plc_rfid_ack_wait']
+                            plc.append(plc_rfid_ack_wait)
+                            plc_rfid_unit_n_conf_refresh = self.mapiotype[board_id][logic_io]['plc_rfid_unit_n_conf_refresh']
+                            plc.append(plc_rfid_unit_n_conf_refresh)
+
                     elif sbyte8 == 'rfid_card':
-                            pass
+                            """
+                            Offset: 31 - board_id_lettore
+                            Offset: 30 - logioc_io_lettore
+                            Offset: 29 - indice inizio trama da controllare
+                            Offset: 28 - indice fine trama da controllare
+                            Offset: 27 - codice card da testare
+                            """
+                            # print("******************", self.mapiotype[board_id][logic_io]['plc_byte_list_io'])
+                            plc.append(self.mapiotype[board_id][logic_io]['plc_byte_list_io'][0]) # Board ID associato del lettore RFID
+                            plc.append(self.mapiotype[board_id][logic_io]['plc_byte_list_io'][1]) # Io logico associato del lettore RFID
+                            rfid_card_code_len = len(self.mapiotype[board_id][logic_io]['rfid_card_code'])
+                            plc.append(19-rfid_card_code_len+1) # indice inizio trama da controllare
+                            plc.append(19) # indice fine trama da controllare
+                            plc += self.mapiotype[board_id][logic_io]['rfid_card_code'] # Codice da controllare
+                            plc.append(9)
+                            # print("PLC RFID==========>>>>>>>>>>>", plc)
 
                     elif sbyte8 == 'power_on':
                         appboardid = self.mapiotype[board_id][logic_io]['plc_byte_list_io'][0]
@@ -2193,12 +2254,20 @@ class Bus:
                     # If not I2C or OneWire, set 0, 0 at address 10 and 11.
                     msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [0,0]))  # 0 = lunghezza programma periodico, 0 = lunghezza prg. inizializzazione
 
+        set_max_board_address = []
+        for board_id in self.config.keys():
+            if "GENERAL_BOARD" in self.config[board_id]:
+                if self.config[board_id]["GENERAL_BOARD"].get("enable") == 1:          
+                    set_max_board_address += [self.setMaxBoardAddress(int(board_id[5:]), self.MAX_BOARD_ADDRESS)] # Set Max Board Address
+        # print("----------------", set_max_board_address)
+        msg += set_max_board_address
+
         if msg:
             msg.append(self.boardReboot(0))
             # msg.append(self.boardReboot(0))
         else:
             self.log.write("NESSUNA CONFIGURAZIONE BOARD DA INVIARE")
-        #pprint(msg)
+        pprint(msg)
 
         return msg
 
@@ -2224,18 +2293,16 @@ class Bus:
                     break  ## esce dal for
 
             if len(self.TXmsg): #se qualcosa da trasmettere
-                #print("TXmsg to send:", len(self.TXmsg))
+                # print("TXmsg to send:", len(self.TXmsg))
                 msg = self.TXmsg.pop(0)  # prende dalla lista la prima trama da trasmettere (msg piu vecchio)
-                ##print(msg, msg[2], b.BUFF_MSG_TX)
                 #if (len(msg)>1): print("****FORSE TRASMETTE: %s            %s" %(len(self.TXmsg), self.int2hex(msg)))
                 if (len(msg)>1) and (msg[1]==self.code['CR_REBOOT']):  # il comando reboot va trasmesso alla fine della configurazione
                     if self.BUFF_MSG_TX or self.TXmsg:
-                        self.log.write("{:<12}    {:<18}".format(self.nowtime, 'REBOOT RIMESSO IN LISTA X ATTESA DIZIONARIO VUOTO'))
-                        # print(" REBOOT RIMESSO IN LISTA X ATTESA DIZIONARIO VUOTO")
+                        self.log.write("{:<11} REBOOT NO              {:<18}".format(self.nowtime, 'RIMESSO IN LISTA X ATTESA DIZIONARIO VUOTO'))
                         self.TXmsg.append(msg)  #lo rimetto in fondo alla lista perchè attesa dizionario vuoto
                     else:
                         # print(" OKTRASM REBOOT")
-                        self.log.write("{:<11} TX                    {:<18} {} {}".format(self.nowtime, str(self.int2hex(msg)), 'OKTRASM REBOOT', ''))
+                        self.log.write("{:<11} TX                     {:<18} {} {}".format(self.nowtime, str(self.int2hex(msg)), 'OKTRASM REBOOT', ''))
                         msg1 = self.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui
                         msg2 = self.encodeMsgCalcCrcTx(msg1) # restituisce il messaggio codificato e completo di crc (1 o 2 crc in base al flag crcdoppio)
                         self.send_data_serial(self.Connection, msg2)  # invia alla seriale comando REBOOT,
@@ -2244,7 +2311,12 @@ class Bus:
                         # ser.write(bytes(msg2))  # invia alla seriale
                 else:
                     if (len(msg)>1) and (msg[2] in self.BUFF_MSG_TX): # controllo se nodo deve ancora dare feedback a un msg precedente
-                        self.log.write("{:<11} {:<18} {} {} {}".format(self.nowtime, 'CONFIGURAZIONE, REINSERIMENTO IN LISTA PER ATTESA FEEDBACK DA NODO',msg[2], ", N° ELEMENTI IN LISTA:",len(self.TXmsg)))
+                        self.log.write("{:<11} {:<18}     {:<16} {} {} {}".format(self.nowtime, 'CONFIGURAZIONE', 'REINSERIMENTO IN LISTA PER ATTESA FEEDBACK DA NODO',msg[2], ", N° ELEMENTI IN LISTA:",len(self.TXmsg)))
+                        # self.boardbadcounter[msg[2]] -= 1
+                        # print("=======>>>>>>>>>>>>>>>>>", self.boardbadcounter, len(self.TXmsg))
+                        # if self.boardbadcounter[msg[2]] <= 0:
+                        #     pass
+                        # else:
                         self.TXmsg.append(msg)  #attesa feedback dallo stesso nodo: lo rimetto in lista al primo posto perchè deve stare prima di reboot
                     else: #tx messaggio lungo o ping
                         # if (len(msg)>1):print(" OKTRASM, ATTESA FEEDBACK")
@@ -2266,12 +2338,12 @@ class Bus:
 
                         if (len(msg)>1):
                            if (msg[1]==self.code['CLEARIO_REBOOT']):
-                                self.log.write("invio multiplo cleario_reboot")
+                                self.log.write("{:<11} REBOOT                  Invio multiplo cleario_reboot".format(self.nowtime))
                                 self.send_data_serial(self.Connection, msg2)  # invio multiplo per superare disturbi
                                 self.send_data_serial(self.Connection, msg2)  # invio multiplo per superare disturbi
 
                            if (msg[1]==self.code['CR_WR_EE']):  # inserisce solo se comando writeEE
-                                self.log.write("ATTESA FEEDBACK")
+                                self.log.write("{:<11} ATTESA FEEDBACK".format(self.nowtime))
                                 self.BUFF_MSG_TX[msg[2]] = [msg, self.NLOOPTIMEOUT+len(msg)]  # inserisce in dizionario messaggio originale per controllo feedback
 
         self.RXtrama[0] &= 0x3F  # Trasforma la trama di nodo occupato in libero (serve solo per la trasmissione)
@@ -2299,21 +2371,22 @@ class Bus:
                     self.log.write(" ERR RICEVUTO FEEDBACK DI MSG MAI INVIATO")
 
             # if self.RXtrama[1] in [self.code['COMUNICA_IO'], self.code['CR_WR_OUT'] | 32]:  # COMUNICA_IO / Scrive valore USCITA
-            if self.RXtrama[1] ==  self.code['COMUNICA_IO']:  # COMUNICA_IO / Scrive valore USCITA
+            if self.RXtrama[1] in [ self.code['COMUNICA_IO'], self.code['RFID'] ]:  # COMUNICA_IO / Scrive valore USCITA
                 """
                 Comunicazione variazione IO della stessa BOARD
                 """
                 board_id = self.RXtrama[0]
+                command = self.RXtrama[1]
                 logic_io = self.RXtrama[2]
                 value = self.RXtrama[3:]
                 # print("TRAMA:", board_id, logic_io, value)
-                value = self.calculate(board_id, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
+                value = self.calculate(board_id, command, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
                 # print("CALCULATE VALUE:", self.RXtrama[0], self.RXtrama[2], self.RXtrama[3:], value)
                 try:
                     value_old = self.status[board_id]['io'][logic_io - 1]
-                    device_type = self.mapiotype[board_id][logic_io]['device_type']                                                
+                    device_type = self.mapiotype[board_id][logic_io]['device_type']                                            
                     if value_old != value:
-                        
+                       
                         # print(device_type)
                         self.status[board_id]['io'][logic_io - 1] = value
                         res = "/BOARD{} : Valore aggiornato\n".format(board_id)
@@ -2325,8 +2398,43 @@ class Bus:
                     self.log.write("chiave non trovata avviso1 {}".format(self.RXtrama))
 
                 self.log.write("{:<11} RX  {:<18} {} {}".format(self.nowtime, self.code[self.RXtrama[1]&0xDF], self.int2hex(self.RXtrama), self.RXtrama))
+                
+            elif self.RXtrama[1] == self.code['CR_GET_BOARD_TYPE'] | 32: # GetTipoBoard
+                """
+                Creare DICT con caratteristiche della BOARD
+                """
+                # print("GetBoardType: ", self.RXtrama)
+                # 0: Board_id
+                # 1: Get tipo board command
+                # 2: Tipo board (1: morsetti)
+                # 3: Numero IO a boardo
+                # 4: Giorno
+                # 5: Mese
+                # 6: anno
+                # 7: Byte: b0: protezione attiva, b1: PLC, b2: PowerOn, b3: PWM out, b5: OneWire, b6: I2C, b7: RFID               
+                # print(self.RXtrama)
+                
+                board_id = self.RXtrama[0]
+                command = self.RXtrama[1]
+                logic_io = self.RXtrama[2]
+                value = self.RXtrama[3:]
 
-            elif self.RXtrama[1] & 32: #è feedback
+                if not self.RXtrama[0] in self.get_board_type:
+                    self.get_board_type[self.RXtrama[0]] = {}
+                self.get_board_type[board_id]['board_id'] = self.RXtrama[0]
+                self.get_board_type[board_id]['board_type'] = self.RXtrama[2]
+                self.get_board_type[board_id]['io_number'] = self.RXtrama[3]
+                self.get_board_type[board_id]['data_firmware'] = '{:02}/{:02}/{:2}'.format(self.RXtrama[4], self.RXtrama[5], self.RXtrama[6])
+                self.get_board_type[board_id]['protection'] = self.byte2active(self.RXtrama[7], 1)
+                self.get_board_type[board_id]['plc'] =  self.byte2active(self.RXtrama[7], 2)
+                self.get_board_type[board_id]['power_on'] =  self.byte2active(self.RXtrama[7], 3)
+                self.get_board_type[board_id]['pwm'] =  self.byte2active(self.RXtrama[7], 4)
+                self.get_board_type[board_id]['onewire'] =  self.byte2active(self.RXtrama[7], 5)
+                self.get_board_type[board_id]['i2c'] =  self.byte2active(self.RXtrama[7], 6)
+                self.get_board_type[board_id]['rfid'] =  self.byte2active(self.RXtrama[7], 7)
+                # pprint(self.get_board_type)
+                
+            elif self.RXtrama[1] & 32: # è feedback
                 apprx=self.RXtrama[1]-32 # ricava comando associato a questa risposta
                 if apprx in self.code:
                     err = ''
@@ -2339,7 +2447,7 @@ class Bus:
                     self.log.write("{:<11} RX  {:<18} {} {}".format(self.nowtime, self.code[apprx], self.int2hex(self.RXtrama), err))
 
             else:
-                # print("RXTRAMA ALTRO COMANDO", self.RXtrama, self.code[self.RXtrama[1]])
+                self.log.write("{:<11} TRAMA                  ALTRO COMANDO {} Codice: {}".format(self.nowtime, self.RXtrama,  self.code.get(self.RXtrama[1])))
                 pass
 
         # else: print("RXPING",int2hex(self.RXtrama))
@@ -2360,8 +2468,30 @@ class Bus:
             # b.BOARD_ADDRESS = max(list(b.board_ready.keys())) + 1
             br = list(self.board_ready.keys())
             br.sort()
-            self.log.write("{:<12} BOARD_READY           {:<18} ".format(int(self.nowtime), str(br)))
+            self.log.write("{:<12}BOARD_READY            {:<18} ".format(int(self.nowtime), str(br)))
             self.printStatus()  # Print status of IO
+
+
+    def cron(self):
+        """
+        Operazioni periodiche a tempo
+        """
+        
+        if not (self.nowtime - self.cronoldtime) % 60:
+            """ CRON EVERY 60 SECONDS """
+            self.cronoldtime -= 1 # Passa una sola volta ogni TOT secondi
+            self.log.write("{:<11} CRON                   60 SECONDS".format(int(self.nowtime)))
+
+        elif not (self.nowtime - self.cronoldtime) % 3600:
+            """ CRON EVERY HOUR """
+            self.cronoldtime -= 1 # Passa una sola volta ogni TOT secondi
+            self.log.write("{:<11} CRON                   1 HOUR".format(int(self.nowtime)))
+            
+        elif not (self.nowtime - self.cronoldtime) % 14400:
+            """ CRON EVERY DAY """
+            self.cronoldtime -= 1 # Passa una sola volta ogni TOT secondi
+            self.log.write("{:<11} CRON                   1 DAY".format(int(self.nowtime)))
+
 
     """ Telegram BOT """
     def initBot(self):
@@ -2377,14 +2507,14 @@ class Bus:
         # print(content_type)
         # chat_id = msg['chat']['id']
         nameuser = msg['chat']['first_name']
-        print(nameuser)
+        print("Telegram Nome User:", nameuser)
         if content_type != 'text':
             self.telegram_bot.sendMessage(chat_id, 'Ammesso solo TESTO')
             return
-        comand = msg['text']
-        print("telegram_bot Comand:", comand)
+        command = msg['text']
+        print("telegram_bot Command:", command)
         
-        if comand == '/INFO':
+        if command == '/INFO':
             self.telegram_bot.sendMessage(chat_id, """
 Telegram Bot per Domoticz
 Interfaccia per intergire con DL485 Board, 
@@ -2395,19 +2525,43 @@ Info su www.domocontrol.info/domocontrol-it/domotica
             self.telegram_bot.sendMessage(chat_id, """Comandi disponibili:
     /INFO (informazioni)
     /BOARD (info board presenti)
+    /TYPE_BOARD (caratteristiche Board)
                         
             """)
 
-        elif comand == '/BOARD':
+        elif command == '/BOARD':
             res = ''
             for v in self.status:
                 # print(v, self.status[v], self.status[v]['name'])
                 res += '/BOARD{:<2} {}\n'.format(v, self.status[v]['name'])    
             self.telegram_bot.sendMessage(chat_id, 'Board presenti: \n{}'.format(res))
         
-        elif '/BOARD' in comand: # MOstra board presenti sul bus
-            bid = int(comand[6:])
-            res = 'I/O della Board {}\n'.format(comand)
+        elif command == '/BOARD_TYPE':
+            for board_id in self.get_board_type.keys():
+                msg = "/BOARD_TYPE_{}".format(board_id)
+                self.telegram_bot.sendMessage(chat_id, msg)
+        
+        elif '/BOARD_TYPE_' in command:
+            board_id = int(command[12:])
+            msg = "/BOARD_TYPE \n /BOARD_ID_{}\n".format(board_id)
+            msg += 'Board Type: {}\n'.format(self.get_board_type[board_id]['board_type'])
+            msg += 'Data Firmware: {}\n'.format(self.get_board_type[board_id]['data_firmware'])
+            msg += 'I/O Numbers: {}\n'.format(self.get_board_type[board_id]['io_number'])
+            msg += 'I2C: {}\n'.format(self.get_board_type[board_id]['i2c'])
+            msg += 'One Wire: {}\n'.format(self.get_board_type[board_id]['onewire'])
+            msg += 'PLC: {}\n'.format(self.get_board_type[board_id]['plc'])
+            msg += 'Power On: {}\n'.format(self.get_board_type[board_id]['power_on'])
+            msg += 'PWM: {}\n'.format(self.get_board_type[board_id]['pwm'])
+            msg += 'RFID: {}\n'.format(self.get_board_type[board_id]['rfid'])
+            msg += 'PRO: {}\n'.format(self.get_board_type[board_id]['protection'])
+            # print(self.get_board_type[board_id])
+
+            self.telegram_bot.sendMessage(chat_id, msg)
+
+        elif '/BOARD' in command: # MOstra board presenti sul bus
+            print(command)
+            bid = int(command[6:])
+            res = 'I/O della Board {}\n'.format(command)
             lendict = len(self.mapiotype[bid])
             for n in self.mapiotype[bid]:
                 # pprint(self.mapiotype[bid][n])
@@ -2417,7 +2571,7 @@ Info su www.domocontrol.info/domocontrol-it/domotica
                 logic_io = int(self.mapiotype[bid][n]['logic_io'])
                 value = self.status[bid]['io'][logic_io - 1]
                 device_type = self.mapiotype[bid][n]['device_type']
-                # print(comand, bid, logic_io, name, value)
+                # print(command, bid, logic_io, name, value)
                 add_slash = ' '
                 if device_type in ['DIGITAL_OUT']:
                     value &= 1
@@ -2426,9 +2580,9 @@ Info su www.domocontrol.info/domocontrol-it/domotica
             
             self.telegram_bot.sendMessage(chat_id, res)      
 
-        elif '_' in comand and '/' in comand: # Setta I/O
-            print(comand)
-            bl = comand[1:].split("_")
+        elif '_' in command and '/' in command: # Setta I/O
+            print(command)
+            bl = command[1:].split("_")
             bid = int(bl[0])
             logic_io = int(bl[1])
             value = self.status[bid]['io'][logic_io - 1] & 1
@@ -2442,9 +2596,9 @@ Info su www.domocontrol.info/domocontrol-it/domotica
 
             self.telegram_bot.sendMessage(chat_id, res)  
 
-        elif '_' in comand: # Setta I/O
-            print(comand)
-            board_id, logic_io = comand[1:].split('_')
+        elif '_' in command: # Setta I/O
+            print(command)
+            board_id, logic_io = command[1:].split('_')
             board_id = int(board_id)
             logic_io = int(logic_io)
             print(board_id, logic_io)
@@ -2456,16 +2610,17 @@ Info su www.domocontrol.info/domocontrol-it/domotica
             self.telegram_bot.sendMessage(chat_id, '-', reply_markup=keyboard)    
 
 
-        # elif comand == '/R':
+        # elif command == '/R':
         #     self.telegram_bot.sendMessage(chat_id, 'Leggi il valore di un I/O - Da Fare')
         
-        # elif comand == '/S':
+        # elif command == '/S':
         #     self.telegram_bot.sendMessage(chat_id, 'Scrivi il valore di un I/O - Da Fare')
         
         else:
-            self.telegram_bot.sendMessage(chat_id, """Comandi disponibili:
+            self.telegram_bot.sendMessage(chat_id, """commandi disponibili:
     /INFO (informazioni)
     /BOARD (info board presenti)
+    /BOARD_TYPE (info type board)
                     
             """)
 
@@ -2499,8 +2654,8 @@ if __name__ == '__main__':
     logstate = logwrite | logscreen # Set logstate
     config_file_name = "./config.json"  # specifica nome file di configurazione
     b = Bus(config_file_name, logstate)  # Istanza la classe bus
-
     log.write("BUS_BAUDRATE:{}, BUS_PORT:{}, BOARD_ADDRESS:{}".format(b.bus_baudrate, b.bus_port, b.BOARD_ADDRESS))
+    b.Connection = b.ser(b.bus_port, b.bus_baudrate)
 
     """ Reset parametri SCHEDE """
     # se serve si resetta una o tutte le schede con le tre righe sotto
@@ -2513,6 +2668,7 @@ if __name__ == '__main__':
     # b.TXmsg += reset
     b.TXmsg += b.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
     # pprint(b.TXmsg)
+    b.TXmsg += [b.getBoardType(0)] # GetTypeBoard Informations
 
     b.oldtime = int(time.time()) - 10  # init oldtime per stampe dizionario con i/o per stampa subito al primo loop
 
@@ -2535,10 +2691,12 @@ if __name__ == '__main__':
             # if len(b.RXtrama) > 1: print("Trama arrivata:", b.RXtrama, b.int2hex(b.RXtrama))
 
             b.arrivatatrama()
-
+            
             b.writeLog()
-
+            
             b.RXtrama = []  # Azzera trama ricezione
+
+            b.cron() # Operazioni periodiche
 
             time.sleep(0.0005)  # Delay per non occupare tutta la CPU
             
