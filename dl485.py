@@ -449,6 +449,7 @@ class Bus:
         self.Connection = False   # Setup serial
         self.ping = self.ping()  # init variabile di appoggio con ping di questo nodo
         self.BME = {}
+        self.send_configuration = int(self.config['GENERAL_NET'].get('send_configuration', 1))  # Flag per inviare la configurazone dei nodi al boot
         self.telegram_enable = int(self.config['GENERAL_NET'].get('telegram_enable', False))  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
         self.telegram_token = self.config['GENERAL_NET'].get('telegram_token', False)  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
         self.telegram_bot = False # Instance
@@ -456,7 +457,9 @@ class Bus:
         self.chat_id = ''
         self.get_board_type = {}
         self.crondata = {} # DICT with periodic command
-        self.cronoldtime = self.nowtime + 10 # Non cambiare
+        self.cronoldtime = self.cron_sec = self.cron_min = self.cron_hour = self.cron_day = 0
+        self.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
+        self.TXmsg += [self.getBoardType(0)] # GetTypeBoard Informations
 
     def getJsonConfig(self, config_file_name):
         """
@@ -1607,10 +1610,11 @@ class Bus:
         """
         Make configuration to send to board
         """
+        print("888888888888888888888888888888888", self.send_configuration)
+        if not self.send_configuration: # Se send_configuration == 0 non invia la configurazione
+            return
+            return
         msg = []
-        #pprint(self.mapiotype)
-        #print("------------------------------------------")
-
         for board_id in self.mapiotype:
             flagreset = True
             #pprint(self.mapiotype[board_id])
@@ -2273,8 +2277,8 @@ class Bus:
         else:
             self.log.write("NESSUNA CONFIGURAZIONE BOARD DA INVIARE")
         # pprint(msg)
-
-        return msg
+        self.TXmsg = msg
+        # return msg
 
     def arrivatatrama(self):
         # arrivata una trama completa (PING e trame piu lunghe)
@@ -2484,21 +2488,24 @@ class Bus:
         """
         Operazioni periodiche a tempo
         """
-        
-        if not (self.nowtime - self.cronoldtime) % 60:
-            """ CRON EVERY 60 SECONDS """
-            self.cronoldtime -= 1 # Passa una sola volta ogni TOT secondi
-            self.log.write("{:<11} CRON                   60 SECONDS".format(int(self.nowtime)))
+        self.cron_sec = self.cron_min = self.cron_hour = self.cron_day = 0
 
-        elif not (self.nowtime - self.cronoldtime) % 3600:
-            """ CRON EVERY HOUR """
-            self.cronoldtime -= 1 # Passa una sola volta ogni TOT secondi
-            self.log.write("{:<11} CRON                   1 HOUR".format(int(self.nowtime)))
+        if self.nowtime != self.cronoldtime:
+            self.cronoldtime = self.nowtime
+            self.cron_sec = 1
+            print("{:<11} CRON                   1 SEC".format(self.cronoldtime))
+                       
+            if not self.cronoldtime % 60:
+                self.cron_min = 1
+                print("{:<11} CRON                   1 MIN".format(self.cronoldtime))
             
-        elif not (self.nowtime - self.cronoldtime) % 14400:
-            """ CRON EVERY DAY """
-            self.cronoldtime -= 1 # Passa una sola volta ogni TOT secondi
-            self.log.write("{:<11} CRON                   1 DAY".format(int(self.nowtime)))
+            if not self.cronoldtime % 3600:
+                self.cron_hour = 1
+                print("{:<11} CRON                   1 HOUR".format(self.cronoldtime))
+            
+            if not self.cronoldtime % 14400:
+                self.cron_day = 1
+                print("{:<11} CRON                   1 DAY".format(self.cronoldtime))
 
 
     """ Telegram BOT """
@@ -2506,6 +2513,7 @@ class Bus:
         if self.telegram_enable:
             print("Bot Telegram begin")
             self.telegram_bot = telepot.Bot(self.telegram_token)
+            # from telepot.loop import MessageLoop
             MessageLoop(self.telegram_bot, {'chat': self.handle, 'callback_query': self.on_callback_query} ).run_as_thread()
 
     def handle(self, msg):
@@ -2672,12 +2680,6 @@ if __name__ == '__main__':
     # b.TXmsg = msg
 
     """ Configurazione SCHEDE in base al file in config_file_name """
-    # reset = b.resetEE(0, 0)
-    # b.TXmsg += reset
-    # b.TXmsg += b.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
-    # pprint(b.TXmsg)
-    b.TXmsg += [b.getBoardType(0)] # GetTypeBoard Informations
-
     b.oldtime = int(time.time()) - 10  # init oldtime per stampe dizionario con i/o per stampa subito al primo loop
 
     """ LOOP """
@@ -2690,13 +2692,13 @@ if __name__ == '__main__':
         RXbytes = b.Connection.read() #legge uno o piu caratteri del buffer seriale
 
         if not RXbytes: continue  # seriale senza caratteri non entra nel for sotto
-        # print("=====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", RXbytes, hex(ord(RXbytes)))
+        # print("==>>>", RXbytes, hex(ord(RXbytes)))
 
         for d in RXbytes:  # analizza i caratteri ricevuti
             b.RXtrama = b.readSerial(d)  # accumula i vari caratteri e restituisce il pacchetto finito quando trova il carattere di fine pacchetto
 
             if not b.RXtrama: continue
-            # if len(b.RXtrama) > 1: print("Trama arrivata:", b.RXtrama, b.int2hex(b.RXtrama))
+            # if len(b.RXtrama) > 0: print("Trama arrivata:", b.RXtrama, b.int2hex(b.RXtrama))
 
             b.arrivatatrama()
             
