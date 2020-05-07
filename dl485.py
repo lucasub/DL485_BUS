@@ -1610,7 +1610,7 @@ class Bus:
         """
         Make configuration to send to board
         """
-        print("888888888888888888888888888888888", self.send_configuration)
+        print("=== getConfiguration ===", self.send_configuration)
         if not self.send_configuration: # Se send_configuration == 0 non invia la configurazione
             return
             return
@@ -2493,19 +2493,19 @@ class Bus:
         if self.nowtime != self.cronoldtime:
             self.cronoldtime = self.nowtime
             self.cron_sec = 1
-            print("{:<11} CRON                   1 SEC".format(self.cronoldtime))
+            # print("{:<11} CRON                   1 SEC".format(self.cronoldtime))
                        
             if not self.cronoldtime % 60:
                 self.cron_min = 1
-                print("{:<11} CRON                   1 MIN".format(self.cronoldtime))
+                # print("{:<11} CRON                   1 MIN".format(self.cronoldtime))
             
             if not self.cronoldtime % 3600:
                 self.cron_hour = 1
-                print("{:<11} CRON                   1 HOUR".format(self.cronoldtime))
+                # print("{:<11} CRON                   1 HOUR".format(self.cronoldtime))
             
             if not self.cronoldtime % 14400:
                 self.cron_day = 1
-                print("{:<11} CRON                   1 DAY".format(self.cronoldtime))
+                # print("{:<11} CRON                   1 DAY".format(self.cronoldtime))
 
 
     """ Telegram BOT """
