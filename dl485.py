@@ -15,8 +15,9 @@ import json
 import re
 import curses
 from struct import unpack, unpack_from
-# from TSL2561 import tsl2561_calculate
 from TSL2561 import tsl2561_calculate
+
+import signal
 
 import telepot
 from telepot.loop import MessageLoop
@@ -1578,6 +1579,7 @@ class Bus:
         """
         From bytes to value Temp, Hum, Press of BME280
         """
+
         bmeValue = value
         pres_raw = (bmeValue[0] << 12) | (bmeValue[1] << 4) | (bmeValue[2] >> 4)
         temp_raw = (bmeValue[3] << 12) | (bmeValue[4] << 4) | (bmeValue[5] >> 4)
@@ -1610,9 +1612,8 @@ class Bus:
         """
         Make configuration to send to board
         """
-        print("888888888888888888888888888888888", self.send_configuration)
+        print("Configurazione Si/No:", self.send_configuration)
         if not self.send_configuration: # Se send_configuration == 0 non invia la configurazione
-            return
             return
         msg = []
         for board_id in self.mapiotype:
@@ -2493,19 +2494,19 @@ class Bus:
         if self.nowtime != self.cronoldtime:
             self.cronoldtime = self.nowtime
             self.cron_sec = 1
-            print("{:<11} CRON                   1 SEC".format(self.cronoldtime))
+            # print("{:<11} CRON                   1 SEC".format(self.cronoldtime))
                        
             if not self.cronoldtime % 60:
                 self.cron_min = 1
-                print("{:<11} CRON                   1 MIN".format(self.cronoldtime))
+                # print("{:<11} CRON                   1 MIN".format(self.cronoldtime))
             
             if not self.cronoldtime % 3600:
                 self.cron_hour = 1
-                print("{:<11} CRON                   1 HOUR".format(self.cronoldtime))
+                # print("{:<11} CRON                   1 HOUR".format(self.cronoldtime))
             
             if not self.cronoldtime % 14400:
                 self.cron_day = 1
-                print("{:<11} CRON                   1 DAY".format(self.cronoldtime))
+                # print("{:<11} CRON                   1 DAY".format(self.cronoldtime))
 
 
     """ Telegram BOT """
@@ -2645,11 +2646,19 @@ Info su www.domocontrol.info/domocontrol-it/domotica
         print('Callback Query:', query_id, from_id, query_data)
         self.telegram_bot.answerCallbackQuery(query_id, text="da completare")
 
+    def signal_handler(sig, frame):
+        print('You pressed Ctrl+C!')
+        sys.exit(0)
+
+    def __exit__(self):
+        print('*---------------------Task End!')
 
 # END BUS Class
 
 # INIZIO PARTE MAIN
 if __name__ == '__main__':
+
+    
     log = Log()
     log.write("*" * 20 + "START DL485 program" + "*" * 20)
     logstate = logwrite = logscreen = 0
@@ -2670,6 +2679,10 @@ if __name__ == '__main__':
     logstate = logwrite | logscreen # Set logstate
     config_file_name = "./config.json"  # specifica nome file di configurazione
     b = Bus(config_file_name, logstate)  # Istanza la classe bus
+    
+    
+
+    
     log.write("BUS_BAUDRATE:{}, BUS_PORT:{}, BOARD_ADDRESS:{}".format(b.bus_baudrate, b.bus_port, b.BOARD_ADDRESS))
     b.Connection = b.ser(b.bus_port, b.bus_baudrate)
 
@@ -2688,7 +2701,7 @@ if __name__ == '__main__':
         res = b.Connection.read()
 
     while 1:
-
+        signal.signal(signal.SIGINT, b.signal_handler)
         RXbytes = b.Connection.read() #legge uno o piu caratteri del buffer seriale
 
         if not RXbytes: continue  # seriale senza caratteri non entra nel for sotto
