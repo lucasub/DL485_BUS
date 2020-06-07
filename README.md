@@ -14,13 +14,56 @@ Library to command DL485 Board's with 2 twisted wires.
 
 More informations at address <a href="https://www.domocontrol.info">Domocontrol.info</a>
 
+### Functionality of the DL485x boards
+
+The DL485x series boards are equal nodes that send their data packets in turn on the RS485 network without stall. The data are available to all connected nodes and possibly also to a possible general control system such as Domoticz and / or other home automation systems.
+
+In rotation, each node, if turned on and connected, sends its data packet in the BUS, when instead a node is turned off, disconnected or busy, it will not enter the network and the tour will continue with the next node ready to operate.
+
+A node has no information to send, it just sends a very short packet called Ping to synchronize the whole network.
+
+All the cards of the DL485x series have the possibility of:
+- read and write digital I/O
+- Read analog inputs
+- Activate the PWM outputs
+- Read OneWIRE DS18B20 temperature sensors
+- Read I2C sensors (AM2320, BME280, TLS2561 ....)
+
+All distributed on RS485 BUS with a simple twisted pair which can reach hundreds of meters.
+
+- Possibility of having a PLC on board on each card to automate the various I/O: example lighting of lights in real time on event.
+- PLC functions available: equal, and, or, xor, odd, even, toggle_on, toggle_on_off, timer, autostart_timer, test_nio_>=_n, test_nio_into_n test_schmitt_nio, analog_in_=_n, analog_in_>_n, analog_in_>=_n, analog_in_schmitt, if_analog_in1_=_analog_in2, if_analog_in1_>_analog_in2, if_analog_in1_>=_analog_in2, if_analog_in1_-_analog_in2_schmitt_value, analog_in_+_n, analog_in_-_n, analog_in_*_n, analog_in_/_n, analog_in_%_n, 
+analog_in_lim_max_n, analog_in_lim_min_n, analog_in1_+_analog_in2, analog_in1_-_analog_in2, analog_in1_*_analog_in2, analog_in1_/_analog_in2, analog_in1_%_analog_in2,  analog_in1_min_analog_in2, analog_in1_max_analog_in2, or_transition_on, last_change, last_change_all, time_meter, counter_up_dw, counter_up, counter_dw, powermeter, power_on.
+More information on <a href="https://www.my-tek.it/wiki/doku.php?id=plc">PLC functions</a>
+
 
 ## Italiano
 
 Libreria per gestione schede domotiche serie DL485x
 
-### Installazione
+### Funzionalità delle schede DL485x
 
+Le schede della serie DL485x sono dei nodi paritari che inviano a turno i loro pacchetti di dati sulla rete RS485 senza stallo. I dati sono a disposizione di tutti i nodi connessi ed eventualmente anche ad un eventuale sistema generale di controllo quale Domoticz e/o altri sistemi domotici.
+
+A rotazione ciascun nodo, se acceso e connesso, invia il suo pacchetto dati nel BUS, quando invece un nodo è spento, scollegato oppure occupato, non si inserirà in rete e il giro proseguirà con il successivo nodo pronto a trasmettere.
+
+Se un nodo non ha informazioni da inviare si limita ad inviare un brevissimo pacchetto chiamato Ping per la sincronizzazione di tutta la rete.
+
+Tutte le Board della serie DL485x hanno la possibilità di: 
+- leggere e scrivere I/O digitali
+- Leggere ingressi analogici
+- Attivare delle uscite PWM
+- Leggere sensori di temperatura OneWIRE DS18B20
+- Leggere sensori I2C (AM2320, BME280, TLS2561....)
+
+Il tutto distribuito su BUS RS485 con semplice doppino twistato che può raggiungere le centinaia di metri.
+
+- Possibilità di avere un PLC a bordo su ciascuna scheda per automatizzare i vari I/O: esempio accensione di Luci in tempo reale su evento.
+- Funzioni PLC disponibili: equal, and, or, xor, odd, even, toggle_on, toggle_on_off, timer, autostart_timer, test_nio_>=_n, test_nio_into_n test_schmitt_nio, analog_in_=_n, analog_in_>_n, analog_in_>=_n, analog_in_schmitt, if_analog_in1_=_analog_in2, if_analog_in1_>_analog_in2, if_analog_in1_>=_analog_in2, if_analog_in1_-_analog_in2_schmitt_value, analog_in_+_n, analog_in_-_n, analog_in_*_n, analog_in_/_n, analog_in_%_n, 
+analog_in_lim_max_n, analog_in_lim_min_n, analog_in1_+_analog_in2, analog_in1_-_analog_in2, analog_in1_*_analog_in2, analog_in1_/_analog_in2, analog_in1_%_analog_in2,  analog_in1_min_analog_in2, analog_in1_max_analog_in2, or_transition_on, last_change, last_change_all, time_meter, counter_up_dw, counter_up, counter_dw, powermeter, power_on.
+Più informazioni sulle <a href="https://www.my-tek.it/wiki/doku.php?id=plc">funzioni PLC</a>
+
+### Installazione
 
 1. Aggiornare e Installare i seguenti pacchetti da terminale:
 ```
