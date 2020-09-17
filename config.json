@@ -69,16 +69,17 @@
         "4": "DL485R",
         "5": "DL485P"
     },
-
+    
     # Configurazione generale del BUS
     "GENERAL_NET": {
         "bus_port": "/dev/ttyAMA0", # Porta seriale Raspberry PI
         "bus_baudrate": 19200, # Velocità BUS e seriale
         "max_board_address": 63, # Numero massimo di Board presenti sul BUS
         "board_address": 2, # ID assegnato a Raspberry. Deve avere l'ID della scheda collegata alla seriale di Raspberry PI +1
-        "telegram_enable": 0, # TO activate telegram bot
         "telegram_token": "", # Telegram TOKEN
-        "send_configuration": 0 # Flag to send configurations to all board
+        "telegram_enable": 1, # TO activate telegram bot
+        "overwrite_text": 0, // Flag per sovrascrivere "nome" e "descrizione" su Domoticz !!! Attenzione
+        "send_configuration": 1 # Flag to send configurations to all board
     },
     "BOARD1": {
         # Configurazione generale della BOARD
@@ -106,7 +107,7 @@
             "description": "Temperatura Board ATMEGA328PB"
         },
         "PD3": {
-            "enable": 0,
+            "enable": 1,
             "logic_io": 3,
             "device_type": "DS18B20",
             "time_refresh": 60,
@@ -208,7 +209,7 @@
         "TEMP_ATMEGA": {
             "enable": 1,
             "logic_io": 2,
-            "time_refresh": 100,
+            "time_refresh": 600,
             "device_type": "TEMP_ATMEGA",
             "name": "TEMP_ATMEGA",
             "description": "Temperatura Board ATMEGA328PB"
@@ -228,7 +229,7 @@
             # "device_type": "DIGITAL_IN_PULLUP",
             "device_type": "DS18B20",
             # "filter": 10,
-            "time_refresh": 60,
+            "time_refresh": 600,
             "name": "IO2",
             "description": "Ingresso IO2"
         },
@@ -238,7 +239,7 @@
             # "device_type": "DIGITAL_IN_PULLUP",
             "device_type": "DS18B20",
             "filter": 10,
-            "time_refresh": 60,
+            "time_refresh": 600,
             "name": "IO3",
             "description": "Ingresso IO3"
         },
@@ -247,7 +248,7 @@
             "logic_io": 6,
             "device_type": "VIRTUAL",
             "filter": 1,
-            "time_refresh": 100,
+            "time_refresh": 600,
             "default_startup_value": 0, #valore preset uscita prima del primo calcolo
             "plc_function": "powermeter",
             "plc_counter_mode": 27, # b11011 memoria del valore precendente e aggiorna dato a periodo ottenuto, azzera tempo ad ogni start a conteggio finito. Considera end come nuovo start, end si fronte ON
@@ -268,7 +269,7 @@
             "enable": 1,
             "logic_io": 7, # Attenzione: LOGIC_IO della calibrazione deve essere appena precedente al LOGIC_IO del BME associato
             "device_type": "BME280_CALIB",
-            "time_refresh": 60,#TBME280
+            "time_refresh": 600,#TBME280
             "address": "0xEC",
             "name": "BME280",
             "description": "Sensore T+U+B bagno",
@@ -279,7 +280,7 @@
             "logic_io": 8,
             "device_type": "BME280",
             "logic_io_calibration": 7,
-            "time_refresh": 60,#TBME280
+            "time_refresh": 600,#TBME280
             "address": "0xEC",
             "altitude": 76, #Altitudine sappada
             "offset_pression": 0,
@@ -298,7 +299,7 @@
             "device_type": "TSL2561",
             "lux_gain": 1, # 0=1x, 1=16X
             "lux_integration": 1, # 0=13.7 msec,  1=101 msec, 2=402 msec
-            "time_refresh": 60,
+            "time_refresh": 600,
             "address": "0x72", # Indirizzo TSL2561
             "name": "TSL2561",
             "description": "Sensore Luminosità"
@@ -314,7 +315,7 @@
             "plc_rfid_unit_mode": 255, 
             "plc_rfid_unit_n_conf_refresh": 10,
             "plc_rfid_ack_wait": 25, # (30-255ms)60ms di pausa tra un comando di lettura e la lettura del codice. Se troppo basso la lettura non funziona
-            "time_refresh": 120,
+            "time_refresh": 600,
             "name": "RFID_UNIT",
             "description": "RFID_UNIT"
         },
@@ -327,7 +328,7 @@
                 "*-10"
             ],
             "rfid_card_code": [70, 71, 72, 73, 74, 75],
-            "time_refresh": 120,
+            "time_refresh": 600,
             "name": "OUT2 RFID_CARD",
             "description": "OUT2 RFID_CARD",
             "dtype": "Switch"
@@ -341,7 +342,7 @@
                 "*-10"
             ],
             "rfid_card_code": [117, 105, 116, 46, 99, 111],
-            "time_refresh": 120,
+            "time_refresh": 600,
             "name": "OUT1 RFID_CARD",
             "description": "OUT1 RFID_CARD",
             "dtype": "Switch"
@@ -409,7 +410,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA CONTATORE", # Nome della BOARD
             "board_type": 5, # Tipo di Board: Vedi TYPEB
-            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
@@ -433,7 +434,7 @@
             "enable": 1,
             "logic_io": 3,
             "device_type": "DS18B20",
-            "time_refresh": 60,
+            "time_refresh": 600,
             "round_temperature": 2,
             # "write_ee": [],
             "name": "DS18B20",
