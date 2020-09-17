@@ -440,6 +440,7 @@ class Bus:
         self.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo boards attive)
         self.bus_baudrate = int(self.config['GENERAL_NET']['bus_baudrate'])  # Legge la velocità del BUS
         self.bus_port = self.config['GENERAL_NET']['bus_port']  # Legge la porta del BUS di Raspberry PI
+        self.overwrite_text = int(self.config['GENERAL_NET'].get('overwrite_text', 0))  # Flag per sovrascrivere "nome" e "descrizione" degli IO su Domoticz
         self.TIME_PRINT_LOG = 4  # intervallo di tempo in secondi per la stampa periodica del log a schermo
         self.nowtime = self.oldtime = int(time.time())
         self.RXtrama = []
@@ -460,6 +461,7 @@ class Bus:
         self.crondata = {} # DICT with periodic command
         self.cronoldtime = self.cron_sec = self.cron_min = self.cron_hour = self.cron_day = 0
         self.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
+        self.TXmsg += [self.getBoardType(0)] # GetTypeBoard Informations
         self.TXmsg += [self.getBoardType(0)] # GetTypeBoard Informations
 
     def getJsonConfig(self, config_file_name):
@@ -500,7 +502,6 @@ class Bus:
                     if 'GENERAL_BOARD' in bb:
                         board_enable = self.config[b][bb]['enable']  # Board enable
                         board_type = self.config[b][bb]['board_type']
-                        overwrite_text = self.config[b][bb].get('overwrite_text', 0) # Overtwrite Name and Description of Domoticz device with config.json
                         if not board_enable:
                             self.log.write("{:<7} DISABILITATA".format(b))
 
@@ -582,7 +583,7 @@ class Bus:
                             'offset_temperature': int(self.config[b][bb].get('offset_temperature', 0)),  # OFFSET temperature
                             'only_fronte_off': int(self.config[b][bb].get('only_fronte_off', 0)),
                             'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
-                            'overwrite_text': overwrite_text,  # Overtwrite Domoticz name and description
+                            'overwrite_text': overwrite_text,  # Overtwrite Domoticz name and description with config.json name and description
                             'pin_label': bb,
                             'pin': pin,
                             'plc_byte_list_io': [],
@@ -2413,7 +2414,7 @@ class Bus:
                 """
                 Creare DICT con caratteristiche della BOARD
                 """
-                # print("GetBoardType: ", self.RXtrama)
+                # print("=====>>>> GetBoardType: ", self.RXtrama)
                 # 0: Board_id
                 # 1: Get tipo board command
                 # 2: Tipo board (1: morsetti)
@@ -2495,7 +2496,11 @@ class Bus:
             self.cronoldtime = self.nowtime
             self.cron_sec = 1
             # print("{:<11} CRON                   1 SEC".format(self.cronoldtime))
-                       
+            if not self.cronoldtime % 5:
+                self.cron_sec = 5
+                self.RXtrama += [self.getBoardType(5)] # Chiede ai nodi di inviare in rete le loro caratteristiche
+                print(self.RXtrama)
+                # print("{:<11} CRON                   1 MIN".format(self.cronoldtime))
             if not self.cronoldtime % 60:
                 self.cron_min = 1
                 # print("{:<11} CRON                   1 MIN".format(self.cronoldtime))
@@ -2679,9 +2684,6 @@ if __name__ == '__main__':
     logstate = logwrite | logscreen # Set logstate
     config_file_name = "./config.json"  # specifica nome file di configurazione
     b = Bus(config_file_name, logstate)  # Istanza la classe bus
-    
-    
-
     
     log.write("BUS_BAUDRATE:{}, BUS_PORT:{}, BOARD_ADDRESS:{}".format(b.bus_baudrate, b.bus_port, b.BOARD_ADDRESS))
     b.Connection = b.ser(b.bus_port, b.bus_baudrate)
