@@ -148,14 +148,14 @@ class Bus:
         'DIGITAL_OUT_PWM':      {'type_io':'analog',        'direction':'output',   'dtype':'Voltage',          'pullup':0},
         'DS18B20':              {'type_io':'onewire',       'direction':'input',    'dtype':'Temperature',      'pullup':1},
         'PSYCHROMETER':         {'type_io':'',              'direction':'input',    'dtype':'Humidity',         'pullup':0},
-        'RFID_CARD':            {'type_io':'',              'direction':'output',    'dtype':'Switch',          'pullup':0},
+        'RFID_CARD':            {'type_io':'',              'direction':'output',   'dtype':'Switch',           'pullup':0},
         'RFID_UNIT':            {'type_io':'i2c',           'direction':'input',    'dtype':'Text',             'pullup':1},
-        
+        'RMS_POWER':            {'type_io':'discrete',      'direction':'input',    'dtype':'Text',             'pullup':0},
         'TEMP_ATMEGA':          {'type_io':'temp_atmega',   'direction':'input',    'dtype':'Temperature',      'pullup':0},
         'TSL2561':              {'type_io':'i2c',           'direction':'input',    'dtype':'Illumination',     'pullup':0},
         'VINR1R2':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
         'VINKMKA':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
-        'VIRTUAL':              {'type_io':'discrete',      'direction':'output',   'dtype':'Temperature',      'pullup':0},        
+        'VIRTUAL':              {'type_io':'discrete',      'direction':'output',   'dtype':'Temperature',      'pullup':0},
     }
 
     i2c_const = {  # Const I2C
@@ -411,6 +411,13 @@ class Bus:
             'I2C7':         {'pin':  27,  'name':      'I2C7'},
             'I2C8':         {'pin':  27,  'name':      'I2C8'},
             'I2C9':         {'pin':  27,  'name':      'I2C9'},
+            'RMS_POWER_CH1':{'pin':  41,  'name':      'RMS_POWER_CH1'},
+            'RMS_POWER_CH2':{'pin':  41,  'name':      'RMS_POWER_CH2'},
+            'RMS_POWER_REAL':        {'pin':  41,  'name':      'RMS_POWER_REAL'},
+            'RMS_POWER_APPARENT':    {'pin':  41,  'name':      'RMS_POWER_APPARENT'},
+            'RMS_POWER_COSFI':       {'pin':  41,  'name':      'RMS_POWER_COSFI'},
+            'RMS_POWER_LOOP':        {'pin':  41,  'name':      'RMS_POWER_LOOP'},
+
         },
     }
 
@@ -428,6 +435,7 @@ class Bus:
         self.BOARD_ADDRESS = 0
         self.config = {}  # Configuration dict
         self.status = {}  # Stauts of all IO Board
+        self.RMS_POWER_DICT = {}
         self.buffricnapp = []  # Contiene i primi 7 byte per poi completarli con i bit residui (b7)
         self.mapiotype = {}  # Tipi di IO disponibili
         self.mapproc = {}  # Procedure associate agli ingressi verso le uscite
@@ -463,6 +471,7 @@ class Bus:
         self.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
         self.TXmsg += [self.getBoardType(0)] # GetTypeBoard Informations
         self.TXmsg += [self.getBoardType(0)] # GetTypeBoard Informations
+        
 
     def getJsonConfig(self, config_file_name):
         """
@@ -504,7 +513,13 @@ class Bus:
                         board_type = self.config[b][bb]['board_type']
                         if not board_enable:
                             self.log.write("{:<7} DISABILITATA".format(b))
+                    if 'RMS_POWER_CONF' in bb:
+                        if board_id not in self.RMS_POWER_DICT:
+                            self.RMS_POWER_DICT[board_id] = {}
+                        self.RMS_POWER_DICT[board_id] = self.config[b]['RMS_POWER_CONF']
 
+                    
+                        
                 for bb in self.config[b]:
                     if not 'GENERAL_BOARD' in bb:
                         enable = self.config[b][bb].get('enable', 0)
@@ -521,7 +536,7 @@ class Bus:
 
                         inverted = int(self.config[b][bb].get('inverted', 0))
                         default_startup_value = self.config[b][bb].get('default_startup_value', 0)
-
+                        # print("-===-",  self.config[b][bb])
                         if 'device_type' in self.config[b][bb]:
                             device_type = self.config[b][bb]['device_type']
                         else:
@@ -552,6 +567,7 @@ class Bus:
                             self.log.write("VALORI AMMESSI: {}".format(self.device_type_dict[device_type]))
                             raise("ERROR: direcrtion NOT DEFINE!!!")
 
+                        # pprint(self.config[b][bb])
                         self.mapiotype[board_id][logic_io] = {
                             'altitude': int(self.config[b][bb].get('altitude', 0)),  # OFFSET altitudine
                             'board_enable': board_enable, # Abilitazione scheda
@@ -583,7 +599,6 @@ class Bus:
                             'offset_temperature': int(self.config[b][bb].get('offset_temperature', 0)),  # OFFSET temperature
                             'only_fronte_off': int(self.config[b][bb].get('only_fronte_off', 0)),
                             'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
-                            'overwrite_text': overwrite_text,  # Overtwrite Domoticz name and description with config.json name and description
                             'pin_label': bb,
                             'pin': pin,
                             'plc_byte_list_io': [],
@@ -616,6 +631,29 @@ class Bus:
                             'powermeter_k': int(self.config[b][bb].get('powermeter_k', 0)),
                             'pullup': self.config[b][bb].get('pullup', self.device_type_dict[device_type].get('pullup', 0)),
                             'rgnd': int(self.config[b][bb].get('rgnd', 100000)),
+                            'rms_power_mode': int(self.config[b][bb].get('rms_power_mode', 0)),
+                            'rms_power_logic_id_ch1': int(self.config[b][bb].get('rms_power_logic_id_ch1', 0)),
+                            'rms_power_logic_id_ch2': int(self.config[b][bb].get('rms_power_logic_id_ch2', 0)),
+                            'rms_power_logic_id_real': int(self.config[b][bb].get('rms_power_logic_id_real', 0)),
+                            'rms_power_logic_id_apparent': int(self.config[b][bb].get('rms_power_logic_id_apparent', 0)),
+                            'rms_power_logic_id_cosfi': self.config[b][bb].get('rms_power_logic_id_cosfi', 1),
+                            'rms_power_filter': int(self.config[b][bb].get('rms_power_filter', 30)),
+                            'rms_power_mul_ch1': int(self.config[b][bb].get('rms_power_mul_ch1', 10)),
+                            'rms_power_mul_ch2': int(self.config[b][bb].get('rms_power_mul_ch2', 10)),
+                            'rms_power_logic_io_offset_enable': int(self.config[b][bb].get('rms_power_logic_io_offset_enable', 0)),
+                            'rms_power_logic_io_offset_ls': int(self.config[b][bb].get('rms_power_logic_io_offset_ls', 0)),
+                            'rms_power_logic_io_offset_ms': int(self.config[b][bb].get('rms_power_logic_io_offset_ms', 0)),
+                            "rms_power_scale_ch1": int(self.config[b][bb].get('rms_power_scale_ch1', 1)),
+                            "rms_power_scale_ch2": int(self.config[b][bb].get('rms_power_scale_ch2', 1)),                            
+                            "rms_power_scale_apparent": int(self.config[b][bb].get('rms_power_scale_apparent', 1)),
+                            "rms_power_scale_cosfi": float(self.config[b][bb].get('rms_power_scale_cosfi', 0.001)),
+                            "rms_power_scale_real": int(self.config[b][bb].get('rms_power_scale_real', 1)),
+                            "rms_power_unit_apparent": self.config[b][bb].get('rms_power_unit_apparent', 'VA'),
+                            "rms_power_unit_ch1": self.config[b][bb].get('rms_power_unit_ch1', 'A'),
+                            "rms_power_unit_ch2": self.config[b][bb].get('rms_power_unit_ch2', 'V'),
+                            "rms_power_unit_cosfi": self.config[b][bb].get('rms_power_unit_cosfi', '°'),
+                            "rms_power_scale_real": self.config[b][bb].get('rms_power_unit_real', 'W'),
+
                             'round_humidity': int(self.config[b][bb].get('round_humidity', 0)),
                             'round_pression': int(self.config[b][bb].get('round_pression', 0)),
                             'round_temperature': int(self.config[b][bb].get('round_temperature', 1)),
@@ -697,7 +735,8 @@ class Bus:
         """
         if byteMS > 127:
             return -32768 + (byteLS + ((byteMS - 128) * 256))
-        return byteLS + (byteMS * 256)
+        return self.byteLSMS2uint(byteLS, byteMS)
+        # return byteLS + (byteMS * 256)
       
     def byte2signed(self, byte):
         """
@@ -721,6 +760,7 @@ class Bus:
                 VINR1R2
                 VINKMKA
                 Power_on
+                RMS_POWER (corrente, potenza, cosfi)
             Digital:
                 Digital input
 
@@ -729,13 +769,6 @@ class Bus:
             BOARD_TYPE
         """
         
-        # if command == 12 | 32 and 1 == 2:
-        #     print("====************************************>>>>> CALCULATE: command:{} board_id: {}, logic_io: {}, value: {}".format(command, board_id, logic_io, value))
-        #     print(self.get_board_type)
-        #     return 0
-        #     return self.get_board_type[board_id]
-
-
         if board_id in self.mapiotype and logic_io in self.mapiotype[board_id]:
             kmul = self.mapiotype[board_id][logic_io]['kmul']
             kadd = self.mapiotype[board_id][logic_io]['kadd']
@@ -746,7 +779,7 @@ class Bus:
 
             # print("board_id: {:<5} logic_io: {:<5} device_type: {:<25} type_io: {:<25} kmul: {:<10} kadd: {:<10} plc_function: {:<10}".format(board_id, logic_io, device_type, type_io, kmul, kadd, plc_function))
 
-            if device_type == 'DS18B20':
+            if device_type == 'DS18B20': # Digital temperature
                 # print(">> DS18B20", value)
                 if len(value) < 9:
                     return None
@@ -760,11 +793,10 @@ class Bus:
 
                     bio = '%s-%s' %(board_id, logic_io)
                     if bio in self.mapproc:
-                        # print("DS18B20 LINKED BOARD", bio, self.mapproc[bio])
                         board_id_linked = self.mapproc[bio]["board_id"]
                         logic_io_linked = self.mapproc[bio]["logic_io"]
                         device_type_linked = self.mapiotype[board_id_linked][logic_io_linked]['device_type']
-                        if device_type_linked =="PSYCHROMETER":
+                        if device_type_linked =="PSYCHROMETER": # Umidity with 2 DS18B20 sensors
                             self.log.write("PSYCHROMETER {}".format(self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"]))
                             io_linked = self.mapiotype[board_id_linked][logic_io_linked]["plc_linked_board_id_logic_io"]
                             t1 = io_linked[0].split("-")
@@ -772,11 +804,10 @@ class Bus:
                             temp_umido = self.status[int(t1[0])]['io'][int(t1[1])-1]
                             temp_secco = self.status[int(t2[0])]['io'][int(t2[1])-1]
                             if temp_umido and temp_secco:
-                                # print(device_type_linked,io_linked,temp_umido,temp_secco)
-
                                 pressione_vapore_saturo_temperatura_sensore_asciutto = 6.11 * 10 ** ((7.5 * temp_secco)/(237.7 + temp_secco))
                                 pressione_vapore_saturo_temperatura_sensore_umido = 6.11 * 10 ** ((7.5 * temp_umido)/(237.7 + temp_umido))
                                 altezza = 100
+                                # altezza = self.mapiotype[board_id_linked][logic_io_linked]["altitude"]
                                 pressione_approssimata_all_altezza = (0.9877 ** (altezza/100)) * 1013.25
 
                                 pressione_vapore_aria_umida =  pressione_vapore_saturo_temperatura_sensore_umido - (1005/(2.5*0.622*10**6))*pressione_approssimata_all_altezza*(temp_secco-temp_umido)
@@ -803,18 +834,50 @@ class Bus:
                     # print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
                     return None
 
+            elif plc_function == 'rms_power':
+
+                
+                if 'rms_power_logic_id_ch1' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch1'] ==  logic_io:
+                    value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_ch1'] / self.RMS_POWER_DICT[board_id]['rms_power_mul_ch1']
+                    return value
+
+                elif 'rms_power_logic_id_ch2' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] ==  logic_io:
+                    value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_ch2'] / self.RMS_POWER_DICT[board_id]['rms_power_mul_ch2']
+                    # print("==>>> RMS_POWER CH2 {} {} {}".format(board_id, logic_io, value))                    
+                    return value
+
+                elif 'rms_power_logic_id_real' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_real'] ==  logic_io:
+                    value = self.byteLSMS2int(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_real']
+                    # print("==>>> RMS_POWER REAL {} {} {}".format(board_id, logic_io, value))                    
+                    return value
+
+                elif 'rms_power_logic_id_apparent' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_apparent'] ==  logic_io:
+                    value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_apparent']
+                    # print("==>>> RMS_POWER APPARENT {} {} {}".format(board_id, logic_io, value))
+                    return value
+
+                elif 'rms_power_logic_id_cosfi' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_cosfi'] ==  logic_io:
+                    value = self.byteLSMS2int(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_cosfi']
+                    # print("==>>> RMS_POWER COSFI {} {} {}".format(board_id, logic_io, value))
+                    return value
+
+                elif 'rms_power_logic_io_offset_enable' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_io_offset_enable'] ==  logic_io:
+                    value = self.byteLSMS2uint(value[0], value[1])
+                    # print("==>>> RMS_OFFSET VOLTAGER {} {} {}".format(board_id, logic_io, value))
+                    return value
+
+                else:
+                    print(print("=--------------=>>> RMS_POWER DA FARE {} {} {}".format(board_id, logic_io, value)))  
+                    pprint(self.RMS_POWER_DICT[board_id])
+
             elif plc_function == 'powermeter' :
-                # print(plc_function, value)
                 value = value[0] + (value[1] * 256)
-                # return (value * kmul) + kadd
                 return adjust(value)
 
             elif type_io == 'digital' and plc_function == 'time_meter' :
-                # print(plc_function, value)
                 return value[0] + (value[1] * 256)
 
             elif plc_function in ['counter_up', 'counter_dw', 'counter_up_dw'] :
-                # print(plc_function, value)
                 flag_signed = self.mapiotype[board_id][logic_io]['plc_counter_mode'] & 2
                 value = value[0] + (value[1] * 256)
                 if flag_signed:
@@ -824,19 +887,16 @@ class Bus:
 
             elif type_io == 'analog' and device_type == 'ANALOG_IN':
                 if len(value) >= 2: # Attenzione: lasciare  altrimenti se si passa dalla configurazione DIGITAL_IN in ANALOG_IN, puo' dare errore
-                    return value[0] + (value[1] * 256)
+                    return self.byteLSMS2uint(value[0], value[1])
+                    # return value[0] + (value[1] * 256)
                 return 0
 
             elif device_type == 'BME280_CALIB':
                 bme_key = '{}-{}'.format(board_id, logic_io)
-
                 if bme_key not in self.BME:
                     self.BME[bme_key] = {}
 
                 if len(value) == 26: # value from 0x88 to 0xA1
-                    # print("CALIBRAZIONE BME--->>>>>", value)
-                    # [101, 109, 65, 103, 50, 0, 54, 146, 12, 214, 208, 11, 9, 32, 56, 255, 249, 255, 172, 38, 10, 216, 189, 16, 0, 75]
-
                     flag_ok=True
 
                     if self.BME[bme_key].get('dig_T1') != self.byteLSMS2uint(value[0], value[1]):
@@ -894,7 +954,6 @@ class Bus:
                     self.BME[bme_key]['flag26'] = flag_ok
 
                 if len(value) == 7: # value from 0xE1 to 0xE7
-                    # print("CALIBRAZIONE BME--->>>>>", value)
 
                     flag_ok=True
                     if self.BME[bme_key].get('dig_H2') !=  self.byteLSMS2int(value[0], value[1]): #  0xE1:
@@ -929,30 +988,22 @@ class Bus:
                 # pprint(self.BME)
 
             elif device_type == 'BME280':
-                # print(self.mapiotype[board_id][logic_io]['type_io'], self.mapiotype[board_id][logic_io]['device_type'] )
-
                 T_Raw,H_Raw,P_Raw = self.getBME280(board_id, logic_io, value, )
-                # print("UNCOMPENSATE:", T_Raw, H_Raw, P_Raw)
                 logic_io_calibration = self.mapiotype[board_id][logic_io]['logic_io_calibration']
                 bme_key = '{}-{}'.format(board_id, logic_io_calibration)
-                # print("bme_key:", bme_key)
                 if (bme_key in self.BME) and self.BME[bme_key].get('flag26') and self.BME[bme_key].get('flag7'):
-                    # pprint(self.BME[bme_key])
 
                     v1 = (T_Raw / 16384.0 - self.BME[bme_key]['dig_T1'] / 1024.0) * self.BME[bme_key]['dig_T2']
                     v2 = ((T_Raw / 131072.0 - self.BME[bme_key]['dig_T1'] / 8192.0) ** 2) * self.BME[bme_key]['dig_T3']
                     T_fine = (v1 + v2)
                     T = T_fine / 5120.0
 
-                    # print("TEMERATURE:", T_Raw, T)
-
                     H = T_fine - 76800.0
                     H = (H_Raw - (self.BME[bme_key]['dig_H4'] * 64.0 + self.BME[bme_key]['dig_H5'] / 16384.0 * H)) * \
                             (self.BME[bme_key]['dig_H2'] / 65536.0 * (1.0 + self.BME[bme_key]['dig_H6'] / 67108864.0 * H * \
                             (1.0 + self.BME[bme_key]['dig_H3'] / 67108864.0 * H)))
                     H = H * (1.0 - (self.BME[bme_key]['dig_H1'] * H / 524288.0))
-                    # print("HUMIDITY:", H_Raw, H)
-
+                   
                     v1 = T_fine / 2.0 - 64000.0
                     v2 = v1 * v1 * self.BME[bme_key]['dig_P6'] / 32768.0
                     v2 = v2 + v1 * self.BME[bme_key]['dig_P5'] * 2.0
@@ -970,7 +1021,6 @@ class Bus:
                     v2 = res * self.BME[bme_key]['dig_P8'] / 32768.0
                     P = (res + (v1 + v2 + self.BME[bme_key]['dig_P7']) / 16.0) / 100
 
-                    # print("PRESSURE:", P_Raw, P)
                 else:
                     return None
 
@@ -1112,12 +1162,6 @@ class Bus:
         """
         return ['{:02X}'.format(a) for a in msg]
 
-    # def serold(self, port='/dev/ttyAMA0', baudrate=9600):
-    #     """
-    #     Instance of serial
-    #     """
-    #     return arduinoserial.SerialPort(port, baudrate)
-
     def ser(self, port='/dev/ttyAMA0', baudrate=19200):
         """
         Instance of serial
@@ -1125,7 +1169,6 @@ class Bus:
         return serial.Serial(port, baudrate)
 
     def send_data_serial(self, Connection, databyte):
-        # print("SEND BY SERIAL===>>", Connection, databyte)
         if self.system == 'Domoticz':
             Connection.Send(Message=bytes(databyte), Delay=0)
         else:
@@ -1136,11 +1179,6 @@ class Bus:
         Calc CRC of trama
         """
         a = 0xff00 | b
-        # while 1:
-            # crc = ((((crc ^ a) & 1) * 280) ^ crc) // 2
-            # a = a // 2
-            # if (a <= 255):
-                # return crc
         while a > 255:
             crc = ((((crc ^ a) & 1) * 280) ^ crc) // 2
             a = a // 2
@@ -1188,12 +1226,9 @@ class Bus:
             # print("Arrivato secondo CRC", hex(inSerial), end='')
             self.lastfinepacc = False
             auscrc = (inSerial & 0x0f) | ((inSerial & 0xE0)//2)
-#            print(", Decodificato CRC:", hex(auscrc))
-#            print("Calcolo CRC da:", hex(self.crcric))
             self.crcric = self.calccrc(self.crcric + 0xaa, self.crcric)  # aggiorna crc
 #            print("CRC calcolato:", hex(self.crcric),", 7bit==>", hex(self.crcric & 0x7f))
             ric = self.buffricn
-#            print("ric=",ric)
             if (auscrc ^ self.crcric) & 0x7f == 0:  # crc corretto e fine pacchetto veramente
                 #print("Secondo crc OK")
                 self.labinitric()
@@ -1204,19 +1239,14 @@ class Bus:
                 return []
 
         if (inSerial & 0x38) == 0x18 or (inSerial & 0x38) == 0x20:  # Fine pacchetto
-            # print("---------", inSerial)
-#            print("Ricevuto fine pacchetto",hex(inSerial))
             inSerial = (inSerial & 0x0f) | ((inSerial & 0xc0) // 4)
 #            print("fine pacchetto decodificato:", hex(inSerial),", 6bit==>",hex(inSerial&0x3F), "confrontare con:", hex(self.crcric & 0x3F) )
 #            print("confrontare con:            ", hex(self.crcric),", 6bit==>",hex(self.crcric & 0x3F), end="" )
             if (inSerial ^ self.crcric) & 0x3F == 0:  # crc corretto
-                # print(" CRC OK",end="")
-                # print(inSerial)
 
                 appn = len(self.buffricn) + len(self.buffricnapp)
                 if appn>2:  # non è un ping
                     if self.buffricnapp:
-#                        print("sistema ultimi residui")
                         self.seven2eight()  # sistema gli ultimi residui
                     ric = self.buffricn
                 else:
@@ -1224,7 +1254,6 @@ class Bus:
 
                 if len(self.buffricn) > 1:  # Non è un PING
                     if self.crcdoppio == 1:
-                        #print("Aspetto secondo CRC")
                         self.lastfinepacc = True
                         return []
 
@@ -1257,7 +1286,6 @@ class Bus:
             self.buffricnapp.insert(self.buffricnlung, ((inSerial & 0x0f) | ((inSerial & 0xE0)//2)))  # inserisce carattere decodificato
 #            print("CAR PRIMA E DOPO DECODIFICA",inSerial,((inSerial & 0x0f) | ((inSerial & 0xE0)//2)))
             if len(self.buffricnapp)==8:  # E' arrivato il byte con i bit residui
-                # print("+++++++++++++++++", self.buffricn, self.buffricnapp)
                 self.seven2eight()
             self.buffricnlung += 1
             return []
@@ -1302,24 +1330,11 @@ class Bus:
             bytedatrasm.append(txapp1)
             self.crctrasm = self.calccrc(txapp1, self.crctrasm)
         bytedatrasm.append((self.crctrasm & 0x0f) | (self.crctrasm & 8)*2 | (self.crctrasm & 0x38 ^ 8)*4)
-        # Sistema per CRC doppio
-        # print(msg)
         if self.crcdoppio == 1 and len(msg) > 2:
-#            print("A**********", hex(self.crctrasm), hex(self.crctrasm + 0xaa))
 
             txapp1 = self.calccrc(self.crctrasm + 0xaa, self.crctrasm)
-#            print("B**********", hex(txapp1&0X7F))
-            # txapp = 0x35
             txapp1 = (txapp1 & 0x0f) | (((txapp1 & 0x78) ^ 8) * 2)
-
-#            print("C**********", hex(txapp1))
-
             bytedatrasm.append(txapp1)
-            # bytedatrasm.append(txapp1)
-            # bytedatrasm.append(txapp1)
-            # bytedatrasm.append(app)
-
-#        print("-D---------", self.int2hex(bytedatrasm))
         return bytedatrasm
 
     def shutdownRequest(self):
@@ -1534,10 +1549,10 @@ class Bus:
         3: 4800
         4: 9600
         5:
-        6:
-        7:
-        8:
-        9:
+        6: 19200
+        7: 38400 # Don't use
+        8: 57600 # Don't use
+        9: 115200 # Don't use
         10:
         """
         data = [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, 3, 0, self.speed[baudrate]]
@@ -1682,11 +1697,6 @@ class Bus:
                     self.log.write("PSYCHROMETER {}".format(message_conf_app))
                     continue
 
-
-                # print("type_io: %s - device_type: %s" %(type_io, device_type))
-
-                #if not enable: type_io = 'disable' # Non fa configurazione se enable = 0
-
                 if type_io == 'analog' or type_io == 'temp_atmega':
                     byte1 |= 0b10
                 elif type_io == 'digital':
@@ -1704,26 +1714,23 @@ class Bus:
                     continue
 
                 byte1 |= 0x40 #b6
+        
 
                 direction = self.mapiotype[board_id][logic_io]['direction']
-                # print("******K*********",direction)
                 if type_io == 'i2c' or type_io == 'onewire' or type_io == 'onewire_test':
                     byte2 = self.mapiotype[board_id][logic_io]['pullup']
                     byte3 = 0
-                    # print(board_id,"*************** Pullup: ",bin(byte2),bin(byte1))
                 elif direction == 'input':
                     byte2 = self.mapiotype[board_id][logic_io]['pullup'] | (self.mapiotype[board_id][logic_io]['default_startup_filter_value']*2)
                     byte3 = 0
                 elif direction == 'output':
                     byte1 |= 1
-                    # print("OUTPUT")
                     default_startup_value = self.mapiotype[board_id][logic_io]['default_startup_value']
                     default_startup_value = default_startup_value
                     byte2, byte3 = self.calcAddressLsMs8(default_startup_value)
                 else:
                     byte2 = byte3 = 0
                     self.log.write("ERROR: DIRECTION su configurazione non riconosciuto. IO: {}".format(board_id))
-                    # continue
 
                 if type_io == 'analog' or type_io == 'digital' or device_type == 'RFID_UNIT':
                     byte4 = self.mapiotype[board_id][logic_io]['n_refresh_on']  # Byte 4: rinfreschi rete sui fronti ON                   
@@ -1735,10 +1742,8 @@ class Bus:
                 if self.mapiotype[board_id][logic_io]['inverted']:  # Invert OUTPUT. Se inverted, lo stato ON in uscita di un rele si ha con lo stato zero.
                     byte4 |= 128
 
-                # byte5 = int(boards.get(board)['time_refresh']) & 255  # Byte 5: rinfresco periodico ls in decimi di secondo
-                # byte6 = int(boards.get(board)['time_refresh']) >> 8  # Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
                 byte5, byte6 = self.calcAddressLsMs8(self.mapiotype[board_id][logic_io]['time_refresh'])# Byte 5: rinfresco periodico ls in decimi di secondo, Byte 6: rinfresco periodico ms (14 bit = 16383) (0=sempre, 16383=mai)
-                # print("RINFRESCHI", byte5, byte6)
+                # print("RINFRESCHI",board_id,logic_io,  byte5, byte6)
 
                 if type_io == 'analog' or type_io == 'digital':
                     byte7 = self.mapiotype[board_id][logic_io]['filter']
@@ -1759,7 +1764,8 @@ class Bus:
                 message_conf_app.append(byte6)  # Byte 6: rinfresco periodico ms
                 message_conf_app.append(byte7)  # Byte 7:  Filtro
 
-                #print("TRAMA CONFIGURAZIONE:             ", message_conf_app)
+                # print("TRAMA CONFIGURAZIONE:             ", message_conf_app)
+                
 
                 msg.append(message_conf_app)
                 # msg.append(self.initIO(board_id, logic_io))  # iNIt io
@@ -1836,8 +1842,8 @@ class Bus:
                     'last_change_all': 29,
                     'nlast_change_all': 29 | 128,
                     'power_on': 30, # Funzione che gestische l'alimentazione raspberry
-                    'rfid_unit': 31,
-                    'rfid_card': 32,
+                    'rfid_unit': 38,
+                    'rfid_card': 39,
                     'counter_up': 32,
                     'counter_dw': 33,
                     'counter_up_dw': 34,
@@ -1857,6 +1863,7 @@ class Bus:
                     'analog_in1_%_analog_in2': 54,
                     'analog_in1_min_analog_in2': 55,
                     'analog_in1_max_analog_in2': 56,
+                    'rms_power': 58,
                     'sampletrigger': 60,
                 }
 
@@ -1934,6 +1941,50 @@ class Bus:
                             plc += self.mapiotype[board_id][logic_io]['rfid_card_code'] # Codice da controllare
                             plc.append(9)
                             # print("PLC RFID==========>>>>>>>>>>>", plc)
+
+                    elif sbyte8 == 'rms_power':
+                            """
+                            Offset: 31 Modo sinusoide (rms_power_mode)    b0 = 1: valore efficace CH1
+                                                                          b1 = 1: valore efficace CH2
+                            Offset: 30 - Logic ID CH1
+                            Offset: 29 - Logic ID CH2
+                            Offset: 28 - Logic ID potenza reale (V*I) istante per istante
+                            Offset: 27 - Logic ID potenza apparente (V*I) istante per istante
+                            Offset: 26 - Logic ID COSFI in millesimi da 0 a 1000
+                            Offset: 25 - Costante filtro passabasso 0=1=no filtro - 127 massimo filtro (default: 30)
+                            Offset: 24 - Moltiplicatore scala campioni CH1 consigliato da 1 a 100 (default: 10)
+                            Offset: 23 - Moltiplicatore scala campioni CH2 consigliato da 1 a 100 (default: 10)
+                            Offset: 22 - Logic IO lettura OFFSET (se > 0 abilita la lettura dell'ingresso analogico corrispondente e sovrascrive l'OFFSET campioni LS e MS. Se == 0 bisogna impostare LS e MS)
+                            Offset: 21 - OFFSET campioni LS (ad esempio LS_MS = 512 i campioni letti saranno decrementati di 512)
+                            Offset: 20 - OFFSET campioni MS
+
+                            esempio:
+                            Moltiplicatore = 100
+                            OFFSET = 500
+                            Lettura ADC = 350
+                            Valore letto = 350 - 500 = -150
+                            Valore passato ai calcoli efficaci = -150 * 100 = -15000
+                            Valore efficace sarà in centesimi perchè moltiplicato per 100
+                            La potenza reale utilizza il valore (-15000) dei calcoli efficaci moltiplicato per la tensione
+
+                            """
+                                
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_mode'] if self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] else self.RMS_POWER_DICT[board_id]['rms_power_mode'] & 0xFD) # Modo sinusoide
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch1'])
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'])
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_id_real'] if self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] else 0)
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_id_apparent'] if self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] else 0)
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_id_cosfi'] if self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] else 0)
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_filter'])
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_mul_ch1'])
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_mul_ch2']) #if self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] else 0)
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_io_offset_enable'])
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_io_offset_ls'])
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_io_offset_ms'])
+                            # pprint(self.RMS_POWER_DICT)
+                            # print("--------------", plc, board_id)
+                            
+                            ###### Controllare che gli altri IO logici corrispondano con il file JSON
 
                     elif sbyte8 == 'power_on':
                         appboardid = self.mapiotype[board_id][logic_io]['plc_byte_list_io'][0]
@@ -2130,12 +2181,14 @@ class Bus:
                             self.log.write('FUNZIONE PLC NON TROVATA: %s' %sbyte8)
                             sys.exit()
 
+
                     plclen = len(plc)
                     plc.reverse()
 
                     plc_EE_start = (logic_io * 32) + 32 - plclen
                     plc_data = self.writeEEadd(board_id, plc_EE_start, plc)
                     msg.append(plc_data)
+                    # sys.exit()
 
                 # Configurazione relativa ai sensori I2C e OneWire
 
@@ -2265,12 +2318,13 @@ class Bus:
                     # If not I2C or OneWire, set 0, 0 at address 10 and 11.
                     msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [0,0]))  # 0 = lunghezza programma periodico, 0 = lunghezza prg. inizializzazione
 
+
+        # sys.exit()
         set_max_board_address = []
         for board_id in self.config.keys():
             if "GENERAL_BOARD" in self.config[board_id]:
                 if self.config[board_id]["GENERAL_BOARD"].get("enable") == 1:          
                     set_max_board_address += [self.setMaxBoardAddress(int(board_id[5:]), self.MAX_BOARD_ADDRESS)] # Set Max Board Address
-        # print("----------------", set_max_board_address)
         msg += set_max_board_address
 
         if msg:
@@ -2280,7 +2334,7 @@ class Bus:
             self.log.write("NESSUNA CONFIGURAZIONE BOARD DA INVIARE")
         # pprint(msg)
         self.TXmsg = msg
-        # return msg
+        
 
     def arrivatatrama(self):
         # arrivata una trama completa (PING e trame piu lunghe)
@@ -2499,7 +2553,7 @@ class Bus:
             if not self.cronoldtime % 5:
                 self.cron_sec = 5
                 self.RXtrama += [self.getBoardType(5)] # Chiede ai nodi di inviare in rete le loro caratteristiche
-                print(self.RXtrama)
+                # print(self.RXtrama)
                 # print("{:<11} CRON                   1 MIN".format(self.cronoldtime))
             if not self.cronoldtime % 60:
                 self.cron_min = 1
@@ -2581,7 +2635,7 @@ Info su www.domocontrol.info/domocontrol-it/domotica
             self.telegram_bot.sendMessage(chat_id, msg)
 
         elif '/BOARD' in command: # MOstra board presenti sul bus
-            print(command)
+            # print(command)
             bid = int(command[6:])
             res = 'I/O della Board {}\n'.format(command)
             lendict = len(self.mapiotype[bid])
@@ -2603,7 +2657,7 @@ Info su www.domocontrol.info/domocontrol-it/domotica
             self.telegram_bot.sendMessage(chat_id, res)      
 
         elif '_' in command and '/' in command: # Setta I/O
-            print(command)
+            # print(command)
             bl = command[1:].split("_")
             bid = int(bl[0])
             logic_io = int(bl[1])
@@ -2613,17 +2667,17 @@ Info su www.domocontrol.info/domocontrol-it/domotica
             res += '/{}_{}  {} => {}'.format(bid, logic_io, value, value_new)
             
             cmd = self.writeIO(bid, logic_io, [value_new])
-            print(cmd)
+            # print(cmd)
             self.TXmsg.append(cmd)
 
             self.telegram_bot.sendMessage(chat_id, res)  
 
         elif '_' in command: # Setta I/O
-            print(command)
+            # print(command)
             board_id, logic_io = command[1:].split('_')
             board_id = int(board_id)
             logic_io = int(logic_io)
-            print(board_id, logic_io)
+            # print(board_id, logic_io)
             pprint(self.mapiotype[board_id][logic_io])
 
             keyboard = InlineKeyboardMarkup(inline_keyboard=[
