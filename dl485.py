@@ -78,6 +78,7 @@ class Bus:
         15: 'I2C ACK',  # Mitt. COmando comunica IO, N. ingresso, valore inresso
         16: 'CLEARIO_REBOOT', #cancella area io e fa reboot
         18: 'RFID', # comunicazione del pacchetto RDIF
+        19: 'TIME_LOOP',
 
         'INPUT': 0,
         'OUTPUT': 1,
@@ -96,6 +97,7 @@ class Bus:
         'I2C ACK': 15,  # Mitt. COmando comunica IO, N. ingresso, valore inresso
         'CLEARIO_REBOOT': 16,
         'RFID': 18,
+        'TIME_LOOP': 19, # Comunica il tempo LOOP in uS
     }
 
     disable_io = 0x3e
@@ -835,35 +837,43 @@ class Bus:
                     return None
 
             elif plc_function == 'rms_power':
-
-                
+                # print("==>>", board_id, logic_io, self.byteLSMS2uint(value[0], value[1]))
                 if 'rms_power_logic_id_ch1' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch1'] ==  logic_io:
+                    
                     value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_ch1'] / self.RMS_POWER_DICT[board_id]['rms_power_mul_ch1']
-                    return value
+                    return round(value, 2)
 
                 elif 'rms_power_logic_id_ch2' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] ==  logic_io:
                     value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_ch2'] / self.RMS_POWER_DICT[board_id]['rms_power_mul_ch2']
                     # print("==>>> RMS_POWER CH2 {} {} {}".format(board_id, logic_io, value))                    
-                    return value
+                    return round(value, 0)
 
                 elif 'rms_power_logic_id_real' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_real'] ==  logic_io:
-                    value = self.byteLSMS2int(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_real']
+                    value = self.byteLSMS2int(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale']
                     # print("==>>> RMS_POWER REAL {} {} {}".format(board_id, logic_io, value))                    
-                    return value
+                    return round(value, 1)
 
                 elif 'rms_power_logic_id_apparent' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_apparent'] ==  logic_io:
-                    value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_apparent']
+                    value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale']
                     # print("==>>> RMS_POWER APPARENT {} {} {}".format(board_id, logic_io, value))
-                    return value
+                    return round(value, 1)
 
                 elif 'rms_power_logic_id_cosfi' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_cosfi'] ==  logic_io:
                     value = self.byteLSMS2int(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_cosfi']
+
+                    p_real = self.status[board_id]['io'][self.RMS_POWER_DICT[board_id]['rms_power_logic_id_real'] - 1]
+                    p_apparent = self.status[board_id]['io'][self.RMS_POWER_DICT[board_id]['rms_power_logic_id_apparent'] - 1]
+
+                    print("==>>> RMS_POWER BID:{} LogicIO:{} COSFI:{} P.REAL:{} p.APPARENT:{}".format(board_id, logic_io, value, p_real, p_apparent))
                     # print("==>>> RMS_POWER COSFI {} {} {}".format(board_id, logic_io, value))
-                    return value
+                    if p_real > 3 or p_apparent > 3:
+                        return value
+                    return 1000
 
                 elif 'rms_power_logic_io_offset_enable' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_io_offset_enable'] ==  logic_io:
                     value = self.byteLSMS2uint(value[0], value[1])
-                    # print("==>>> RMS_OFFSET VOLTAGER {} {} {}".format(board_id, logic_io, value))
+                    
+                    
                     return value
 
                 else:
@@ -1349,6 +1359,12 @@ class Bus:
         Command to board REBOOT (0 for all board in the BUS)
         """
         return [self.BOARD_ADDRESS, self.code['CR_REBOOT'], board_id] # Fa reboot scheda
+
+    def timeLoop(self, board_id):
+        """
+        Command to board get last Time Loop in uS
+        """
+        return [self.BOARD_ADDRESS, self.code['TIME_LOOP'], board_id]        
 
     def clearIO_boardReboot(self, board_id):
         """
@@ -1940,7 +1956,6 @@ class Bus:
                             plc.append(19) # indice fine trama da controllare
                             plc += self.mapiotype[board_id][logic_io]['rfid_card_code'] # Codice da controllare
                             plc.append(9)
-                            # print("PLC RFID==========>>>>>>>>>>>", plc)
 
                     elif sbyte8 == 'rms_power':
                             """
@@ -2477,15 +2492,14 @@ class Bus:
                 # 5: Mese
                 # 6: anno
                 # 7: Byte: b0: protezione attiva, b1: PLC, b2: PowerOn, b3: PWM out, b5: OneWire, b6: I2C, b7: RFID               
-                # print(self.RXtrama)
+                # 8: Byte: b0: rms_power
+                # 9: Numero IO esclusi (a causa di logic_io o fisico fuori range)
+                # 10: Numero conflitti (es. IO assegnato a RX o assegnato a LED, pulsante, oppure OneWire e ingresso digitale, oppure ingresso analogico e ingresso digitale)
                 
                 board_id = self.RXtrama[0]
                 command = self.RXtrama[1]
                 logic_io = self.RXtrama[2]
                 value = self.RXtrama[3:]
-
-                # pprint(self.config)
-
 
                 if not self.RXtrama[0] in self.get_board_type:
                     self.get_board_type[self.RXtrama[0]]        = {}
@@ -2500,6 +2514,13 @@ class Bus:
                 self.get_board_type[board_id]['onewire']        = self.byte2active(self.RXtrama[7], 5)
                 self.get_board_type[board_id]['i2c']            = self.byte2active(self.RXtrama[7], 6)
                 self.get_board_type[board_id]['rfid']           = self.byte2active(self.RXtrama[7], 7)
+
+                if len(self.RXtrama) == 11:
+                    """ Byte aggiunti il 23/10/2020 """
+                    self.get_board_type[board_id]['rms_power']                      = self.byte2active(self.RXtrama[8], 1)
+                    self.get_board_type[board_id]['error_logic_io_fisic_io']        = self.RXtrama[9]
+                    self.get_board_type[board_id]['error_conflict']                 = self.RXtrama[9]
+                
                 # pprint(self.get_board_type)
                 
             elif self.RXtrama[1] & 32: # è feedback
@@ -2521,23 +2542,23 @@ class Bus:
         # else: print("RXPING",int2hex(self.RXtrama))
 
     def writeLog(self):
-        #  parte che stampa il log ogni TIME_PRINT_LOG e aggiorna le board presenti
-        if (not len(self.TXmsg)) and (self.nowtime - self.oldtime > self.TIME_PRINT_LOG):
-            self.oldtime = self.nowtime  # Not remove
-            self.TXmsg.append(self.ping)  # Not remove. Is neccesary to reset shutdown counter
-            # Routine che aggiorna le BOARD presenti sul BUS
-            board_to_remove = []
-            for k, v in self.board_ready.items():
-                # b.log.write(v, b.nowtime-v, v)
-                if (self.nowtime - v) > 5:  # rimuove board se i suoi pacchetti mancano da piu di 5 secondi
-                    board_to_remove.append(k)
-            for k in board_to_remove:
-                del self.board_ready[k]
-            # b.BOARD_ADDRESS = max(list(b.board_ready.keys())) + 1
-            br = list(self.board_ready.keys())
-            br.sort()
-            self.log.write("{:<12}BOARD_READY            {:<18} ".format(int(self.nowtime), str(br)))
-            self.printStatus()  # Print status of IO
+        """  parte che stampa il log ogni TIME_PRINT_LOG e aggiorna le board presenti """
+        # if (not len(self.TXmsg)):
+            # self.oldtime = self.nowtime  # Not remove
+        
+        
+        # Routine che aggiorna le BOARD presenti sul BUS
+        board_to_remove = []
+        for k, v in self.board_ready.items():
+            if (self.nowtime - v) > 5:  # rimuove board se i suoi pacchetti mancano da piu di 5 secondi
+                board_to_remove.append(k)
+        for k in board_to_remove:
+            del self.board_ready[k]
+        # b.BOARD_ADDRESS = max(list(b.board_ready.keys())) + 1
+        br = list(self.board_ready.keys())
+        br.sort()
+        self.log.write("{:<12}BOARD_READY            {:<18} ".format(int(self.nowtime), str(br)))
+        self.printStatus()  # Print status of IO
 
 
     def cron(self):
@@ -2549,19 +2570,26 @@ class Bus:
         if self.nowtime != self.cronoldtime:
             self.cronoldtime = self.nowtime
             self.cron_sec = 1
-            # print("{:<11} CRON                   1 SEC".format(self.cronoldtime))
-            if not self.cronoldtime % 5:
-                self.cron_sec = 5
-                self.RXtrama += [self.getBoardType(5)] # Chiede ai nodi di inviare in rete le loro caratteristiche
-                # print(self.RXtrama)
-                # print("{:<11} CRON                   1 MIN".format(self.cronoldtime))
+            
+            
+            if not self.cronoldtime % 10:
+                self.cron_sec = 10
+
+                self.TXmsg += [self.timeLoop(8)]
+                self.writeLog()
+            
+            if not self.cronoldtime % 30:
+                self.cron_sec = 30
+                
             if not self.cronoldtime % 60:
                 self.cron_min = 1
-                # print("{:<11} CRON                   1 MIN".format(self.cronoldtime))
+                
+                self.TXmsg.append(self.ping)  # Not remove. Is neccesary to reset shutdown counter        
             
             if not self.cronoldtime % 3600:
                 self.cron_hour = 1
-                # print("{:<11} CRON                   1 HOUR".format(self.cronoldtime))
+                
+                self.TXmsg += [self.getBoardType(8)] # Chiede ai nodi di inviare in rete le loro caratteristiche
             
             if not self.cronoldtime % 14400:
                 self.cron_day = 1
@@ -2771,7 +2799,7 @@ if __name__ == '__main__':
 
             b.arrivatatrama()
             
-            b.writeLog()
+            # b.writeLog()
             
             b.RXtrama = []  # Azzera trama ricezione
 
