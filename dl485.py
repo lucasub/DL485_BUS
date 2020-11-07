@@ -471,10 +471,7 @@ class Bus:
         self.crondata = {} # DICT with periodic command
         self.cronoldtime = self.cron_sec = self.cron_min = self.cron_hour = self.cron_day = 0
         self.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
-        self.TXmsg += [self.getBoardType(0)] # GetTypeBoard Informations
-        self.TXmsg += [self.getBoardType(0)] # GetTypeBoard Informations
         
-
     def getJsonConfig(self, config_file_name):
         """
         Create self.config from JSON configuration file
@@ -531,13 +528,13 @@ class Bus:
 
                         logic_io = int(self.config[b][bb].get('logic_io', 0))
                         if not logic_io:
-                            self.log.write("LOGIC_IO non impostato, boardid={} {}".format(b, bb))
+                            self.log.write("LOGIC_IO non impostato, BoardID={} {}".format(b, bb))
                             sys.exit()
 
                         if not board_id in self.mapiotype: self.mapiotype[board_id] = {}
 
                         inverted = int(self.config[b][bb].get('inverted', 0))
-                        default_startup_value = self.config[b][bb].get('default_startup_value', 0)
+                        
                         # print("-===-",  self.config[b][bb])
                         if 'device_type' in self.config[b][bb]:
                             device_type = self.config[b][bb]['device_type']
@@ -576,7 +573,7 @@ class Bus:
                             'board_type': board_type, # Tipo scheda
                             'rfid_card_code': self.config[b][bb].get('rfid_card_code'),
                             'default_startup_filter_value': int(self.config[b][bb].get('default_startup_filter_value', 0)), # 0 o 1
-                            'default_startup_value': default_startup_value,  # Valore di default allo startup
+                            'default_startup_value': int(self.config[b][bb].get('default_startup_value', 0)),  # Valore di default allo startup
                             'description': self.config[b][bb].get('description', 'NO description'),  # Descrizione IO
                             'device_address': self.config[b][bb].get('address', []),  # Address of I2C / Onewire (serial number for DS18B20)
                             'device_type': device_type, # Tipo di device collegato al PIN del micro
@@ -638,32 +635,26 @@ class Bus:
                             'rms_power_logic_id_ch2': int(self.config[b][bb].get('rms_power_logic_id_ch2', 0)),
                             'rms_power_logic_id_real': int(self.config[b][bb].get('rms_power_logic_id_real', 0)),
                             'rms_power_logic_id_apparent': int(self.config[b][bb].get('rms_power_logic_id_apparent', 0)),
-                            'rms_power_logic_id_cosfi': self.config[b][bb].get('rms_power_logic_id_cosfi', 1),
+                            'rms_power_logic_id_cosfi': self.config[b][bb].get('rms_power_logic_id_cosfi', 0),
+                            'rms_power_logic_id_phase': self.config[b][bb].get('rms_power_logic_id_phase', 0),
                             'rms_power_filter': int(self.config[b][bb].get('rms_power_filter', 30)),
                             'rms_power_mul_ch1': int(self.config[b][bb].get('rms_power_mul_ch1', 10)),
                             'rms_power_mul_ch2': int(self.config[b][bb].get('rms_power_mul_ch2', 10)),
-                            'rms_power_logic_io_offset_enable': int(self.config[b][bb].get('rms_power_logic_io_offset_enable', 0)),
-                            'rms_power_logic_io_offset_ls': int(self.config[b][bb].get('rms_power_logic_io_offset_ls', 0)),
-                            'rms_power_logic_io_offset_ms': int(self.config[b][bb].get('rms_power_logic_io_offset_ms', 0)),
+                            'rms_power_logic_id_offset': int(self.config[b][bb].get('rms_power_logic_id_offset', 0)),
+                            'rms_power_logic_offset_ls': int(self.config[b][bb].get('rms_power_logic_offset_ls', 0)),
+                            'rms_power_logic_offset_ms': int(self.config[b][bb].get('rms_power_logic_offset_ms', 0)),
+                            'rms_power_default_ch2_off': int(self.config[b][bb].get('rms_power_default_ch2_off', 230)),
                             "rms_power_scale_ch1": int(self.config[b][bb].get('rms_power_scale_ch1', 1)),
                             "rms_power_scale_ch2": int(self.config[b][bb].get('rms_power_scale_ch2', 1)),                            
-                            "rms_power_scale_apparent": int(self.config[b][bb].get('rms_power_scale_apparent', 1)),
-                            "rms_power_scale_cosfi": float(self.config[b][bb].get('rms_power_scale_cosfi', 0.001)),
-                            "rms_power_scale_real": int(self.config[b][bb].get('rms_power_scale_real', 1)),
-                            "rms_power_unit_apparent": self.config[b][bb].get('rms_power_unit_apparent', 'VA'),
-                            "rms_power_unit_ch1": self.config[b][bb].get('rms_power_unit_ch1', 'A'),
-                            "rms_power_unit_ch2": self.config[b][bb].get('rms_power_unit_ch2', 'V'),
-                            "rms_power_unit_cosfi": self.config[b][bb].get('rms_power_unit_cosfi', '°'),
-                            "rms_power_scale_real": self.config[b][bb].get('rms_power_unit_real', 'W'),
-
+                            "rms_power_scale": int(self.config[b][bb].get('rms_power_scale', 1)),
                             'round_humidity': int(self.config[b][bb].get('round_humidity', 0)),
                             'round_pression': int(self.config[b][bb].get('round_pression', 0)),
                             'round_temperature': int(self.config[b][bb].get('round_temperature', 1)),
                             'rvcc': int(self.config[b][bb].get('rvcc', 1)),
                             'time_refresh': int(self.config[b][bb].get('time_refresh', 3000)),
                             'type_io': self.device_type_dict[device_type].get('type_io'),
+                            'dunit': self.config[b][bb].get('dunit'),
                             'write_ee': self.config[b][bb].get('write_ee', []),
-
                         }
 
                         app=[]
@@ -859,37 +850,41 @@ class Bus:
                     return round(value, 1)
 
                 elif 'rms_power_logic_id_cosfi' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_cosfi'] ==  logic_io:
-                    value = self.byteLSMS2int(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_cosfi']
-
+                    value = self.byteLSMS2int(value[0], value[1])
                     p_real = self.status[board_id]['io'][self.RMS_POWER_DICT[board_id]['rms_power_logic_id_real'] - 1]
                     p_apparent = self.status[board_id]['io'][self.RMS_POWER_DICT[board_id]['rms_power_logic_id_apparent'] - 1]
-
-                    print("==>>> RMS_POWER BID:{} LogicIO:{} COSFI:{} P.REAL:{} p.APPARENT:{}".format(board_id, logic_io, value, p_real, p_apparent))
-                    # print("==>>> RMS_POWER COSFI {} {} {}".format(board_id, logic_io, value))
+                    # print("==>>> RMS_POWER BID:{} LogicIO:{} COSFI:{} P.REAL:{} p.APPARENT:{}".format(board_id, logic_io, value, p_real, p_apparent))
                     if p_real > 3 or p_apparent > 3:
                         return value
                     return 1000
 
-                elif 'rms_power_logic_io_offset_enable' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_io_offset_enable'] ==  logic_io:
+                elif 'rms_power_logic_id_phase' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_phase'] ==  logic_io:
+                    value = self.byteLSMS2int(value[0], value[1]) / 1000
+                    # print("==>>> RMS_POWER PHASE {} {} {}".format(board_id, logic_io, value))
+                    return round(value, 1)
+
+                elif 'rms_power_logic_id_offset' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_offset'] ==  logic_io:
                     value = self.byteLSMS2uint(value[0], value[1])
-                    
-                    
                     return value
 
                 else:
-                    print(print("=--------------=>>> RMS_POWER DA FARE {} {} {}".format(board_id, logic_io, value)))  
-                    pprint(self.RMS_POWER_DICT[board_id])
+                    print(print("==>>> RMS_POWER DA FARE {} {} {}".format(board_id, logic_io, value)))  
+                    # pprint(self.RMS_POWER_DICT[board_id])
 
             elif plc_function == 'powermeter' :
-                value = value[0] + (value[1] * 256)
+                value = self.byteLSMS2uint(value[0], value[1])
+                # value = value[0] + (value[1] * 256)
                 return adjust(value)
 
-            elif type_io == 'digital' and plc_function == 'time_meter' :
-                return value[0] + (value[1] * 256)
+            elif type_io in ['digital', 'discrete'] and plc_function == 'time_meter' :
+                value = self.byteLSMS2uint(value[0], value[1])
+                # print("time_meter", value)
+                return value
 
             elif plc_function in ['counter_up', 'counter_dw', 'counter_up_dw'] :
                 flag_signed = self.mapiotype[board_id][logic_io]['plc_counter_mode'] & 2
-                value = value[0] + (value[1] * 256)
+                value = self.byteLSMS2uint(value[0], value[1])
+                # value = value[0] + (value[1] * 256)
                 if flag_signed:
                     if value >= 32768:
                         value -= 65536
@@ -1742,7 +1737,7 @@ class Bus:
                 elif direction == 'output':
                     byte1 |= 1
                     default_startup_value = self.mapiotype[board_id][logic_io]['default_startup_value']
-                    default_startup_value = default_startup_value
+                    # default_startup_value = default_startup_value
                     byte2, byte3 = self.calcAddressLsMs8(default_startup_value)
                 else:
                     byte2 = byte3 = 0
@@ -1966,12 +1961,13 @@ class Bus:
                             Offset: 28 - Logic ID potenza reale (V*I) istante per istante
                             Offset: 27 - Logic ID potenza apparente (V*I) istante per istante
                             Offset: 26 - Logic ID COSFI in millesimi da 0 a 1000
-                            Offset: 25 - Costante filtro passabasso 0=1=no filtro - 127 massimo filtro (default: 30)
-                            Offset: 24 - Moltiplicatore scala campioni CH1 consigliato da 1 a 100 (default: 10)
-                            Offset: 23 - Moltiplicatore scala campioni CH2 consigliato da 1 a 100 (default: 10)
-                            Offset: 22 - Logic IO lettura OFFSET (se > 0 abilita la lettura dell'ingresso analogico corrispondente e sovrascrive l'OFFSET campioni LS e MS. Se == 0 bisogna impostare LS e MS)
-                            Offset: 21 - OFFSET campioni LS (ad esempio LS_MS = 512 i campioni letti saranno decrementati di 512)
-                            Offset: 20 - OFFSET campioni MS
+                            Offset: 25 - Logic ID SFASAMENTO in microsecondi
+                            Offset: 24 - Costante filtro passabasso 0=1=no filtro - 127 massimo filtro (default: 30)
+                            Offset: 23 - Moltiplicatore scala campioni CH1 consigliato da 1 a 100 (default: 10)
+                            Offset: 22 - Moltiplicatore scala campioni CH2 consigliato da 1 a 100 (default: 10)
+                            Offset: 21 - Logic IO lettura OFFSET (se > 0 abilita la lettura dell'ingresso analogico corrispondente e sovrascrive l'OFFSET campioni LS e MS. Se == 0 bisogna impostare LS e MS)
+                            Offset: 20 - OFFSET campioni LS (ad esempio LS_MS = 512 i campioni letti saranno decrementati di 512)
+                            Offset: 19 - OFFSET campioni MS
 
                             esempio:
                             Moltiplicatore = 100
@@ -1990,12 +1986,13 @@ class Bus:
                             plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_id_real'] if self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] else 0)
                             plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_id_apparent'] if self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] else 0)
                             plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_id_cosfi'] if self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] else 0)
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_id_phase'] if self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] else 0)
                             plc.append(self.RMS_POWER_DICT[board_id]['rms_power_filter'])
                             plc.append(self.RMS_POWER_DICT[board_id]['rms_power_mul_ch1'])
                             plc.append(self.RMS_POWER_DICT[board_id]['rms_power_mul_ch2']) #if self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] else 0)
-                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_io_offset_enable'])
-                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_io_offset_ls'])
-                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_io_offset_ms'])
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_id_offset'])
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_offset_ls'])
+                            plc.append(self.RMS_POWER_DICT[board_id]['rms_power_logic_offset_ms'])
                             # pprint(self.RMS_POWER_DICT)
                             # print("--------------", plc, board_id)
                             
@@ -2564,35 +2561,35 @@ class Bus:
     def cron(self):
         """
         Operazioni periodiche a tempo
-        """
+        """ 
         self.cron_sec = self.cron_min = self.cron_hour = self.cron_day = 0
-
         if self.nowtime != self.cronoldtime:
             self.cronoldtime = self.nowtime
             self.cron_sec = 1
             
             
             if not self.cronoldtime % 10:
-                self.cron_sec = 10
+                self.cron_sec = 10 # Dont remove
 
-                self.TXmsg += [self.timeLoop(8)]
                 self.writeLog()
-            
+                # self.TXmsg += [self.timeLoop(8)]
+                
             if not self.cronoldtime % 30:
-                self.cron_sec = 30
+                self.cron_sec = 30 # Dont remove
+                # self.TXmsg += [self.getBoardType(0)]
                 
             if not self.cronoldtime % 60:
-                self.cron_min = 1
+                self.cron_min = 1 # Dont remove
                 
                 self.TXmsg.append(self.ping)  # Not remove. Is neccesary to reset shutdown counter        
             
             if not self.cronoldtime % 3600:
-                self.cron_hour = 1
+                self.cron_hour = 1 # Dont remove
                 
-                self.TXmsg += [self.getBoardType(8)] # Chiede ai nodi di inviare in rete le loro caratteristiche
+                self.TXmsg += [self.getBoardType(0)] # Chiede ai nodi di inviare in rete le loro caratteristiche
             
             if not self.cronoldtime % 14400:
-                self.cron_day = 1
+                self.cron_day = 1 # Dont remove
                 # print("{:<11} CRON                   1 DAY".format(self.cronoldtime))
 
 
