@@ -611,6 +611,7 @@ class Bus:
                             'plc_linked_board_id_logic_io': self.config[b][bb].get('plc_linked_board_id_logic_io', []),
                             'plc_mode_timer': int(self.config[b][bb].get('plc_mode_timer', 0)),
                             'plc_params': self.config[b][bb].get('plc_params', 0),
+                            'plc_powermeter_k': int(self.config[b][bb].get('plc_powermeter_k', 0)),
                             'plc_preset_input': int(self.config[b][bb].get('plc_preset_input', 0)),
                             'plc_rfid_ack_wait': int(self.config[b][bb].get('plc_rfid_ack_wait', 50)),
                             'plc_rfid_unit_tpolling_nocard': int(self.config[b][bb].get('plc_rfid_unit_tpolling_nocard', 10)),
@@ -627,7 +628,6 @@ class Bus:
                             'power_on_tmin_off' : int(self.config[b][bb].get('power_on_tmin_off', 0)),
                             'power_on_voltage_off' : float(self.config[b][bb].get('power_on_voltage_off', 0)),
                             'power_on_voltage_on' : float(self.config[b][bb].get('power_on_voltage_on', 0)),
-                            'powermeter_k': int(self.config[b][bb].get('powermeter_k', 0)),
                             'pullup': self.config[b][bb].get('pullup', self.device_type_dict[device_type].get('pullup', 0)),
                             'rgnd': int(self.config[b][bb].get('rgnd', 100000)),
                             'rms_power_mode': int(self.config[b][bb].get('rms_power_mode', 0)),
@@ -2192,8 +2192,8 @@ class Bus:
                             plc += list(self.calcAddressLsMs8(plc_counter_timeout))
                             plc_counter_min_period_time = self.mapiotype[board_id][logic_io]['plc_counter_min_period_time']
                             plc.append(plc_counter_min_period_time)
-                            powermeter_k = self.mapiotype[board_id][logic_io]['powermeter_k']
-                            plc += list(self.calcAddressLsMs8(powermeter_k))
+                            plc_powermeter_k = self.mapiotype[board_id][logic_io]['plc_powermeter_k']
+                            plc += list(self.calcAddressLsMs8(plc_powermeter_k))
 
                         elif sbyte8 in  ['and', 'nand',   'or', 'nor', 'xor', 'nxor', 'odd', 'even', 'toggle_off', 'toggle_on', 'toggle_on_off']:
                             plc.append(plc_time_unit_app)
