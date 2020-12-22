@@ -603,7 +603,7 @@ class Bus:
                             'plc_byte_list_io': [],
                             'plc_counter_filter': self.config[b][bb].get('plc_counter_filter', 0),
                             'plc_counter_min_period_time': int(self.config[b][bb].get('plc_counter_min_period_time', 0)),
-                            'plc_counter_mode': int(self.config[b][bb].get('plc_counter_mode', 0)),
+                            'plc_counter_mode': int(self.config[b][bb].get('plc_counter_mode', 256)), # inizializza con 256 che significa che non è stato inizializzato correttamente
                             'plc_counter_timeout': int(self.config[b][bb].get('plc_counter_timeout', 0)),
                             'plc_delay_off_on': int(self.config[b][bb].get('plc_delay_off_on', 0)),
                             'plc_delay_on_off': int(self.config[b][bb].get('plc_delay_on_off', 0)),
@@ -882,7 +882,10 @@ class Bus:
                 return value
 
             elif plc_function in ['counter_up', 'counter_dw', 'counter_up_dw'] :
-                flag_signed = self.mapiotype[board_id][logic_io]['plc_counter_mode'] & 2
+                plc_counter_mode = self.mapiotype[board_id][logic_io]['plc_counter_mode']
+                if plc_counter_mode > 255:
+                    self.logErrorParameter('plc_counter_mode', plc_function, board_id, logic_io, msg='')
+                flag_signed = plc_counter_mode & 2
                 value = self.byteLSMS2uint(value[0], value[1])
                 # value = value[0] + (value[1] * 256)
                 if flag_signed:
@@ -1635,6 +1638,10 @@ class Bus:
         TXtrama.append(self.boardReboot(board_id))
         return(TXtrama)
 
+    def logErrorParameter(self, parameter, function, board_id, logic_io, msg=''):
+        print("ERROR!!! {} NON INIZIALIZZATO: funzione {}, board_id:{}, logic_io:{}".format(parameter, function, board_id, logic_io, msg))
+        sys.exit()
+
     def getConfiguration(self):
         """
         Make configuration to send to board
@@ -2144,6 +2151,8 @@ class Bus:
 
                         elif sbyte8 in ['counter_up', 'counter_dw']:
                             plc_counter_mode = self.mapiotype[board_id][logic_io]['plc_counter_mode']
+                            if plc_counter_mode > 255:
+                                self.logErrorParameter('plc_counter_mode', sbyte8, board_id, logic_io, msg='')
                             plc.append(plc_counter_mode)
                             plc_counter_filter = self.mapiotype[board_id][logic_io]['plc_counter_filter']
                             plc.append(plc_counter_filter)
@@ -2153,6 +2162,8 @@ class Bus:
                         elif sbyte8 in ['counter_up_dw']:
                             """ ingresso dispari incrementa - ingresso pari decrementa """
                             plc_counter_mode = self.mapiotype[board_id][logic_io]['plc_counter_mode']
+                            if plc_counter_mode > 255:
+                                self.logErrorParameter('plc_counter_mode', sbyte8, board_id, logic_io, msg='')
                             plc.append(plc_counter_mode)
                             plc_counter_filter = self.mapiotype[board_id][logic_io]['plc_counter_filter']
                             plc.append(plc_counter_filter)
@@ -2161,6 +2172,8 @@ class Bus:
 
                         elif sbyte8 == 'time_meter':
                             plc_counter_mode = self.mapiotype[board_id][logic_io]['plc_counter_mode']
+                            if plc_counter_mode > 255:
+                                self.logErrorParameter('plc_counter_mode', sbyte8, board_id, logic_io, msg='')
                             plc.append(plc_counter_mode)
                             plc_counter_filter = self.mapiotype[board_id][logic_io]['plc_counter_filter']
                             plc.append(plc_counter_filter)
@@ -2169,6 +2182,9 @@ class Bus:
 
                         elif sbyte8 == 'powermeter':
                             plc_counter_mode = self.mapiotype[board_id][logic_io]['plc_counter_mode']
+                            if plc_counter_mode > 255:
+                                self.logErrorParameter('plc_counter_mode', sbyte8, board_id, logic_io, msg='')
+                                
                             plc.append(plc_counter_mode)
                             plc_counter_filter = self.mapiotype[board_id][logic_io]['plc_counter_filter']
                             plc.append(plc_counter_filter)
