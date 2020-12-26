@@ -192,6 +192,21 @@ class Bus:
 
     }
 
+
+    # Tipi di Board disponibili. Non modificare
+    board_type_available = {
+        "DL485M": 1,
+        "DL485B": 2,
+        "DL485Pold": 3, #scheda tipo 3 vecchia sostituita con 5
+        "DL485R": 4,
+        "DL485P": 5,
+        "1": "DL485M",
+        "2": "DL485B",
+        "3": "DL485Pold",
+        "4": "DL485R",
+        "5": "DL485P",
+    }
+
     # Function PIN map: I=input, O=output, P=pwm, SDA=sda, VCC=VCC, GND=GND, X=xtal, PROG=prog_button, LED_TX=led TX,
     #                  LED_RX=led RX, MO=MOSI, MI=MISO, SC=Serial clock, TX_BUS=BUS, AT=Atemega temp,
     mapmicro = {  # MAP PIN Atmega328P QFN32PIN
@@ -447,6 +462,7 @@ class Bus:
         self.getJsonConfig(config_file_name)
         self.BOARD_ADDRESS = int(self.config['GENERAL_NET']['board_address'])  # Legge ID assegnato a Raspberry PI per accedere al Bus
         self.MAX_BOARD_ADDRESS = int(self.config['GENERAL_NET'].get('max_board_address', 63))  # Legge ID assegnato a Raspberry PI per accedere al Bus
+        self.checkConfigFile()
         self.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo boards attive)
         self.bus_baudrate = int(self.config['GENERAL_NET']['bus_baudrate'])  # Legge la velocità del BUS
         self.bus_port = self.config['GENERAL_NET']['bus_port']  # Legge la porta del BUS di Raspberry PI
@@ -484,6 +500,70 @@ class Bus:
         config = json.loads(config)
         self.config = config
 
+    def recursiveKeyOnDict(self, d, target):
+        print("recursiveKeyOnDict")
+        for key, value in d.items():
+            yield key
+            if isinstance(value, dict):
+                yield from self.recursiveKeyOnDict(value, key)
+            # elif key == target:
+            #     print("-----  ", key, target)
+            #     yield key
+
+    def checkConfigFile(self):
+        print("== checkConfigFile == \n")
+        # k = []
+        # for x in self.recursiveKeyOnDict(self.config, ''):
+        #     if x not in k:
+        #         k.append(x)
+        # print(k)
+
+        key_general_net = ['bus_port', 'bus_baudrate', 'max_board_address', 'board_address', 'telegram_token', 'telegram_enable', 'overwrite_text', 'send_configuration']
+        
+        for c in self.config:
+            if c == 'TYPEB':
+                print("""ERROR!!! file config.json is old type.\nPlease delete TYPEB dictionary and change board_type on GENERAL_BOARD with board_type_name: Example: "board_type_name": "DL485M",""")
+                sys.exit()
+            
+            for cc in self.config[c]:
+                print()
+                if c == "GENERAL_NET":
+                    if cc not in key_general_net: # key scritta male o in modo errato o non esistente
+                        print("""ERROR config.json!!!: wrong key "{}" on GENERAL_NET section.""".format(cc))                 
+                    else:
+                        key_general_net.remove(cc)
+                
+                elif 'BOARD' in c:
+                    if self.config[c][cc].get('device_type') == 'DS18B20':
+                        key_DS18B20 = ['enable', 'logic_io', 'device_type', 'time_refresh', 'name', 'description']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_DS18B20:
+                                print("""ERROR config.json in board: {} logic_io: {}!!!: wrong key "{}" on {} section.""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))                 
+                            else:
+                                key_DS18B20.remove(ccc)
+                        
+                        if key_DS18B20:
+                            print("""ERROR config.json!!!: key "{}" missing on {} section.""".format(key_DS18B20, self.config[c][cc].get('device_type')))                    
+                            sys.exit()
+
+
+                    if self.config[c][cc].get('device_type') == 'TEMP_ATMEGA':
+                        key_TEMP_ATMEGA = ['enable', 'logic_io', 'device_type', 'time_refresh', 'name', 'description']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_TEMP_ATMEGA:
+                                print("""ERROR config.json in board: {} logic_io: {}!!!: wrong key "{}" on {} section.""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))                 
+                            else:
+                                key_TEMP_ATMEGA.remove(ccc)
+                        
+                        if key_TEMP_ATMEGA:
+                            print("""ERROR config.json!!!: key "{}" missing on {} section.""".format(key_TEMP_ATMEGA, self.config[c][cc].get('device_type')))                    
+                            # sys.exit()
+       
+        if key_general_net:
+            print("""ERROR config.json!!!: key "{}" missing on GENERAL_NET section.""".format(key_general_net))
+    
+        # sys.exit()
+
     def dictBoardIo(self):
         """
         Crea la mappa dove saranno inseriti i valori dei vari di tutti gli IO presenti in self.config
@@ -493,23 +573,13 @@ class Bus:
             if 'BOARD' in b:
                 board_id = int(b[5:])
                 self.status[board_id] = {} # Dict with all IO status
-                board_type = int(self.config[b]['GENERAL_BOARD']['board_type'])
-                self.status[board_id]['board_type'] = board_type
-                name = self.config[b]['GENERAL_BOARD']['name'] # Board name
-                self.status[board_id]['name'] = name
-                
-                try:
-                    self.status[board_id]['io'] = [0] * len(self.iomap[board_type])
-                    self.status[board_id]['boardtypename'] = self.config['TYPEB']["%s" %board_type]
-                except:
-                    self.log.write("BOARD TYPE %s non esistente" %board_type)
-                    sys.exit()
-
                 board_enable = 0
+                
                 for bb in self.config[b]:
                     if 'GENERAL_BOARD' in bb:
                         board_enable = self.config[b][bb]['enable']  # Board enable
-                        board_type = self.config[b][bb]['board_type']
+                        self.status[board_id]['boardtypename'] = self.config[b][bb]['board_type_name']
+                        board_type = self.board_type_available[self.config[b][bb]['board_type_name']] 
                         if not board_enable:
                             self.log.write("{:<7} DISABILITATA".format(b))
                     if 'RMS_POWER_CONF' in bb:
@@ -517,7 +587,16 @@ class Bus:
                             self.RMS_POWER_DICT[board_id] = {}
                         self.RMS_POWER_DICT[board_id] = self.config[b]['RMS_POWER_CONF']
 
-                    
+                self.status[board_id]['board_type'] = board_type
+                name = self.config[b]['GENERAL_BOARD']['name'] # Board name
+                self.status[board_id]['name'] = name
+                
+                try:
+                    self.status[board_id]['io'] = [0] * len(self.iomap[board_type])
+                    # self.status[board_id]['boardtypename'] = self.config['TYPEB']["%s" %board_type]
+                except:
+                    self.log.write("BOARD TYPE %s non esistente" %board_type)
+                    sys.exit()    
                         
                 for bb in self.config[b]:
                     if not 'GENERAL_BOARD' in bb:
@@ -656,7 +735,7 @@ class Bus:
                             'dunit': self.config[b][bb].get('dunit'),
                             'write_ee': self.config[b][bb].get('write_ee', []),
                         }
-
+                        
                         app=[]
                         plc_xor_input = 0
                         plc_byte_list_io = []
@@ -680,6 +759,7 @@ class Bus:
                         self.mapiotype[board_id][logic_io]['plc_linked_board_id_logic_io'] = app
                         self.mapiotype[board_id][logic_io]['plc_xor_input'] = plc_xor_input
                         self.mapiotype[board_id][logic_io]['plc_byte_list_io'] = plc_byte_list_io
+
 
     def make_inverted(self, board_id, logic_io, value):
         """
