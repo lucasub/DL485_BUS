@@ -96,21 +96,14 @@
 #        1               => invertita
 #
 
+// Board Type Available:
+// "DL485M": 1,
+// "DL485B": 2,
+// "DL485R": 4,
+// "DL485P": 5,
+
 { #inizio file
-    # Tipi di Board disponibili. Non modificare
-    "TYPEB": {
-        "DL485M": 1,
-        "DL485B": 2,
-        "DL485Pold": 3, #scheda tipo 3 vecchia sostituita con 5
-        "DL485R": 4,
-        "DL485P": 5,
-        "1": "DL485M",
-        "2": "DL485B",
-        "3": "DL485Pold",
-        "4": "DL485R",
-        "5": "DL485P"
-    },
-    
+        
     # Configurazione generale del BUS
     "GENERAL_NET": {
         "bus_port": "/dev/ttyAMA0", # Porta seriale Raspberry PI
@@ -126,7 +119,7 @@
     "BOARD8": { # RMS POWER TEST
         "GENERAL_BOARD": {
             "name": "SCHEDA RMS", # Nome della BOARD
-            "board_type": 2, # Tipo di Board: Vedi TYPEB
+            "board_type_name": "DL485B", # Tipo di Board: Vedi TYPEB
             "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
 
@@ -152,6 +145,7 @@
             "rms_power_logic_offset_ls": 0, # valori di default per offset ch1 e ch2 se mancasse il canale di acquisizione offset, in totale ms/ls è circa 512, quindi ms=2, ls=0
             "rms_power_logic_offset_ms": 0
         },
+        
         "VIN": { # Tensione alimentazione BOARD
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 1, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
@@ -171,20 +165,19 @@
             "description": "Temperatura Board ATMEGA328PB",
             "dtype": "Temperature"
         },
-        "SDA": { # Conta Impulsi
+        "SDA": { # temperatura
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 3, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 600, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "DS18B20",
             "inverted": 0,
             "name": "DS18B20", # Nome che verrà riportato su DOMOTICZ
-            "description": "DS18B20", # Descrizione che verrà riportato su DOMOTICZ
-            "dtype": "Temperature"
+            "description": "DS18B20" # Descrizione che verrà riportato su DOMOTICZ
         },
         "IO1": { # Corrente TA
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 4, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
-            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "time_refresh": 60, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "ANALOG_IN",
             "plc_function": "rms_power",
             "name": "TA", # Nome che verrà riportato su DOMOTICZ
@@ -208,7 +201,7 @@
             "device_type": "ANALOG_IN",
             "plc_function": "rms_power",
             "name": "OFFSET", # Nome che verrà riportato su DOMOTICZ
-            "description": "OFFSET", # Descrizione che verrà riportato su DOMOTICZ
+            "description": "OFFSET vrif TA", # Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Custom Sensor",
             "dunit": "mV"
         },
@@ -254,54 +247,51 @@
             "dunit": "mS"
         },
 
-        "IO4": { # LDR
+        "IO4": { # LDR per rilevare impulsi
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 11, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "DIGITAL_IN_PULLUP",
-            "filter": 1, # Tenere basso in quanto il lampo del contatore dura veramente poco
-            "name": "LDR", # Nome che verrà riportato su DOMOTICZ
-            "description": "LDR", # Descrizione che verrà riportato su DOMOTICZ
-            "dtype": "kWh"
+            "inverted":1,
+            "filter": 1, # Valore basso del filtro perchè il lampo del contatore dura poco
+            "name": "SENS. IMPULSI", # Nome che verrà riportato su DOMOTICZ
+            "description": "LDR" # Descrizione che verrà riportato su DOMOTICZ
         },
 
-        "VIRT5": {
+        "VIRT5": { # stima potenza dal tempo tra impulsi
             "enable": 1,
             "logic_io": 12,
             "device_type": "VIRTUAL",
             "filter": 1,
-            "time_refresh": 100,
             "default_startup_value": 0,
             "time_refresh": 600,
             "plc_function": "powermeter",
-            "counter_mode": 27, # b11011 memoria del valore precendente e aggiorna dato a periodo ottenuto, azzera tempo ad ogni start a conteggio finito. Considera end come nuovo start, end su fronte ON
-            "powermeter_k": 60000, # numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
-            "kmul": 6,
+            "plc_counter_mode": 27, # b011011, memoria del valore precendente e aggiorna dato a periodo ottenuto (b5b4=01), 
+                                # azzera tempo ad ogni start a conteggio finito (b3=1),
+                                # considera end come nuovo start (b1=1), 
+                                # end su fronte ON (b0=1)
+            "plc_powermeter_k": 60000, # numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale) questo perchè il campo a 16 bit non consente di scrivere 360000
+            "kmul": 6, #moltiplica per 6 la lettura di 1/6 della potenza
             "kadd": 0,
-            "plc_time_unit": 0.01, // Centesimi di secondo per la misura del periodo
-            "counter_filter": 0, # non usato
-            "counter_timeout": 500, # 5 secondi
-            "plc_linked_board_id_logic_io": [
-                "*-11"
-            ],
+            "plc_counter_filter": 0, # non usato
+            "plc_time_unit": 0.01, # Centesimi di secondo per la misura del periodo impulsi
+            "plc_counter_timeout": 500, # 500 centesimi=5 secondi 
+            "plc_linked_board_id_logic_io": ["*-11"], # usa ingresso LDR
             "name": "POWER METER",
             "description": "POWER METER",
-            "dtype": "Current (Single)"
+            "dtype": "kWh"
         },
-        "OUT1": { # LDR fa scattare il relè
+        "OUT1": { # replica di LDR per sentire il suono dell'impulso tramite rele
             "enable": 1,
             "logic_io": 13,
             "device_type": "DIGITAL_OUT",
             "default_startup_value": 0,
-            "inverted": 1,
-            "filter": 10,
+            "filter": 1,
             "time_refresh": 600,
-            "plc_function": "equal", // PLC function
-            "plc_linked_board_id_logic_io": [ // PLC inputs
-                "*-11"
-            ],
+            "plc_function": "nequal", // PLC function, invertito con nequal perche il relè è invertito
+            "plc_linked_board_id_logic_io": ["*-11"], //usa ingresso LDR 
             "plc_time_unit": 0.01, // Time unit (1: 1 second - 0.1 - 0.01 - 2.5)
-            "plc_tmax_on": 10, // Max time output ON, if omitted: default = 65635 (infinite)
+            #"plc_tmax_on": 10, // Max time output ON, if omitted: default = 65635 (infinite)
             "plc_delay_on_off": 0, // Delay ON->OFF, if omitted: default = 0
             "plc_delay_off_on": 0, // Delay OFF->ON, if omitted: default = 0
             "name": "LDR RELE",
@@ -309,23 +299,21 @@
             "dtype": "Switch"
         },
         "VIRT6": {
-            "enable": 1, # Mostra il numero di impulsi
+            "enable": 1, # conta impulsi
             "logic_io": 14,
             "device_type": "VIRTUAL",
             "default_startup_value": 0,
             "inverted": 1,
             "filter": 127,
             "time_refresh": 600,
-            "plc_function": "time_meter",
-            "counter_mode": 27, # b11011
-            "counter_filter": 0, # non usato
-            "counter_timeout": 65535, # 5 secondi
-            "plc_linked_board_id_logic_io": [
-                "*-11"
-            ],
-            "name": "time_meter",
-            "description": "time_meter",
-            "dtype": "Current (Single)"
+            "plc_function": "counter_up",
+            "plc_counter_mode": 0, # b00000
+            "plc_counter_filter": 0, # non usato
+            "plc_counter_timeout": 65535, # mai
+            "plc_linked_board_id_logic_io": ["*-11"], //usa ingresso LDR
+            "name": "watt ora",
+            "description": "watt ora rilevati da LDR",
+            "dtype": "kWh"
         }
     },
 
@@ -333,7 +321,7 @@
         # Configurazione generale della BOARD
         "GENERAL_BOARD": {
             "name": "SCHEDA MASTER", # Nome della BOARD
-            "board_type": 1, # Tipo di Board: Vedi TYPEB
+            "board_type_name": "DL485M", # Tipo di Board: Vedi TYPEB
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
@@ -441,7 +429,7 @@
     "BOARD4": {
         "GENERAL_BOARD": {
             "name": "SCHEDA RELE", # Nome della BOARD
-            "board_type": 4, # Tipo di Board: Vedi TYPEB
+            "board_type_name": "DL485R", # Tipo di Board: Vedi TYPEB
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
@@ -500,7 +488,7 @@
             "default_startup_value": 0, #valore preset uscita prima del primo calcolo
             "plc_function": "powermeter",
             "plc_counter_mode": 27, # b11011 memoria del valore precendente e aggiorna dato a periodo ottenuto, azzera tempo ad ogni start a conteggio finito. Considera end come nuovo start, end si fronte ON
-            "powermeter_k": 60000, # numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
+            "plc_powermeter_k": 60000, # numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
             "plc_time_unit": 0.01, # Centesimi di secondo
             "plc_counter_timeout": 500, # 5 secondi
             "plc_counter_min_period_time": 150, # (150 centesimi) Se ad esempio gli impulsi arrivassero ogni 40 centesimi, si aspettano 4 periodi, per superare questo tempo, poi si calcola il periodo tenendo conto degli impulti attivati e del tempo trascorso
@@ -599,7 +587,7 @@
     "BOARD3": { # Configurazione generale della BOARD
         "GENERAL_BOARD": {
             "name": "SCHEDA CONTATORE", # Nome della BOARD
-            "board_type": 1, # Tipo di Board: Vedi TYPEB
+            "board_type_name": "DL485M", # Tipo di Board: Vedi TYPEB
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
@@ -656,7 +644,7 @@
     "BOARD5": {
         "GENERAL_BOARD": {
             "name": "SCHEDA CONTATORE", # Nome della BOARD
-            "board_type": 5, # Tipo di Board: Vedi TYPEB
+            "board_type_name": "DL485P", # Tipo di Board: Vedi TYPEB
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
@@ -719,9 +707,9 @@
             "plc_linked_board_id_logic_io": [
                 "*-11"
             ],
-            "counter_mode": 0,
-            "counter_filter": 0, # non usato
-            "counter_timeout": 65535, # escluso
+            "plc_counter_mode": 0,
+            "plc_counter_filter": 0, # non usato
+            "plc_counter_timeout": 65535, # escluso
             "name": "WATTORA",
             "description": "WATT per ORA",
             "dtype": "Counter Incremental" # contatore
@@ -735,12 +723,12 @@
             "filter": 10,
             "time_refresh": 600,
             "plc_function": "powermeter",
-            "counter_mode": 27, # b11011 memoria del valore precendente e aggiorna dato a periodo ottenuto, azzera tempo ad ogni start a conteggio finito. Considera end come nuovo start, end su fronte ON
-            "powermeter_k": 60000, # numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
+            "plc_counter_mode": 27, # b11011 memoria del valore precendente e aggiorna dato a periodo ottenuto, azzera tempo ad ogni start a conteggio finito. Considera end come nuovo start, end su fronte ON
+            "plc_powermeter_k": 60000, # numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
             "kmul": 6,
             "kadd": 0,
-            "counter_filter": 0, # non usato
-            "counter_timeout": 500, # 5 secondi
+            "plc_counter_filter": 0, # non usato
+            "plc_counter_timeout": 500, # 5 secondi
             "plc_linked_board_id_logic_io": [
                 "*-11"
             ],
@@ -757,9 +745,9 @@
             "filter": 127,
             "time_refresh": 600,
             "plc_function": "time_meter",
-            "counter_mode": 27, # b11011
-            "counter_filter": 0, # non usato
-            "counter_timeout": 65535, # 5 secondi
+            "plc_counter_mode": 27, # b11011
+            "plc_counter_filter": 0, # non usato
+            "plc_counter_timeout": 65535, # 5 secondi
             "plc_linked_board_id_logic_io": [
                 "*-11"
             ],
@@ -771,7 +759,7 @@
     "BOARD7": { #board di prova per video
         "GENERAL_BOARD": {
             "name": "BUS", # Nome della BOARD
-            "board_type": 5, # Tipo di Board: Vedi TYPEB
+            "board_type_name": "DL485P", # Tipo di Board: Vedi TYPEB
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
@@ -940,8 +928,8 @@
             "enable": 1,
             "logic_io": 15,
             "device_type": "DS18B20",
-            "time_refresh": 60,
-            "device_name": "DS18B20",
+            "time_refresh": 600,
+            "device_type": "DS18B20",
             "name": "DS18B20 Secco",
             "description": "Sensore Temperatura SECCO"
         },
@@ -949,7 +937,7 @@
             "enable": 1,
             "logic_io": 16,
             "device_type": "DS18B20",
-            "time_refresh": 60,
+            "time_refresh": 600,
             "name": "DS18B20 Umido",
             "description": "Sensore Temperatura UMIDO"
         },
