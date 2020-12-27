@@ -1,6 +1,8 @@
 26/12/2020
-Modificato config.json
-	eliminato dizionario TYPEB e spostato su DL485.py con nome board_type_available
-	modificato key board_type con board_type_name dove come parametro va inserito il nome della board anziché l'ID
+  Modificato config.json
+    eliminato dizionario TYPEB e spostato su DL485.py con nome board_type_available
+    modificato key board_type con board_type_name dove come parametro va inserito il nome della board anziché l'ID
 
-Aggiunta funzione checkConfigFile per controllo parziale config.json
+  Aggiunta funzione checkConfigFile per controllo parziale config.json
+27/12/2020
+  aggiunto exxezione per file config.json con errori
