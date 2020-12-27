@@ -1,7 +1,7 @@
-# File di configurazione DL485
-# COMMENTI DEVONO INIZIARE SOLO CON # OPPURE con  #
+// File di configurazione DL485
+// COMMENTI DEVONO INIZIARE SOLO CON # OPPURE con
 
-# Dispositivi / Device Domoticz. Not all device are working and implemented
+// Dispositivi / Device Domoticz. Not all device are working and implemented
 // 'Temperature'                   : { 'Type': 80,         'SubType': 5,       'SwitchType': False},
 // 'Humidity'                      : { 'Type': 81,         'SubType': 1,       'SwitchType': False},
 // 'Temp+Hum'                      : { 'Type': 82,         'SubType': 1,       'SwitchType': False},
@@ -170,7 +170,6 @@
             "logic_io": 3, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 600, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "DS18B20",
-            "inverted": 0,
             "name": "DS18B20", # Nome che verrà riportato su DOMOTICZ
             "description": "DS18B20" # Descrizione che verrà riportato su DOMOTICZ
         },
@@ -286,7 +285,6 @@
             "logic_io": 13,
             "device_type": "DIGITAL_OUT",
             "default_startup_value": 0,
-            "filter": 1,
             "time_refresh": 600,
             "plc_function": "nequal", // PLC function, invertito con nequal perche il relè è invertito
             "plc_linked_board_id_logic_io": ["*-11"], //usa ingresso LDR 
@@ -357,7 +355,6 @@
             "device_type": "DIGITAL_OUT",
             "default_startup_filter_value": 1,
             "time_refresh": 2000,
-            "filter": 20,
             "inverted": 1,
             "name": "pulsante",
             "description": "pulsantexxx",
@@ -419,7 +416,7 @@
             "plc_linked_board_id_logic_io": [
                 "4-1"
             ],
-            "rfid_card_code": [102, 235, 87, 142, 152, 0],
+            "plc_rfid_card_code": [102, 235, 87, 142, 152, 0],
             "time_refresh": 120,
             "name": "RFID_CARD",
             "description": "RFID_CARD"
@@ -474,7 +471,6 @@
             "logic_io": 5,
             # "device_type": "DIGITAL_IN_PULLUP",
             "device_type": "DS18B20",
-            "filter": 10,
             "time_refresh": 600,
             "name": "IO3",
             "description": "Ingresso IO3"
@@ -562,7 +558,7 @@
             "plc_linked_board_id_logic_io": [
                 "*-10"
             ],
-            "rfid_card_code": [70, 71, 72, 73, 74, 75],
+            "plc_rfid_card_code": [70, 71, 72, 73, 74, 75],
             "time_refresh": 600,
             "name": "OUT2 RFID_CARD",
             "description": "OUT2 RFID_CARD",
@@ -576,7 +572,7 @@
             "plc_linked_board_id_logic_io": [
                 "*-10"
             ],
-            "rfid_card_code": [117, 105, 116, 46, 99, 111],
+            "plc_rfid_card_code": [117, 105, 116, 46, 99, 111],
             "time_refresh": 600,
             "name": "OUT1 RFID_CARD",
             "description": "OUT1 RFID_CARD",
@@ -720,7 +716,6 @@
             "device_type": "DIGITAL_OUT",
             "default_startup_value": 0,
             "inverted": 1,
-            "filter": 10,
             "time_refresh": 600,
             "plc_function": "powermeter",
             "plc_counter_mode": 27, # b11011 memoria del valore precendente e aggiorna dato a periodo ottenuto, azzera tempo ad ogni start a conteggio finito. Considera end come nuovo start, end su fronte ON
@@ -742,7 +737,6 @@
             "device_type": "DIGITAL_OUT",
             "default_startup_value": 0,
             "inverted": 1,
-            "filter": 127,
             "time_refresh": 600,
             "plc_function": "time_meter",
             "plc_counter_mode": 27, # b11011
@@ -765,11 +759,10 @@
         "VIN": { # Tensione alimentazione BOARD
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 1, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
-            "direction": "input", # Valori: input, output. Direzione dell' IO
             "device_type": "VINR1R2", # Valori: analog, digital, i2c, onewire, disable. Tipo IO
             "time_refresh": 1800, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            "Rvcc": 12000, # Valore resistenza posta tra IO e ingresso alimentazione.
-            "Rgnd": 470, # Valore resistenza posta tra IO e 0V.
+            "rvcc": 12000, # Valore resistenza posta tra IO e ingresso alimentazione.
+            "rgnd": 470, # Valore resistenza posta tra IO e 0V.
             "name": "Vin", # Nome che verrà riportato su DOMOTICZ
             "description": "Tensione alimentazione scheda" # Descrizione che verrà riportato su DOMOTICZ
         },
@@ -785,7 +778,6 @@
             "enable": 1,
             "logic_io": 3,
             "device_type": "DIGITAL_IN_PULLUP",
-            "pullup": 3,
             "time_refresh": 1800,
             "filter": 20,
             "inverted": 1,
@@ -796,7 +788,6 @@
             "enable": 1,
             "logic_io": 4,
             "device_type": "DIGITAL_IN_PULLUP",
-            "pullup": 3,
             "time_refresh": 1800,
             "filter": 20,
             "inverted": 1,
