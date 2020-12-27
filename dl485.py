@@ -361,8 +361,6 @@ class Bus:
             'PE2':          {'pin':  19},
             'SDA':          {'pin':  27},
             'SCL':          {'pin':  28},
-            'PE0':          {'pin':   3},
-            'PE1':          {'pin':   6},
             'PE2':          {'pin':  19},
             'VIN':          {'pin':  22, 'function': ['VIN']},
             'TEMP_ATMEGA':  {'pin':  37},
@@ -475,7 +473,7 @@ class Bus:
         self.BUFF_MSG_TX = {} # dizionario dei messaggi trasmessi indicizzato secondo indirizzo destinatario
         self.NLOOPTIMEOUT = 4  # numero di giri del loop dopo i quali si ritrasmettera il messaggio
         self.Connection = False   # Setup serial
-        self.ping = self.ping()  # init variabile di appoggio con ping di questo nodo
+        # self.ping = self.ping()  # init variabile di appoggio con ping di questo nodo
         self.BME = {}
         self.send_configuration = int(self.config['GENERAL_NET'].get('send_configuration', 1))  # Flag per inviare la configurazone dei nodi al boot
         self.telegram_enable = int(self.config['GENERAL_NET'].get('telegram_enable', False))  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
@@ -487,7 +485,14 @@ class Bus:
         self.crondata = {} # DICT with periodic command
         self.cronoldtime = self.cron_sec = self.cron_min = self.cron_hour = self.cron_day = 0
         self.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
-        
+
+    def ping(self):
+        """
+        Make Ping
+        """
+        data = [self.BOARD_ADDRESS]
+        return data
+
     def getJsonConfig(self, config_file_name):
         """
         Create self.config from JSON configuration file
@@ -497,8 +502,16 @@ class Bus:
         config = re.sub(r'#.*\n', '\n', config)
         config = re.sub(r'\\\n', '', config)
         config = re.sub(r'//.*\n', '\n', config)
-        config = json.loads(config)
-        self.config = config
+        try:
+            config = json.loads(config)
+            self.config = config
+        except json.decoder.JSONDecodeError as e:
+            print("Error into config.json file: ", e)
+            sys.exit()
+        except TypeError as e:
+            print("Error into config.json file: ", e)
+            sys.exit()
+        
 
     def recursiveKeyOnDict(self, d, target):
         print("recursiveKeyOnDict")
@@ -510,6 +523,7 @@ class Bus:
             #     print("-----  ", key, target)
             #     yield key
 
+    
     def checkConfigFile(self):
         print("== checkConfigFile == \n")
         # k = []
@@ -519,6 +533,9 @@ class Bus:
         # print(k)
 
         key_general_net = ['bus_port', 'bus_baudrate', 'max_board_address', 'board_address', 'telegram_token', 'telegram_enable', 'overwrite_text', 'send_configuration']
+        key_general = ['Custom Sensor', 'description', 'device_type', 'dtype', 'dunit', 'enable', 'kadd', 'kmul', 'logic_io', 'name', 'n_refresh_off', 'n_refresh_on', 'time_refresh']
+        key_plc = ['plc_counter_filter', 'plc_counter_mode', 'plc_counter_timeout', 'plc_delay_off_on', 'plc_delay_on_off', 'plc_function', 'plc_linked_board_id_logic_io',
+            'plc_mode_timer', 'plc_powermeter_k', 'plc_rfid_card_code', 'plc_timer_n_transitions', 'plc_time_off', 'plc_time_on', 'plc_time_unit']
         
         for c in self.config:
             if c == 'TYPEB':
@@ -526,7 +543,6 @@ class Bus:
                 sys.exit()
             
             for cc in self.config[c]:
-                print()
                 if c == "GENERAL_NET":
                     if cc not in key_general_net: # key scritta male o in modo errato o non esistente
                         print("""ERROR config.json!!!: wrong key "{}" on GENERAL_NET section.""".format(cc))                 
@@ -535,33 +551,130 @@ class Bus:
                 
                 elif 'BOARD' in c:
                     if self.config[c][cc].get('device_type') == 'DS18B20':
-                        key_DS18B20 = ['enable', 'logic_io', 'device_type', 'time_refresh', 'name', 'description']
+                        key_DS18B20 = ['offset_temperature', 'round_temperature']
                         for ccc in self.config[c][cc]:
-                            if ccc not in key_DS18B20:
-                                print("""ERROR config.json in board: {} logic_io: {}!!!: wrong key "{}" on {} section.""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))                 
-                            else:
-                                key_DS18B20.remove(ccc)
-                        
-                        if key_DS18B20:
-                            print("""ERROR config.json!!!: key "{}" missing on {} section.""".format(key_DS18B20, self.config[c][cc].get('device_type')))                    
-                            sys.exit()
-
+                            if ccc not in key_DS18B20 and ccc not in key_general:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'TEMP_ATMEGA':
-                        key_TEMP_ATMEGA = ['enable', 'logic_io', 'device_type', 'time_refresh', 'name', 'description']
+                        key_TEMP_ATEMEGA = ['offset_temperature', 'round_temperature']
                         for ccc in self.config[c][cc]:
-                            if ccc not in key_TEMP_ATMEGA:
-                                print("""ERROR config.json in board: {} logic_io: {}!!!: wrong key "{}" on {} section.""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))                 
-                            else:
-                                key_TEMP_ATMEGA.remove(ccc)
-                        
-                        if key_TEMP_ATMEGA:
-                            print("""ERROR config.json!!!: key "{}" missing on {} section.""".format(key_TEMP_ATMEGA, self.config[c][cc].get('device_type')))                    
-                            # sys.exit()
-       
-        if key_general_net:
-            print("""ERROR config.json!!!: key "{}" missing on GENERAL_NET section.""".format(key_general_net))
-    
+                            if ccc not in key_TEMP_ATEMEGA and ccc not in key_general:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+                            
+                    if self.config[c][cc].get('device_type') == 'TEMP_ATMEGA':
+                        key_TEMP_ATEMEGA = ['round_temperature']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_TEMP_ATEMEGA and ccc not in key_general:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') == 'ANALOG_IN':
+                        key_ANALOG_IN = ['plc_function']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_ANALOG_IN and ccc not in key_general:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') in ['DIGITAL_IN', 'DIGITAL_IN_PULLUP']:
+                        key_DIGITAL_IN = ['default_startup_filter_value', 'filter', 'inverted']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_DIGITAL_IN and ccc not in key_general:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+                                
+                    if self.config[c][cc].get('device_type') == 'DIGITAL_OUT':
+                        key_DIGITAL_OUT = ['default_startup_filter_value', 'default_startup_value', 'inverted']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_DIGITAL_OUT and ccc not in key_general and ccc not in key_plc:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') == 'VINKMKA':
+                        key_VINKMKA = []
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_VINKMKA and ccc not in key_general:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') == 'VINR1R2':
+                        key_VINR1R2 = ['rgnd', 'rvcc']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_VINR1R2 and ccc not in key_general:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') == 'PSYCHROMETER':
+                        key_PSYCHROMETER = []
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_PSYCHROMETER and ccc not in key_general and ccc not in key_plc:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+        
+                    if self.config[c][cc].get('device_type') == 'DIGITAL_OUT_PWM':
+                        key_DIGITAL_OUT_PWM = []
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_DIGITAL_OUT_PWM and ccc not in key_general and ccc not in key_plc:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') == 'AM2320':
+                        key_AM2320 = ['address']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_AM2320 and ccc not in key_general and ccc not in key_plc:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+                    
+                    if self.config[c][cc].get('device_type') == 'BME280':
+                        key_BME280 = ['address', 'altitude', 'logic_io_calibration', 'offset_humidity', 'offset_pression', 'offset_temperature', 'round_pression', 'round_temperature', 'round_humidity']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_BME280 and ccc not in key_general and ccc not in key_plc:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') == 'BME280_CALIB':
+                        key_BME280_CALIB = ['address']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_BME280_CALIB and ccc not in key_general and ccc not in key_plc:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') == 'RFID_CARD':
+                        key_RFID_CARD = []
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_RFID_CARD and ccc not in key_general and ccc not in key_plc:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') == 'RFID_UNIT':
+                        key_RFID_UNIT = ['filter', 'plc_rfid_ack_wait', 'plc_rfid_unit_mode', 'plc_rfid_unit_n_conf_refresh', 'plc_rfid_unit_tpolling_nocard', 'plc_rfid_unit_tpolling_oncard']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_RFID_UNIT and ccc not in key_general and ccc not in key_plc:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') == 'RMS_POWER':
+                        key_RMS_POWER = []
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_RMS_POWER and ccc not in key_general and ccc not in key_plc:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') == 'TSL2561':
+                        key_TSL2561 = ['address', 'lux_gain', 'lux_integration']
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_TSL2561 and ccc not in key_general:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                sys.exit()
+
+                    if self.config[c][cc].get('device_type') == 'VIRTUAL':
+                        key_VIRTUAL = []
+                        for ccc in self.config[c][cc]:
+                            if ccc not in key_VIRTUAL and ccc not in key_general and ccc not in key_plc:
+                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
+                                # sys.exit()
         # sys.exit()
 
     def dictBoardIo(self):
@@ -650,7 +763,7 @@ class Bus:
                             'altitude': int(self.config[b][bb].get('altitude', 0)),  # OFFSET altitudine
                             'board_enable': board_enable, # Abilitazione scheda
                             'board_type': board_type, # Tipo scheda
-                            'rfid_card_code': self.config[b][bb].get('rfid_card_code'),
+                            'plc_rfid_card_code': self.config[b][bb].get('plc_rfid_card_code'),
                             'default_startup_filter_value': int(self.config[b][bb].get('default_startup_filter_value', 0)), # 0 o 1
                             'default_startup_value': int(self.config[b][bb].get('default_startup_value', 0)),  # Valore di default allo startup
                             'description': self.config[b][bb].get('description', 'NO description'),  # Descrizione IO
@@ -1591,13 +1704,6 @@ class Bus:
         data = [self.BOARD_ADDRESS, self.code['CR_INIT_SINGOLO_IO'], board_id, logic_io]
         return data
 
-    def ping(self):
-        """
-        Make Ping
-        """
-        data = [self.BOARD_ADDRESS]
-        return data
-
     # Speed Baudate
     speed = {
         1: 1200,
@@ -1719,7 +1825,7 @@ class Bus:
         return(TXtrama)
 
     def logErrorParameter(self, parameter, function, board_id, logic_io, msg=''):
-        print("ERROR!!! {} NON INIZIALIZZATO: funzione {}, board_id:{}, logic_io:{}".format(parameter, function, board_id, logic_io, msg))
+        print("ERROR!!! {} NON INIZIALIZZATO: funzione {}, board_id:{}, logic_io:{} msg:{}".format(parameter, function, board_id, logic_io, msg))
         sys.exit()
 
     def getConfiguration(self):
@@ -2033,10 +2139,10 @@ class Bus:
                             # print("******************", self.mapiotype[board_id][logic_io]['plc_byte_list_io'])
                             plc.append(self.mapiotype[board_id][logic_io]['plc_byte_list_io'][0]) # Board ID associato del lettore RFID
                             plc.append(self.mapiotype[board_id][logic_io]['plc_byte_list_io'][1]) # Io logico associato del lettore RFID
-                            rfid_card_code_len = len(self.mapiotype[board_id][logic_io]['rfid_card_code'])
-                            plc.append(19-rfid_card_code_len+1) # indice inizio trama da controllare
+                            plc_rfid_card_code_len = len(self.mapiotype[board_id][logic_io]['plc_rfid_card_code'])
+                            plc.append(19-plc_rfid_card_code_len+1) # indice inizio trama da controllare
                             plc.append(19) # indice fine trama da controllare
-                            plc += self.mapiotype[board_id][logic_io]['rfid_card_code'] # Codice da controllare
+                            plc += self.mapiotype[board_id][logic_io]['plc_rfid_card_code'] # Codice da controllare
                             plc.append(9)
 
                     elif sbyte8 == 'rms_power':
@@ -2559,8 +2665,6 @@ class Bus:
                     value_old = self.status[board_id]['io'][logic_io - 1]
                     device_type = self.mapiotype[board_id][logic_io]['device_type']                                            
                     if value_old != value:
-                       
-                        # print(device_type)
                         self.status[board_id]['io'][logic_io - 1] = value
                         res = "/BOARD{} : Valore aggiornato\n".format(board_id)
                         res += '/{}_{}  {} => {}'.format(board_id, logic_io, value_old, value)
@@ -2677,7 +2781,7 @@ class Bus:
             if not self.cronoldtime % 60:
                 self.cron_min = 1 # Dont remove
                 
-                self.TXmsg.append(self.ping)  # Not remove. Is neccesary to reset shutdown counter        
+                self.TXmsg.append(self.ping())  # Not remove. Is neccesary to reset shutdown counter        
             
             if not self.cronoldtime % 3600:
                 self.cron_hour = 1 # Dont remove
@@ -2826,19 +2930,14 @@ Info su www.domocontrol.info/domocontrol-it/domotica
         print('Callback Query:', query_id, from_id, query_data)
         self.telegram_bot.answerCallbackQuery(query_id, text="da completare")
 
-    def signal_handler(sig, frame):
-        print('You pressed Ctrl+C!')
+    def signal_handler(self, sig, frame):
+        print('\n==================== You pressed Ctrl+C! =======================')
         sys.exit(0)
-
-    def __exit__(self):
-        print('*---------------------Task End!')
 
 # END BUS Class
 
 # INIZIO PARTE MAIN
 if __name__ == '__main__':
-
-    
     log = Log()
     log.write("*" * 20 + "START DL485 program" + "*" * 20)
     logstate = logwrite = logscreen = 0
