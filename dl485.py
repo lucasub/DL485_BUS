@@ -195,17 +195,19 @@ class Bus:
 
 
     # Tipi di Board disponibili. Non modificare
-    board_type_available={
+    board_type_available = {
         "DL485M": 1,
         "DL485B": 2,
         "DL485Pold": 3, #scheda tipo 3 vecchia sostituita con 5
         "DL485R": 4,
         "DL485P": 5,
+        "DL485D": 6,
         "1": "DL485M",
         "2": "DL485B",
         "3": "DL485Pold",
         "4": "DL485R",
         "5": "DL485P",
+        "6": "DL485D",
     }
 
     # Function PIN map: I=input, O=output, P=pwm, SDA=sda, VCC=VCC, GND=GND, X=xtal, PROG=prog_button, LED_TX=led TX,
@@ -344,6 +346,8 @@ class Bus:
             'I2C9':         {'pin':   27,  'name':     'I2C9'},
         },
 
+        
+
         5: {  # DL485P V.2.2
             'PB1':          {'pin':  13},
             'PB2':          {'pin':  14},
@@ -433,6 +437,44 @@ class Bus:
             'RMS_POWER_COSFI':       {'pin':  41,  'name':      'RMS_POWER_COSFI'},
             'RMS_POWER_LOOP':        {'pin':  41,  'name':      'RMS_POWER_LOOP'},
 
+        },
+
+        6: {  # DL485D Dimmer 1 CH => Basato su DL485B
+            'IO1':          {'pin':   23,  'name':     'IO1'},
+            'IO2':          {'pin':   24,  'name':     'IO2'},
+            'IO3':          {'pin':   25,  'name':     'IO3'},
+            'IO4':          {'pin':   26,  'name':     'IO4'},
+            'DIM1':         {'pin':   14,  'name':     'DIMMER1'},
+            'DIM2':         {'pin':   13,  'name':     'DIMMER2'},
+            'DIM3':         {'pin':   15,  'name':     'DIMMER3'},
+            'VIN':          {'pin':   22,  'name':     'VIN'},
+            'SDA':          {'pin':   27,  'name':     'SDA'},
+            'SCL':          {'pin':   28,  'name':     'SCL'},
+            'PCA9535':      {'pin':    0,  'name':     'PCA9535'},
+            'BME280A':      {'pin':    0,  'name':     'BME280'},
+            'BME280B':      {'pin':    0,  'name':     'BME280'},
+            'BME280_CALIB': {'pin':   27,  'name':     'BME280_CALIB'},
+            'TSL2561':      {'pin':    0,  'name':     'TSL2561'},
+            'DS18B20':      {'pin':   35,  'name':     'DS18B20'},
+            'TEMP_ATMEGA':  {'pin':   37,  'name':     'TEMP_ATMEGA'},
+            'VIRT1':        {'pin':   41,  'name':     'VIRT1'},
+            'VIRT2':        {'pin':   41,  'name':     'VIRT2'},
+            'VIRT3':        {'pin':   41,  'name':     'VIRT3'},
+            'VIRT4':        {'pin':   41,  'name':     'VIRT4'},
+            'VIRT5':        {'pin':   41,  'name':     'VIRT5'},
+            'VIRT6':        {'pin':   41,  'name':     'VIRT6'},
+            'VIRT7':        {'pin':   41,  'name':     'VIRT7'},
+            'VIRT8':        {'pin':   41,  'name':     'VIRT8'},
+            'VIRT9':        {'pin':   41,  'name':     'VIRT9'},
+            'I2C1':         {'pin':   27,  'name':     'I2C1'},
+            'I2C2':         {'pin':   27,  'name':     'I2C2'},
+            'I2C3':         {'pin':   27,  'name':     'I2C3'},
+            'I2C4':         {'pin':   27,  'name':     'I2C4'},
+            'I2C5':         {'pin':   27,  'name':     'I2C5'},
+            'I2C6':         {'pin':   27,  'name':     'I2C6'},
+            'I2C7':         {'pin':   27,  'name':     'I2C7'},
+            'I2C8':         {'pin':   27,  'name':     'I2C8'},
+            'I2C9':         {'pin':   27,  'name':     'I2C9'},
         },
     }
 
@@ -536,7 +578,7 @@ class Bus:
             'plc_mode_timer', 'plc_powermeter_k', 'plc_rfid_card_code', 'plc_timer_n_transitions', 'plc_time_off', 'plc_time_on', 'plc_time_unit']
 
         for c in self.config:
-            if c == 'TYPEB':
+            if c == 'TYPEB':  # Controlla che non ci sia il dizionario TYPEB di config.json (file configurazione vecchio)
                 print("""ERROR!!! file config.json is old type.\nPlease delete TYPEB dictionary and change board_type on GENERAL_BOARD with board_type_name: Example: "board_type_name": "DL485M",""")
                 sys.exit()
 
@@ -557,13 +599,6 @@ class Bus:
 
                     if self.config[c][cc].get('device_type') == 'TEMP_ATMEGA':
                         key_TEMP_ATEMEGA = ['offset_temperature', 'round_temperature']
-                        for ccc in self.config[c][cc]:
-                            if ccc not in key_TEMP_ATEMEGA and ccc not in key_general:
-                                print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
-                                sys.exit()
-
-                    if self.config[c][cc].get('device_type') == 'TEMP_ATMEGA':
-                        key_TEMP_ATEMEGA = ['round_temperature']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_TEMP_ATEMEGA and ccc not in key_general:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
@@ -611,7 +646,7 @@ class Bus:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
                                 sys.exit()
 
-                    if self.config[c][cc].get('device_type') == 'DIGITAL_OUT_PWM':
+                    if self.config[c][cc].get('device_type') == 'DIGITAL_OUT_PWM' and not 'plc_function' in self.config[c][cc].keys():
                         key_DIGITAL_OUT_PWM = []
                         for ccc in self.config[c][cc]:
                             if ccc not in key_DIGITAL_OUT_PWM and ccc not in key_general and ccc not in key_plc:
@@ -767,6 +802,18 @@ class Bus:
                             'description': self.config[b][bb].get('description', 'NO description'),  # Descrizione IO
                             'device_address': self.config[b][bb].get('address', []),  # Address of I2C / Onewire (serial number for DS18B20)
                             'device_type': device_type, # Tipo di device collegato al PIN del micro
+                            'dimmer_extension': int(self.config[b][bb].get('dimmer_extension', 0)),
+                            'dimmer_mode': int(self.config[b][bb].get('dimmer_mode', 0)),
+                            'dimmer_max': int(self.config[b][bb].get('dimmer_max', 255)),
+                            'dimmer_min': int(self.config[b][bb].get('dimmer_min', 0)),
+                            'dimmer_button_time': int(self.config[b][bb].get('dimmer_button_time', 30)),
+                            'dimmer_delay_auto_up': int(self.config[b][bb].get('dimmer_delay_auto_up', 3)),
+                            'dimmer_delay_auto_dw': int(self.config[b][bb].get('dimmer_delay_auto_dw', 3)),
+                            'dimmer_delay_manual': int(self.config[b][bb].get('dimmer_delay_manual', 4)),
+                            'dimmer_fraction_limit': int(self.config[b][bb].get('dimmer_fraction_limit', 200)),
+                            'dimmer_step_pwm': int(self.config[b][bb].get('dimmer_step_pwm', 5)),
+                            'dimmer_time_reverse_dir': int(self.config[b][bb].get('dimmer_time_reverse_dir', 200)),
+                            'dimmer_time_reset_dir': int(self.config[b][bb].get('dimmer_time_reset_dir', 200)),
                             'direction': direction,  # Input / Output
                             'direction_val': 1 if direction == 'output' else 0,  # 1=Output, 0=Input (how arduino)
                             'dtype': self.config[b][bb].get('dtype', self.device_type_dict[device_type].get('dtype', 'Switch')),  # Domoticz Device
@@ -1056,7 +1103,8 @@ class Bus:
                 elif 'rms_power_logic_id_offset' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_offset'] == logic_io:
                     value = self.byteLSMS2uint(value[0], value[1])
                     return value
-
+                
+                
                 else:
                     print(print("==>>> RMS_POWER DA FARE {} {} {}".format(board_id, logic_io, value)))
                     # pprint(self.RMS_POWER_DICT[board_id])
@@ -1070,6 +1118,10 @@ class Bus:
                 value = self.byteLSMS2uint(value[0], value[1])
                 # print("time_meter", value)
                 return value
+
+            elif plc_function in ['dimmer']:
+                # print("---------------- DIMMER", board_id, command, logic_io, value)
+                return value[0]
 
             elif plc_function in ['counter_up', 'counter_dw', 'counter_up_dw']:
                 plc_counter_mode = self.mapiotype[board_id][logic_io]['plc_counter_mode']
@@ -1879,7 +1931,6 @@ class Bus:
 
 
                 byte0 = self.mapiotype[board_id][logic_io]['fisic_io']
-                # print("################",board_type,byte0)
                 eels, eems = self.calcAddressLsMs8(logic_io * 32)
 
                 byte1 = self.mapiotype[board_id][logic_io]['direction_val']
@@ -1915,6 +1966,7 @@ class Bus:
                     continue
 
                 byte1 |= 0x40 #b6
+                # print(f"BOARD: {board_id}, Logic_IO: {logic_io} BYTE1 CONFIGURAZIONE: {byte1}")
 
                 direction = self.mapiotype[board_id][logic_io]['direction']
                 if type_io == 'i2c' or type_io == 'onewire' or type_io == 'onewire_test':
@@ -2064,6 +2116,7 @@ class Bus:
                     'analog_in1_max_analog_in2': 56,
                     'rms_power': 58,
                     'sampletrigger': 60,
+                    'dimmer':62,
                 }
 
                 sbyte8 = self.mapiotype[board_id][logic_io]['plc_function']
@@ -2139,6 +2192,7 @@ class Bus:
                         plc.append(19) # indice fine trama da controllare
                         plc += self.mapiotype[board_id][logic_io]['plc_rfid_card_code'] # Codice da controllare
                         plc.append(9)
+
 
                     elif sbyte8 == 'rms_power':
                         """
@@ -2274,6 +2328,37 @@ class Bus:
                             # plc.append(plc_time_off & 255)
                             # plc.append(plc_time_off >> 8)
                             plc += list(self.calcAddressLsMs8(plc_time_off))
+
+                        elif sbyte8 in ["dimmer"]:
+                            """
+                            dimmer_mode = byte 8 bit
+                            b7, b6, b5 = numero da 0-8
+                                0: comando assente
+                                1: comando singolo pulsante
+                                2: comando a comandi separati su/giu, su SU fa anche ON e GIU fa anche OFF
+                                3: comando a comandi separati su/giu, su SU fa anche ON/OFF e GIU fa anche ON/OFF
+
+                            b4: 1: Dimmer che cicla dopo min/max - 0 si ferma al minimo / massimo
+                            b3: libero
+                            b2: libero
+                            b1:b0: Numero dispositivo dimmer                               
+                            """
+                            plc.append(self.mapiotype[board_id][logic_io]['dimmer_extension'])
+                            num_dimmer = int(self.mapiotype[board_id][logic_io]['pin_label'][-1:]) - 1
+                            mode_dimmer = (int(self.mapiotype[board_id][logic_io]['dimmer_mode']) & 0xfc) | num_dimmer
+                            plc.append(mode_dimmer)
+                            plc.append(self.mapiotype[board_id][logic_io]['dimmer_max']) # Max PWM default: 255
+                            plc.append(self.mapiotype[board_id][logic_io]['dimmer_min']) # Min PWM default: 0
+                            plc.append(self.mapiotype[board_id][logic_io]['dimmer_button_time']) # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default: 0.3 sec
+                            plc.append(self.mapiotype[board_id][logic_io]['dimmer_delay_auto_up']) # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default: 3
+                            plc.append(self.mapiotype[board_id][logic_io]['dimmer_delay_auto_dw']) # Pausa tra step del dimmer in rampa spegnimento o spegnimento automatica in centesimi. default: 3
+                            plc.append(self.mapiotype[board_id][logic_io]['dimmer_delay_manual']) # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default: 4
+                            plc.append(self.mapiotype[board_id][logic_io]['dimmer_step_pwm']) # Velocità UP/WN del dimmer. default: 200 - Limit
+                            plc.append(self.mapiotype[board_id][logic_io]['dimmer_fraction_limit']) # Velocità UP/WN del dimmer. default: 200 - Limit
+                            plc.append(self.mapiotype[board_id][logic_io]['dimmer_time_reverse_dir']) # Velocità UP/WN del dimmer. default: 200 - Limit
+                            plc.append(self.mapiotype[board_id][logic_io]['dimmer_time_reset_dir']) # Velocità UP/WN del dimmer. default: 200 - Limit
+                            plc.append(self.mapiotype[board_id][logic_io]['plc_tmax_on']) # Velocità UP/WN del dimmer. default: 200 - Limit
+                            # pprint(plc)
 
                         elif sbyte8 in ["equal", "nequal"]:
 
@@ -2667,7 +2752,7 @@ class Bus:
                 """
                 Creare DICT con caratteristiche della BOARD
                 """
-                # print("=====>>>> GetBoardType: ", self.RXtrama)
+                print("=====>>>> GetBoardType: ", self.RXtrama)
                 # 0: Board_id
                 # 1: Get tipo board command
                 # 2: Tipo board (1: morsetti)
@@ -2688,7 +2773,7 @@ class Bus:
                 if not self.RXtrama[0] in self.get_board_type:
                     self.get_board_type[self.RXtrama[0]] = {}
                 self.get_board_type[board_id]['board_id'] = self.RXtrama[0]
-                self.get_board_type[board_id]['board_type'] = "{} - {}".format(self.RXtrama[2], self.config['TYPEB'][str(self.RXtrama[2])])
+                self.get_board_type[board_id]['board_type'] = "{} - {}".format(self.RXtrama[2], self.board_type_available[str(self.RXtrama[2])])
                 self.get_board_type[board_id]['io_number'] = self.RXtrama[3]
                 self.get_board_type[board_id]['data_firmware'] = '{:02}/{:02}/{:2}'.format(self.RXtrama[4], self.RXtrama[5], self.RXtrama[6])
                 self.get_board_type[board_id]['protection'] = self.byte2active(self.RXtrama[7], 1)
@@ -2760,12 +2845,14 @@ class Bus:
             if not self.cronoldtime % 10:
                 self.cron_sec = 10 # Dont remove
 
-                self.writeLog()
+                # self.writeLog()
                 # self.TXmsg += [self.timeLoop(8)]
 
             if not self.cronoldtime % 30:
                 self.cron_sec = 30 # Dont remove
                 # self.TXmsg += [self.getBoardType(0)]
+
+                self.writeLog()
 
             if not self.cronoldtime % 60:
                 self.cron_min = 1 # Dont remove
