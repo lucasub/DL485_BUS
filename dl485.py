@@ -22,7 +22,9 @@ from telepot.loop import MessageLoop
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 import time
 from TSL2561 import tsl2561_calculate
-
+# from dl485_mqtt import *
+# import paho.mqtt.client as Client
+# import paho.mqtt.publish as publish
 
 class Log:
     def __init__(self, file='log.txt', logstate=0):
@@ -440,13 +442,15 @@ class Bus:
         },
 
         6: {  # DL485D Dimmer 1 CH => Basato su DL485B
-            'IO1':          {'pin':   23,  'name':     'IO1'},
-            'IO2':          {'pin':   24,  'name':     'IO2'},
-            'IO3':          {'pin':   25,  'name':     'IO3'},
-            'IO4':          {'pin':   26,  'name':     'IO4'},
+            'IN1':          {'pin':   23,  'name':     'IO1'},
+            'IN2':          {'pin':   24,  'name':     'IO2'},
+            'IN3':          {'pin':   25,  'name':     'IO3'},
+            'IN4':          {'pin':   26,  'name':     'IO4'},
             'DIM1':         {'pin':   14,  'name':     'DIMMER1'},
             'DIM2':         {'pin':   13,  'name':     'DIMMER2'},
-            'DIM3':         {'pin':   15,  'name':     'DIMMER3'},
+            'DIM3':         {'pin':    1,  'name':     'DIMMER3'},
+            'DIM4':         {'pin':   15,  'name':     'DIMMER4'},
+            'DIMG':         {'pin':   37,  'name':     'DIMMER GENERALE'},
             'VIN':          {'pin':   22,  'name':     'VIN'},
             'SDA':          {'pin':   27,  'name':     'SDA'},
             'SCL':          {'pin':   28,  'name':     'SCL'},
@@ -527,6 +531,41 @@ class Bus:
         self.crondata = {} # DICT with periodic command
         self.cronoldtime = self.cron_sec = self.cron_min = self.cron_hour = self.cron_day = 0
         self.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
+        self.cronStartup = False # Flag per invio di cron una sola volta dopo lo startup
+
+        self.mqtt_enable = 0
+
+        if self.mqtt_enable:
+            
+
+            self.broker = '192.168.1.6'
+            self.broker = '2.37.188.75'
+            self.port = 1883
+            self.topic = "dl485"
+
+            self.client_id = f'DL485'
+            self.username = 'mqtt_user'
+            self.password = '12311'
+            self.client = Client.Client(self.client_id)
+            self.client.username_pw_set(self.username, self.password)
+            self.client.on_connect = self.on_connect
+            self.client.connect(self.broker)
+            self.client.on_message = self.on_message
+            self.client.subscribe(f'{self.topic}/#')
+            self.client.loop_start()
+            # self.client.loop_forever()
+
+    def on_connect(self, client, userdata, flags, rc):
+        print("****************")
+        if rc == 0:
+            print(f"Connected to MQTT Broker {self.broker} !")
+        else:
+            error = Client.error_string(rc)
+            print(f"Failed to connect, return code error:{rc} {error}\n")
+    
+    def on_message(self, client, userdata, message):
+        # print(dir(message))
+        print( "RECEIVED", message._topic.decode(), message.payload.decode() )
 
     def ping(self):
         """
@@ -612,7 +651,7 @@ class Bus:
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') in ['DIGITAL_IN', 'DIGITAL_IN_PULLUP']:
-                        key_DIGITAL_IN = ['default_startup_filter_value', 'filter', 'inverted']
+                        key_DIGITAL_IN = ['default_startup_filter_value', 'filter', 'inverted', 'default_startup_value']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_DIGITAL_IN and ccc not in key_general:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
@@ -804,6 +843,7 @@ class Bus:
                             'device_type': device_type, # Tipo di device collegato al PIN del micro
                             'dimmer_extension': int(self.config[b][bb].get('dimmer_extension', 0)),
                             'dimmer_mode': int(self.config[b][bb].get('dimmer_mode', 0)),
+                            'dimmer_poweron_state': int(self.config[b][bb].get('dimmer_poweron_state', 0)),
                             'dimmer_max': int(self.config[b][bb].get('dimmer_max', 255)),
                             'dimmer_min': int(self.config[b][bb].get('dimmer_min', 0)),
                             'dimmer_button_time': int(self.config[b][bb].get('dimmer_button_time', 30)),
@@ -811,6 +851,7 @@ class Bus:
                             'dimmer_delay_auto_dw': int(self.config[b][bb].get('dimmer_delay_auto_dw', 3)),
                             'dimmer_delay_manual': int(self.config[b][bb].get('dimmer_delay_manual', 4)),
                             'dimmer_fraction_limit': int(self.config[b][bb].get('dimmer_fraction_limit', 200)),
+                            'dimmer_linked': int(self.config[b][bb].get('dimmer_linked', 1)),
                             'dimmer_step_pwm': int(self.config[b][bb].get('dimmer_step_pwm', 5)),
                             'dimmer_time_reverse_dir': int(self.config[b][bb].get('dimmer_time_reverse_dir', 200)),
                             'dimmer_time_reset_dir': int(self.config[b][bb].get('dimmer_time_reset_dir', 200)),
@@ -1121,7 +1162,10 @@ class Bus:
 
             elif plc_function in ['dimmer']:
                 # print("---------------- DIMMER", board_id, command, logic_io, value)
-                return value[0]
+                if len(value) == 2:
+                    return value[0] # Return Single color dimmer
+                else:
+                    return value # Return RGB/RGBW value
 
             elif plc_function in ['counter_up', 'counter_dw', 'counter_up_dw']:
                 plc_counter_mode = self.mapiotype[board_id][logic_io]['plc_counter_mode']
@@ -1377,7 +1421,7 @@ class Bus:
                 value = value[-6:]
 
             else:
-                # print("calculate ERROR: Tipo dispositivo NON trovato:", board_id, logic_io)
+                print("calculate ERROR: Tipo dispositivo NON trovato:", board_id, logic_io)
                 return value
         else:
             # print("calculate ERROR: Board o logic_io non presenti sul file di configurazione. Comunica IO ignorato. board_id:%s, logic_io:%s" % (board_id,  logic_io))
@@ -2332,21 +2376,26 @@ class Bus:
                         elif sbyte8 in ["dimmer"]:
                             """
                             dimmer_mode = byte 8 bit
-                            b7, b6, b5 = numero da 0-8
-                                0: comando assente
-                                1: comando singolo pulsante
-                                2: comando a comandi separati su/giu, su SU fa anche ON e GIU fa anche OFF
-                                3: comando a comandi separati su/giu, su SU fa anche ON/OFF e GIU fa anche ON/OFF
-
-                            b4: 1: Dimmer che cicla dopo min/max - 0 si ferma al minimo / massimo
-                            b3: libero
+                            b7: libero 
+                            b6: libero
+                            b5: 1: accende allo starup / 0 resta spendo allo startup
+                            b4: 1: regolazione manuale fino al valore minimo stabilito e non va a zero
+                            b3: 1: non si memorizza mai lo stato con il pulsante ma prende sempre predefinito in memoria
                             b2: libero
-                            b1:b0: Numero dispositivo dimmer                               
+                            b1:b0: Numero dispositivo dimmer 1-4                              
                             """
                             plc.append(self.mapiotype[board_id][logic_io]['dimmer_extension'])
-                            num_dimmer = int(self.mapiotype[board_id][logic_io]['pin_label'][-1:]) - 1
+                            DIMMER_TYPE = self.mapiotype[board_id][logic_io]['pin_label'][-1:]
+                            if DIMMER_TYPE != 'G':
+                                num_dimmer = int(DIMMER_TYPE) - 1
+                            else:
+                                num_dimmer = (int(self.mapiotype[board_id][logic_io]['dimmer_linked']) - 1) + 128
+
+                            
                             mode_dimmer = (int(self.mapiotype[board_id][logic_io]['dimmer_mode']) & 0xfc) | num_dimmer
-                            plc.append(mode_dimmer)
+                            
+                            dimmer_poweron_state = self.mapiotype[board_id][logic_io]['dimmer_poweron_state'] * 32 # Setta de il dimmer deve accendersi o stare spento quando viene data alimentazione
+                            plc.append(mode_dimmer | dimmer_poweron_state)
                             plc.append(self.mapiotype[board_id][logic_io]['dimmer_max']) # Max PWM default: 255
                             plc.append(self.mapiotype[board_id][logic_io]['dimmer_min']) # Min PWM default: 0
                             plc.append(self.mapiotype[board_id][logic_io]['dimmer_button_time']) # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default: 0.3 sec
@@ -2733,6 +2782,11 @@ class Bus:
                 value = self.RXtrama[3:]
                 # print("TRAMA:", board_id, logic_io, value)
                 value = self.calculate(board_id, command, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
+                
+                if self.mqtt_enable:
+                    print("MQTT_ENABLE", board_id, command, logic_io, value)
+                    publish.single(f"{self.topic}/{board_id}/{logic_io}", str(value), hostname=self.broker, auth = {'username':self.username, 'password':self.password})
+
                 # print("CALCULATE VALUE:", self.RXtrama[0], self.RXtrama[2], self.RXtrama[3:], value)
                 try:
                     value_old = self.status[board_id]['io'][logic_io - 1]
@@ -2752,7 +2806,7 @@ class Bus:
                 """
                 Creare DICT con caratteristiche della BOARD
                 """
-                print("=====>>>> GetBoardType: ", self.RXtrama)
+                # print("=====>>>> GetBoardType: ", self.RXtrama)
                 # 0: Board_id
                 # 1: Get tipo board command
                 # 2: Tipo board (1: morsetti)
@@ -2787,9 +2841,17 @@ class Bus:
                 if len(self.RXtrama) == 11:
                     """ Byte aggiunti il 23/10/2020 """
                     self.get_board_type[board_id]['rms_power'] = self.byte2active(self.RXtrama[8], 1)
+                    self.get_board_type[board_id]['dimmer'] = (self.RXtrama[8] >> 1) & 0x7
                     self.get_board_type[board_id]['error_logic_io_fisic_io'] = self.RXtrama[9]
                     self.get_board_type[board_id]['error_conflict'] = self.RXtrama[9]
-                # pprint(self.get_board_type)
+                else: 
+                    self.get_board_type[board_id]['rms_power'] = 0
+                    self.get_board_type[board_id]['dimmer'] = 0
+                    self.get_board_type[board_id]['error_logic_io_fisic_io'] = 0
+                    self.get_board_type[board_id]['error_conflict'] = 0
+                # if board_id == 6:
+                #     print((self.RXtrama[8] >> 1) & 0x7)
+                #     pprint(self.get_board_type)
 
             elif self.RXtrama[1] & 32: # è feedback
                 apprx = self.RXtrama[1]-32 # ricava comando associato a questa risposta
@@ -2841,7 +2903,6 @@ class Bus:
             self.cronoldtime = self.nowtime
             self.cron_sec = 1
 
-
             if not self.cronoldtime % 10:
                 self.cron_sec = 10 # Dont remove
 
@@ -2851,13 +2912,16 @@ class Bus:
             if not self.cronoldtime % 30:
                 self.cron_sec = 30 # Dont remove
                 # self.TXmsg += [self.getBoardType(0)]
-
                 self.writeLog()
 
             if not self.cronoldtime % 60:
-                self.cron_min = 1 # Dont remove
 
+                self.cron_min = 1 # Dont remove
                 self.TXmsg.append(self.ping())  # Not remove. Is neccesary to reset shutdown counter
+
+                if not self. cronStartup: # Invia la richiesta UNA SOLA dopo lo startup e dopo 1 minuto
+                    self. cronStartup = True
+                    self.TXmsg += [self.getBoardType(0)]
 
             if not self.cronoldtime % 3600:
                 self.cron_hour = 1 # Dont remove
