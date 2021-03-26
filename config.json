@@ -116,14 +116,14 @@
         "telegram_token": "", # Telegram TOKEN
         "telegram_enable": 0, # TO activate telegram bot
         "overwrite_text": 1, // Flag per sovrascrivere "nome" e "descrizione" su Domoticz !!! Attenzione
-        "send_configuration": 0 # Flag to send configurations to all board
+        "send_configuration": 1 # Flag to send configurations to all board
     },
 
     "BOARD6": { # BOARD DIMMER
         "GENERAL_BOARD": {
             "name": "SCHEDA DIMMER", # Nome della BOARD
             "board_type_name": "DL485D", # Tipo di Board DIMMER
-            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "DIM1": { # Dimmer 1
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
@@ -136,14 +136,17 @@
             "plc_linked_board_id_logic_io": ["*-5"], # ingresso che comando il DIMMER
             "dimmer_max": 255, # Luminosità massima 1-255
             "dimmer_min": 0, # Luminosità minima 1-255
-            "dimmer_step_pwm": 30, # Velocità UP/WN del dimmer. default 200 - Limit
+            "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
             "dimmer_fraction_limit": 9, # dimmer_fraction_limit
-            "dimmer_delay_auto_up": 1, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
-            "dimmer_delay_auto_dw": 1, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
+            "dimmer_delay_auto_up": 0, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
+            "dimmer_delay_auto_dw": 0, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
             "dimmer_delay_manual": 2, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
             "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
             "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
             "dimmer_time_reset_dir": 100, # Tempo di reset pressone tasto
+            "dimmer_change_memory": 0, # Imposta se le variazioni devono essere memorizzate
+            "dimmer_manual_go_off": 1, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
+            "dimmer_mode_fraction": 0, # 0=Si sale a passi di 1 fino al limite frazione aggiunta, poi ahhiunge la frazione, 1:modo 2
             "plc_tmax_on": 50, # Max time output ON, 1-255 (0=infinito). 255=16256 secondi
             "name": "OUT1 DIMM RED", # Nome che verrà riportato su DOMOTICZ
             "description": "OUT1 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
@@ -160,14 +163,16 @@
             "plc_linked_board_id_logic_io": ["*-6"], # ingresso che comando il DIMMER
             "dimmer_max": 255, # Luminosità massima 1-255
             "dimmer_min": 0, # Luminosità minima 1-255
-            "dimmer_step_pwm": 40, # Velocità UP/WN del dimmer. default 200 - Limit
+            "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
             "dimmer_fraction_limit": 15, # dimmer_fraction_limit
-            "dimmer_delay_auto_up": 1, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
-            "dimmer_delay_auto_dw": 1, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
+            "dimmer_delay_auto_up": 2, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
+            "dimmer_delay_auto_dw": 2, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
             "dimmer_delay_manual": 4, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
             "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
             "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
             "dimmer_time_reset_dir": 100,
+            "dimmer_change_memory": 1, # Imposta se le variazioni devono essere memorizzate
+            "dimmer_manual_go_off": 1, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
             "plc_tmax_on": 50, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
             "name": "OUT2 DIMM GREEN", # Nome che verrà riportato su DOMOTICZ
             "description": "OUT2 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
@@ -182,14 +187,16 @@
             "dimmer_poweron_state": 0, # Resta acceso e spento quando ritorna la corrente
             "plc_function": "dimmer",
             "plc_linked_board_id_logic_io": ["*-7"], # usa ingressi DIMMER
-            "dimmer_step_pwm": 10, # Velocità UP/WN del dimmer. default 200 - Limit
+            "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
             "dimmer_fraction_limit": 20, # dimmer_fraction_limit
-            "dimmer_delay_auto_up": 1, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
-            "dimmer_delay_auto_dw": 1, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
-            "dimmer_delay_manual": 3, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
+            "dimmer_delay_auto_up": 2, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
+            "dimmer_delay_auto_dw": 5, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
+            "dimmer_delay_manual": 5, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
             "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
             "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
             "dimmer_time_reset_dir": 100,
+            "dimmer_change_memory": 1, # Imposta se le variazioni devono essere memorizzate
+            "dimmer_manual_go_off": 1, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
             "plc_tmax_on": 50, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
             "name": "OUT3 DIMM BLUE", # Nome che verrà riportato su DOMOTICZ
             "description": "OUT3 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
@@ -204,8 +211,8 @@
             "dimmer_poweron_state": 0, # Resta acceso e spento quando ritorna la corrente
             "plc_function": "dimmer",
             "plc_linked_board_id_logic_io": ["*-8"], # usa ingressi DIMMER
-            "dimmer_linked": 3, # I dimmer 1,2,3 sono comandati anche dal dimmer generale
-            "dimmer_step_pwm": 10, # Velocità UP/WN del dimmer. default 200 - Limit
+            "dimmer_linked": 0, # I dimmer 1,2,3 sono comandati anche dal dimmer generale
+            "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
             "dimmer_fraction_limit": 20, # dimmer_fraction_limit
             "dimmer_delay_auto_up": 1, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
             "dimmer_delay_auto_dw": 1, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
@@ -225,7 +232,7 @@
             "device_type": "DIGITAL_IN_PULLUP",
             "default_startup_value": 1, # Valore pulsante allo startup
             "inverted": 1,
-            "filter": 4,
+            "filter": 2,
             "name": "IN1 DIMMER", # Nome che verrà riportato su DOMOTICZ
             "description": "IN1 DIMMER" # Descrizione che verrà riportato su DOMOTICZ
             // "dtype": "Current (Single)"
@@ -237,7 +244,7 @@
             "device_type": "DIGITAL_IN_PULLUP",
             "default_startup_value": 1, # Valore pulsante allo startup
             "inverted": 1,
-            "filter": 4,
+            "filter": 2,
             "name": "IN2 DIMMER", # Nome che verrà riportato su DOMOTICZ
             "description": "IN2 DIMMER" # Descrizione che verrà riportato su DOMOTICZ
             // "dtype": "Current (Single)"
@@ -249,7 +256,7 @@
             "device_type": "DIGITAL_IN_PULLUP",
             "default_startup_value": 1, # Valore pulsante allo startup
             "inverted": 1,
-            "filter": 4,
+            "filter": 1,
             "name": "IN3 DIMMER", # Nome che verrà riportato su DOMOTICZ
             "description": "IN3 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Switch"
@@ -473,10 +480,10 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA MASTER", # Nome della BOARD
             "board_type_name": "DL485M", # Tipo di Board: Vedi TYPEB
-            "enable": 2 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
-            "enable": 0, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 1, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 600, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "VINR1R2",
@@ -486,7 +493,7 @@
             "description": "Tensione alimentazione scheda" # Descrizione che verrà riportato su DOMOTICZ
         },
         "TEMP_ATMEGA": {
-            "enable": 0,
+            "enable": 1,
             "logic_io": 2,
             "time_refresh": 1800,
             "device_type": "TEMP_ATMEGA",
@@ -917,7 +924,7 @@
         "GENERAL_BOARD": {
             "name": "BUS", # Nome della BOARD
             "board_type_name": "DL485P", # Tipo di Board: Vedi TYPEB
-            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO

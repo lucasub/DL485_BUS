@@ -27,6 +27,9 @@ from TSL2561 import tsl2561_calculate
 # import paho.mqtt.publish as publish
 
 class Log:
+    """
+    LOG class
+    """
     def __init__(self, file='log.txt', logstate=0):
         self.logstate = logstate
         if self.logstate & 1:
@@ -45,16 +48,12 @@ class Log:
         if self.logstate & 2:
             print('%s' %data)  # Show log to terminal
 
-"""
-ERRORI DA CORREGGERE:
-quando IO disabilitato, non inserire sui dizionari della configurazione
-"""
-
 class Bus:
     EEPROM_LANGUAGE = 1  # 1=NEW,  0=old
     BROADCAST = 0 # Invia il comando a tutti i nodi. Da inserire al posto dell'indirizzo Board
 
-    code = {  # Dict with all COMMAND
+    """ Allow commands """
+    code = {
         0: 'INPUT',
         1: 'OUTPUT',
         2: 'CR_TRASPORTO_STR',
@@ -67,15 +66,6 @@ class Bus:
         10: 'CR_INIT_SINGOLO_IO',  # Mandare per aggiunare singola configurazione IO oppure REBOOT totale
         11: 'CR_REBOOT',  # Fa il reboot della scheda
         12: 'CR_GET_BOARD_TYPE',  # Ritorna il tipo di board
-        # 1: Board_id
-        # 2: Get tipo board
-        # 3: Tipo board (1: morsetti)
-        # 4: Numero IO a boardo
-        # 5: Giorno
-        # 6: Mese
-        # 7: anno
-        # 8: Byte: b0: protezione attiva, b1: PLC, b2: PowerOn, b3: PWM out, b5: OneWire, b6: I2C, b7: RFID
-        #
         13: 'ERRORE',  # Errore generico
         14: 'COMUNICA_IO',  # Mitt. COmando comunica IO, N. ingresso, valore inresso
         15: 'I2C ACK',  # Mitt. COmando comunica IO, N. ingresso, valore inresso
@@ -103,9 +93,10 @@ class Bus:
         'TIME_LOOP': 19, # Comunica il tempo LOOP in uS
     }
 
-    disable_io = 0x3e
-    enable_io = 0xff
+    # disable_io = 0x3e
+    # enable_io = 0xff
 
+    """ Dict with all errors """
     error = {  # Dict with ERROR type
          1: "Errore 3 zeri",
          2: "Errore 3 uni",
@@ -142,6 +133,7 @@ class Bus:
         33: "1W Timeout"
     }
 
+    """ Types of devices allowed on Config.json """
     device_type_dict = {
         'AM2320':               {'type_io':'i2c',           'direction':'input',    'dtype':'Temp+Hum',         'pullup':0},
         'ANALOG_IN':            {'type_io':'analog',        'direction':'input',    'dtype':'Switch',           'pullup':0},
@@ -163,7 +155,8 @@ class Bus:
         'VIRTUAL':              {'type_io':'discrete',      'direction':'output',   'dtype':'Temperature',      'pullup':0},
     }
 
-    i2c_const = {  # Const I2C
+    """ Dict I2C constant """
+    i2c_const = { 
         'CONCATENA': 128,
         'NON_CONCATENA': 0,
         'BYTE_OPZIONI_LETTURA': 64,
@@ -174,7 +167,7 @@ class Bus:
     if EEPROM_LANGUAGE == 1:  # nuovo linguaggio
         i2c_const['FLAG_PAUSA'] = 128
 
-    # Micro function
+    """ Micro GPIO function """
     mf = {
         'D': 'DIGITAL',
         'A': 'ANALOG',
@@ -192,11 +185,10 @@ class Bus:
         'MI': 'MISO',
         'MO': 'MOSI',
         'SC': 'SCK',
-
     }
 
 
-    # Tipi di Board disponibili. Non modificare
+    """ Types of Boards available. Do not modify!!! """
     board_type_available = {
         "DL485M": 1,
         "DL485B": 2,
@@ -212,8 +204,10 @@ class Bus:
         "6": "DL485D",
     }
 
-    # Function PIN map: I=input, O=output, P=pwm, SDA=sda, VCC=VCC, GND=GND, X=xtal, PROG=prog_button, LED_TX=led TX,
-    #                  LED_RX=led RX, MO=MOSI, MI=MISO, SC=Serial clock, TX_BUS=BUS, AT=Atemega temp,
+    """
+    Function PIN map: I=input, O=output, P=pwm, SDA=sda, VCC=VCC, GND=GND, X=xtal, PROG=prog_button, LED_TX=led TX,
+    LED_RX=led RX, MO=MOSI, MI=MISO, SC=Serial clock, TX_BUS=BUS, AT=Atemega temp,
+    """
     mapmicro = {  # MAP PIN Atmega328P QFN32PIN
          1: {'name': 'PD3',         'fisic_io':    3,    'function': ['I', 'O', 'P']},
          2: {'name': 'PD4',         'fisic_io':    4,    'function': ['I', 'O']},
@@ -348,8 +342,6 @@ class Bus:
             'I2C9':         {'pin':   27,  'name':     'I2C9'},
         },
 
-        
-
         5: {  # DL485P V.2.2
             'PB1':          {'pin':  13},
             'PB2':          {'pin':  14},
@@ -395,7 +387,6 @@ class Bus:
             'I2C8':         {'pin':   27,  'name':     'I2C8'},
             'I2C9':         {'pin':   27,  'name':     'I2C9'},
         },
-
 
         4: {  # Board DL485R
             'IO1':          {'pin':  15,   'name':     'IO1',       'function': ['I', 'O', 'A']},
@@ -556,7 +547,6 @@ class Bus:
             # self.client.loop_forever()
 
     def on_connect(self, client, userdata, flags, rc):
-        print("****************")
         if rc == 0:
             print(f"Connected to MQTT Broker {self.broker} !")
         else:
@@ -841,8 +831,12 @@ class Bus:
                             'description': self.config[b][bb].get('description', 'NO description'),  # Descrizione IO
                             'device_address': self.config[b][bb].get('address', []),  # Address of I2C / Onewire (serial number for DS18B20)
                             'device_type': device_type, # Tipo di device collegato al PIN del micro
+                            
+                            'dimmer_change_memory': int(self.config[b][bb].get('dimmer_change_memory', 0)),
                             'dimmer_extension': int(self.config[b][bb].get('dimmer_extension', 0)),
+                            'dimmer_manual_go_off': int(self.config[b][bb].get('dimmer_manual_go_off', 0)),
                             'dimmer_mode': int(self.config[b][bb].get('dimmer_mode', 0)),
+                            'dimmer_mode_fraction': int(self.config[b][bb].get('dimmer_mode_fraction', 0)),
                             'dimmer_poweron_state': int(self.config[b][bb].get('dimmer_poweron_state', 0)),
                             'dimmer_max': int(self.config[b][bb].get('dimmer_max', 255)),
                             'dimmer_min': int(self.config[b][bb].get('dimmer_min', 0)),
@@ -855,6 +849,7 @@ class Bus:
                             'dimmer_step_pwm': int(self.config[b][bb].get('dimmer_step_pwm', 5)),
                             'dimmer_time_reverse_dir': int(self.config[b][bb].get('dimmer_time_reverse_dir', 200)),
                             'dimmer_time_reset_dir': int(self.config[b][bb].get('dimmer_time_reset_dir', 200)),
+
                             'direction': direction,  # Input / Output
                             'direction_val': 1 if direction == 'output' else 0,  # 1=Output, 0=Input (how arduino)
                             'dtype': self.config[b][bb].get('dtype', self.device_type_dict[device_type].get('dtype', 'Switch')),  # Domoticz Device
@@ -2389,13 +2384,19 @@ class Bus:
                             if DIMMER_TYPE != 'G':
                                 num_dimmer = int(DIMMER_TYPE) - 1
                             else:
-                                num_dimmer = (int(self.mapiotype[board_id][logic_io]['dimmer_linked']) - 1) + 128
+                                if int(self.mapiotype[board_id][logic_io]['dimmer_linked']) > 1:
+                                    num_dimmer = (int(self.mapiotype[board_id][logic_io]['dimmer_linked']) - 1) + 128
+                                else: 
+                                    num_dimmer =  128
 
                             
                             mode_dimmer = (int(self.mapiotype[board_id][logic_io]['dimmer_mode']) & 0xfc) | num_dimmer
-                            
-                            dimmer_poweron_state = self.mapiotype[board_id][logic_io]['dimmer_poweron_state'] * 32 # Setta de il dimmer deve accendersi o stare spento quando viene data alimentazione
-                            plc.append(mode_dimmer | dimmer_poweron_state)
+                            dimmer_change_memory = (1 - int(self.mapiotype[board_id][logic_io]['dimmer_change_memory']) << 3)
+                            dimmer_manual_go_off = (1 - int(self.mapiotype[board_id][logic_io]['dimmer_manual_go_off']) << 4)
+                            dimmer_poweron_state = self.mapiotype[board_id][logic_io]['dimmer_poweron_state'] << 5 # Setta de il dimmer deve accendersi o stare spento quando viene data alimentazione
+                            dimmer_mode_fraction = (int(self.mapiotype[board_id][logic_io]['dimmer_mode_fraction']) << 6)
+                            plc.append(mode_dimmer | dimmer_change_memory | dimmer_manual_go_off | dimmer_poweron_state | dimmer_mode_fraction)
+
                             plc.append(self.mapiotype[board_id][logic_io]['dimmer_max']) # Max PWM default: 255
                             plc.append(self.mapiotype[board_id][logic_io]['dimmer_min']) # Min PWM default: 0
                             plc.append(self.mapiotype[board_id][logic_io]['dimmer_button_time']) # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default: 0.3 sec
