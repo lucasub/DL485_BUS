@@ -123,7 +123,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA DIMMER", # Nome della BOARD
             "board_type_name": "DL485D", # Tipo di Board DIMMER
-            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "DIM1": { # Dimmer 1
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO

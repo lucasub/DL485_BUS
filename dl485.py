@@ -529,14 +529,13 @@ class Bus:
         if self.mqtt_enable:
             
 
-            self.broker = '192.168.1.6'
-            self.broker = '2.37.188.75'
+            self.broker = ''
             self.port = 1883
             self.topic = "dl485"
 
             self.client_id = f'DL485'
-            self.username = 'mqtt_user'
-            self.password = '12311'
+            self.username = ''
+            self.password = ''
             self.client = Client.Client(self.client_id)
             self.client.username_pw_set(self.username, self.password)
             self.client.on_connect = self.on_connect
