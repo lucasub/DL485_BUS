@@ -106,7 +106,7 @@
 // "DL485D4": 8, Dimmer 4 canali
 
 { #inizio file
-        
+
     # Configurazione generale del BUS
     "GENERAL_NET": {
         "bus_port": "/dev/ttyAMA0", # Porta seriale Raspberry PI
@@ -115,6 +115,12 @@
         "board_address": 2, # ID assegnato a Raspberry. Deve avere l'ID della scheda collegata alla seriale di Raspberry PI +1
         "telegram_token": "", # Telegram TOKEN
         "telegram_enable": 0, # TO activate telegram bot
+        "enable_mqtt": 1, # 1 to enable MQTT
+        "mqtt_broker": "192.168.1.6", # IP to MQTT broker
+        "mqtt_broker_username": "mqtt_user", # Username to connect to MQTT broker
+        "mqtt_broker_password": "mqtt_password", # Password to connect to MQTT broker
+        "mqtt_topic": "dl485", # MQTT topic
+        "mqtt_client_id": "dl485", # MQTT client id
         "overwrite_text": 1, // Flag per sovrascrivere "nome" e "descrizione" su Domoticz !!! Attenzione
         "send_configuration": 1 # Flag to send configurations to all board
     },
@@ -135,18 +141,18 @@
             "plc_function": "dimmer",
             "plc_linked_board_id_logic_io": ["*-5"], # ingresso che comando il DIMMER
             "dimmer_max": 255, # Luminosità massima 1-255
-            "dimmer_min": 0, # Luminosità minima 1-255
+            "dimmer_min": 1, # Luminosità minima 1-255
             "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
             "dimmer_fraction_limit": 9, # dimmer_fraction_limit
             "dimmer_delay_auto_up": 0, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
             "dimmer_delay_auto_dw": 0, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
-            "dimmer_delay_manual": 2, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
+            "dimmer_delay_manual": 6, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
             "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
             "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
             "dimmer_time_reset_dir": 100, # Tempo di reset pressone tasto
-            "dimmer_change_memory": 0, # Imposta se le variazioni devono essere memorizzate
-            "dimmer_manual_go_off": 1, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
-            "dimmer_mode_fraction": 0, # 0=Si sale a passi di 1 fino al limite frazione aggiunta, poi ahhiunge la frazione, 1:modo 2
+            "dimmer_memory": 1, # Imposta se le variazioni devono essere memorizzate
+            "dimmer_manual_go_off": 0, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
+            "dimmer_mode_fraction": 0, # 0=Si sale a passi di 1 fino al limite frazione aggiunta poi ahhiunge la frazione 1=modo 2
             "plc_tmax_on": 50, # Max time output ON, 1-255 (0=infinito). 255=16256 secondi
             "name": "OUT1 DIMM RED", # Nome che verrà riportato su DOMOTICZ
             "description": "OUT1 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
@@ -162,17 +168,17 @@
             "plc_function": "dimmer",
             "plc_linked_board_id_logic_io": ["*-6"], # ingresso che comando il DIMMER
             "dimmer_max": 255, # Luminosità massima 1-255
-            "dimmer_min": 0, # Luminosità minima 1-255
+            "dimmer_min": 1, # Luminosità minima 1-255
             "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
             "dimmer_fraction_limit": 15, # dimmer_fraction_limit
             "dimmer_delay_auto_up": 2, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
             "dimmer_delay_auto_dw": 2, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
-            "dimmer_delay_manual": 4, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
+            "dimmer_delay_manual": 6, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
             "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
             "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
             "dimmer_time_reset_dir": 100,
             "dimmer_change_memory": 1, # Imposta se le variazioni devono essere memorizzate
-            "dimmer_manual_go_off": 1, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
+            "dimmer_manual_go_off": 0, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
             "plc_tmax_on": 50, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
             "name": "OUT2 DIMM GREEN", # Nome che verrà riportato su DOMOTICZ
             "description": "OUT2 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
@@ -187,16 +193,18 @@
             "dimmer_poweron_state": 0, # Resta acceso e spento quando ritorna la corrente
             "plc_function": "dimmer",
             "plc_linked_board_id_logic_io": ["*-7"], # usa ingressi DIMMER
+            "dimmer_max": 255, # Luminosità massima 1-255
+            "dimmer_min": 1, # Luminosità minima 1-255
             "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
             "dimmer_fraction_limit": 20, # dimmer_fraction_limit
             "dimmer_delay_auto_up": 2, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
             "dimmer_delay_auto_dw": 5, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
-            "dimmer_delay_manual": 5, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
+            "dimmer_delay_manual": 6, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
             "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
             "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
             "dimmer_time_reset_dir": 100,
             "dimmer_change_memory": 1, # Imposta se le variazioni devono essere memorizzate
-            "dimmer_manual_go_off": 1, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
+            "dimmer_manual_go_off": 0, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
             "plc_tmax_on": 50, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
             "name": "OUT3 DIMM BLUE", # Nome che verrà riportato su DOMOTICZ
             "description": "OUT3 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
@@ -225,7 +233,7 @@
             "description": "OUT3 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Selector Switch Dimmer"
         },
-        "IN1": { # 
+        "IN1": { #
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 5, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
@@ -237,7 +245,7 @@
             "description": "IN1 DIMMER" # Descrizione che verrà riportato su DOMOTICZ
             // "dtype": "Current (Single)"
         },
-        "IN2": { # 
+        "IN2": { #
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 6, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
@@ -273,7 +281,7 @@
             "description": "IN Generale", # Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Switch"
         }
-        
+
     },
 
     "BOARD8": { # RMS POWER TEST
@@ -297,15 +305,15 @@
             "rms_power_scale_ch1": 0.044952, # moltiplicatore scala visualizzazione canale 1 (per visualizzare )
             "rms_power_scale_ch2": 0.6971277, # moltiplicatore scala visualizzazione canale 2
             "rms_power_scale": 0.1259205776, # moltiplicatore scala visualizzazione potenze
-            
+
             "rms_power_filter": 30, # filtro calcolo potenza
-            "rms_power_mul_ch1": 50, # moltiplicatori per calcoli interni 0..50 
+            "rms_power_mul_ch1": 50, # moltiplicatori per calcoli interni 0..50
             "rms_power_mul_ch2": 50, # max 50
-            
+
             "rms_power_logic_offset_ls": 0, # valori di default per offset ch1 e ch2 se mancasse il canale di acquisizione offset, in totale ms/ls è circa 512, quindi ms=2, ls=0
             "rms_power_logic_offset_ms": 0
         },
-        
+
         "VIN": { # Tensione alimentazione BOARD
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 1, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
@@ -421,20 +429,20 @@
             "enable": 1,
             "logic_io": 12,
             "device_type": "VIRTUAL",
-            "filter": 1,
-            "default_startup_value": 0,
+            // "filter": 1, # Non deve esserci
+            // "default_startup_value": 0,
             "time_refresh": 600,
             "plc_function": "powermeter",
-            "plc_counter_mode": 27, # b011011, memoria del valore precendente e aggiorna dato a periodo ottenuto (b5b4=01), 
+            "plc_counter_mode": 27, # b011011, memoria del valore precendente e aggiorna dato a periodo ottenuto (b5b4=01),
                                 # azzera tempo ad ogni start a conteggio finito (b3=1),
-                                # considera end come nuovo start (b1=1), 
+                                # considera end come nuovo start (b1=1),
                                 # end su fronte ON (b0=1)
             "plc_powermeter_k": 60000, # numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale) questo perchè il campo a 16 bit non consente di scrivere 360000
             "kmul": 6, #moltiplica per 6 la lettura di 1/6 della potenza
             "kadd": 0,
             "plc_counter_filter": 0, # non usato
             "plc_time_unit": 0.01, # Centesimi di secondo per la misura del periodo impulsi
-            "plc_counter_timeout": 500, # 500 centesimi=5 secondi 
+            "plc_counter_timeout": 500, # 500 centesimi=5 secondi
             "plc_linked_board_id_logic_io": ["*-11"], # usa ingresso LDR
             "name": "POWER METER",
             "description": "POWER METER",
@@ -447,7 +455,7 @@
             "default_startup_value": 0,
             "time_refresh": 600,
             "plc_function": "nequal", // PLC function, invertito con nequal perche il relè è invertito
-            "plc_linked_board_id_logic_io": ["*-11"], //usa ingresso LDR 
+            "plc_linked_board_id_logic_io": ["*-11"], //usa ingresso LDR
             "plc_time_unit": 0.01, // Time unit (1: 1 second - 0.1 - 0.01 - 2.5)
             #"plc_tmax_on": 10, // Max time output ON, if omitted: default = 65635 (infinite)
             "plc_delay_on_off": 0, // Delay ON->OFF, if omitted: default = 0
@@ -460,9 +468,9 @@
             "enable": 1, # conta impulsi
             "logic_io": 14,
             "device_type": "VIRTUAL",
-            "default_startup_value": 0,
-            "inverted": 1,
-            "filter": 127,
+            // "default_startup_value": 0,
+            // "inverted": 1,
+            // "filter": 127,
             "time_refresh": 600,
             "plc_function": "counter_up",
             "plc_counter_mode": 0, # b00000
@@ -541,7 +549,7 @@
         },
         "I2C2": {#i2c
             "enable": 0,
-            "logic_io": 9, # Attenzione: LOGIC_IO della calibrazione deve essere appena precedente al LOGIC_IO del BME associato 
+            "logic_io": 9, # Attenzione: LOGIC_IO della calibrazione deve essere appena precedente al LOGIC_IO del BME associato
             "device_type": "BME280_CALIB",
             "time_refresh": 60,#TBME280
             "address": "0xEC",
@@ -600,7 +608,7 @@
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
-            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO 
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 1, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 60, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "VINR1R2",
@@ -649,9 +657,9 @@
             "enable": 0,
             "logic_io": 6,
             "device_type": "VIRTUAL",
-            "filter": 1,
+            // "filter": 1,
             "time_refresh": 600,
-            "default_startup_value": 0, #valore preset uscita prima del primo calcolo
+            // "default_startup_value": 0, #valore preset uscita prima del primo calcolo
             "plc_function": "powermeter",
             "plc_counter_mode": 27, # b11011 memoria del valore precendente e aggiorna dato a periodo ottenuto, azzera tempo ad ogni start a conteggio finito. Considera end come nuovo start, end si fronte ON
             "plc_powermeter_k": 60000, # numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale)
@@ -713,7 +721,7 @@
             "plc_function": "rfid_unit",
             "plc_rfid_unit_tpolling_nocard": 0,
             "plc_rfid_unit_tpolling_oncard": 0,
-            "plc_rfid_unit_mode": 255, 
+            "plc_rfid_unit_mode": 255,
             "plc_rfid_unit_n_conf_refresh": 10,
             "plc_rfid_ack_wait": 25, # (30-255ms)60ms di pausa tra un comando di lettura e la lettura del codice. Se troppo basso la lettura non funziona
             "time_refresh": 600,
@@ -1065,7 +1073,7 @@
             ],
             "name": "LUCECORRIDOIO",
             "description": "LUCE CORRIDOIO"
-        },       
+        },
         "BME280": {
             "enable": 0,
             "logic_io": 13,
