@@ -26,8 +26,9 @@ from bus_dl485 import BusDL485
 from log import Log
 
 # from dl485_mqtt import *
-# import paho.mqtt.client as Client
+import paho.mqtt.client as Client
 # import paho.mqtt.publish as publish
+
 
 class Bus(BusDL485, Log):
     EEPROM_LANGUAGE = 1  # 1=NEW,  0=old
@@ -496,38 +497,53 @@ class Bus(BusDL485, Log):
         self.cronoldtime = self.cron_sec = self.cron_min = self.cron_hour = self.cron_day = 0
         self.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
         self.cronStartup = False # Flag per invio di cron una sola volta dopo lo startup
-        self.mqtt_enable = 0
+        self.mqtt_enable = int(self.config['GENERAL_NET']['mqtt_enable'])
 
         if self.mqtt_enable:
+            try:
+                self.writelog(f"self.mqtt_enable: {self.mqtt_enable}")
+                self.mqtt_broker = self.config['GENERAL_NET']['mqtt_broker']
+                self.mqtt_port = self.config['GENERAL_NET']['mqtt_port']
+                self.mqtt_topic = self.config['GENERAL_NET']['mqtt_topic']
+                self.mqtt_username = self.config['GENERAL_NET']['mqtt_broker_username']
+                self.mqtt_password = self.config['GENERAL_NET']['mqtt_broker_password']
+                self.mqtt_client_id = self.config['GENERAL_NET']['mqtt_client_id']
 
-
-            self.broker = '192.168.1.6'
-            self.broker = '2.37.188.75'
-            self.port = 1883
-            self.topic = "dl485"
-
-            self.client_id = f'DL485'
-            self.username = 'mqtt_user'
-            self.password = '12311'
-            self.client = Client.Client(self.client_id)
-            self.client.username_pw_set(self.username, self.password)
-            self.client.on_connect = self.on_connect
-            self.client.connect(self.broker)
-            self.client.on_message = self.on_message
-            self.client.subscribe(f'{self.topic}/#')
-            self.client.loop_start()
-            # self.client.loop_forever()
+                self.client = Client.Client(self.mqtt_client_id)
+                self.client.username_pw_set(self.mqtt_username, self.mqtt_password)
+                self.client.on_connect = self.on_connect
+                self.client.connect(self.mqtt_broker)
+                self.client.on_message = self.on_message
+                self.client.subscribe(f'{self.mqtt_topic}/#')
+                self.client.loop_start()
+                # self.client.loop_forever()
+            except:
+                self.writelog("ERROR MQTT CONNECTION. It will be disabled!!!")
+                self.mqtt_enable = 0
 
     def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
-            print(f"Connected to MQTT Broker {self.broker} !")
+            self.writelog(f"Connected to MQTT Broker {self.mqtt_broker} !")
         else:
             error = Client.error_string(rc)
-            print(f"Failed to connect, return code error:{rc} {error}\n")
+            self.writelog(f"Failed to connect, return code error:{rc} {error}\n")
 
     def on_message(self, client, userdata, message):
-        # print(dir(message))
-        print( "RECEIVED", message._topic.decode(), message.payload.decode() )
+        bb = message._topic.decode().split("/")  # MQTT topic, board_id, logic_io received
+        # try:
+        board_id = int(bb[1])
+        logic_io = int(bb[2])
+        device_type = self.mapiotype[board_id][logic_io]['device_type']
+        device_type_name = self.device_type_dict[device_type]['dtype']
+        value = message.payload.decode()
+        # print(device_type_name)
+        # print("----------------MSG:", board_id, logic_io, [value])
+        if device_type_name in ['Switch']:
+            msg = self.writeIO(board_id, logic_io, [int(value)])
+            print("----------------MSG:", msg)
+            self.TXmsg.append(msg)
+        # except:
+        #     print("MQTT ERROR RECEIVED:", message._topic.decode(), message.payload.decode() )
 
     def ping(self):
         """
@@ -568,7 +584,7 @@ class Bus(BusDL485, Log):
     def checkConfigFile(self):
         print("== checkConfigFile == \n")
         key_general_net = ['bus_port', 'bus_baudrate', 'max_board_address', 'board_address', 'telegram_token', 'telegram_enable', 'overwrite_text', 'send_configuration',
-            'enable_mqtt', 'mqtt_broker', 'mqtt_broker_username', 'mqtt_broker_password', 'mqtt_topic', 'mqtt_client_id']
+            'mqtt_enable', 'mqtt_port', 'mqtt_broker', 'mqtt_broker_username', 'mqtt_broker_password', 'mqtt_topic', 'mqtt_client_id']
         key_general = ['Custom Sensor', 'description', 'device_type', 'dtype', 'dunit', 'enable', 'kadd', 'kmul', 'logic_io', 'name', 'n_refresh_off', 'n_refresh_on', 'time_refresh']
         key_plc = ['plc_counter_filter', 'plc_counter_mode', 'plc_counter_timeout', 'plc_delay_off_on', 'plc_delay_on_off', 'plc_function', 'plc_linked_board_id_logic_io', \
             'plc_mode_timer', 'plc_powermeter_k', 'plc_rfid_card_code', 'plc_timer_n_transitions', 'plc_time_off', 'plc_time_on', 'plc_time_unit']
@@ -586,22 +602,26 @@ class Bus(BusDL485, Log):
                         key_general_net.remove(cc)
 
                 elif 'BOARD' in c:
+                    if 'offset_temperature' in self.config[c][cc]:
+                        print(f"ERROR: Change on {c} logic_io:{self.config[c][cc].get('logic_io')} offset_temperature with kadd - kmuk")
+                        sys.exit()
+
                     if self.config[c][cc].get('device_type') == 'DS18B20':
-                        key_DS18B20 = ['offset_temperature', 'round_temperature']
+                        key_DS18B20 = ['kadd', 'kmul', 'round_temperature']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_DS18B20 and ccc not in key_general:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'TEMP_ATMEGA':
-                        key_TEMP_ATEMEGA = ['offset_temperature', 'round_temperature']
+                        key_TEMP_ATEMEGA = ['kadd', 'kmul', 'round_temperature']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_TEMP_ATEMEGA and ccc not in key_general:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'ANALOG_IN':
-                        key_ANALOG_IN = ['plc_function']
+                        key_ANALOG_IN = ['plc_function', 'round_value']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_ANALOG_IN and ccc not in key_general:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
@@ -622,21 +642,21 @@ class Bus(BusDL485, Log):
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'VINKMKA':
-                        key_VINKMKA = []
+                        key_VINKMKA = ['kadd', 'kmul', 'round_value']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_VINKMKA and ccc not in key_general:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'VINR1R2':
-                        key_VINR1R2 = ['rgnd', 'rvcc']
+                        key_VINR1R2 = ['rgnd', 'rvcc', 'round_value', 'kadd', 'kmul']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_VINR1R2 and ccc not in key_general:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'PSYCHROMETER':
-                        key_PSYCHROMETER = []
+                        key_PSYCHROMETER = ['round_humidity', 'offset_humidity']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_PSYCHROMETER and ccc not in key_general and ccc not in key_plc:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
@@ -650,14 +670,14 @@ class Bus(BusDL485, Log):
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'AM2320':
-                        key_AM2320 = ['address']
+                        key_AM2320 = ['address', 'kadd', 'kmul', 'round_temperature']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_AM2320 and ccc not in key_general and ccc not in key_plc:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'BME280':
-                        key_BME280 = ['address', 'altitude', 'logic_io_calibration', 'offset_humidity', 'offset_pression', 'offset_temperature', 'round_pression', 'round_temperature', 'round_humidity']
+                        key_BME280 = ['address', 'altitude', 'logic_io_calibration', 'offset_humidity', 'offset_pression', 'kadd', 'kmul', 'round_pression', 'round_temperature', 'round_humidity']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_BME280 and ccc not in key_general and ccc not in key_plc:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
@@ -692,7 +712,7 @@ class Bus(BusDL485, Log):
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'TSL2561':
-                        key_TSL2561 = ['address', 'lux_gain', 'lux_integration']
+                        key_TSL2561 = ['address', 'lux_gain', 'lux_integration', 'kadd', 'kmul', 'round_value']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_TSL2561 and ccc not in key_general:
                                 print("""ERROR config.json in board: {:<6} - logic_io: {:>1}: wrong key: {:<20}  on section {:<10}""".format(c, self.config[c][cc].get('logic_io'), ccc, self.config[c][cc].get('device_type')))
@@ -767,7 +787,8 @@ class Bus(BusDL485, Log):
                         try:
                             pin = self.iomap[board_type][bb]['pin']
                         except:
-                            self.writelog(f"NOME LABEL {bb} NON TROVATO NELLA DEFINIZIONE DELLA BOARD TIPO: {board_type}: {self.iomap[board_type]}")
+                            self.writelog(f"NOME LABEL {bb} NON TROVATO NELLA DEFINIZIONE DELLA BOARD TIPO: {board_type}")
+                            sys.exit()
                             pin = 0
 
                         if pin > 0:
@@ -804,7 +825,7 @@ class Bus(BusDL485, Log):
                             'dimmer_mode_fraction': int(self.config[b][bb].get('dimmer_mode_fraction', 0)),
                             'dimmer_poweron_state': int(self.config[b][bb].get('dimmer_poweron_state', 0)),
                             'dimmer_max': int(self.config[b][bb].get('dimmer_max', 255)),
-                            'dimmer_min': int(self.config[b][bb].get('dimmer_min', 0)),
+                            'dimmer_min': int(self.config[b][bb].get('dimmer_min', 1)),
                             'dimmer_button_time': int(self.config[b][bb].get('dimmer_button_time', 30)),
                             'dimmer_delay_auto_up': int(self.config[b][bb].get('dimmer_delay_auto_up', 3)),
                             'dimmer_delay_auto_dw': int(self.config[b][bb].get('dimmer_delay_auto_dw', 3)),
@@ -833,7 +854,7 @@ class Bus(BusDL485, Log):
                             'name': self.config[b][bb].get('name', 'NO Name'),
                             'offset_pression': int(self.config[b][bb].get('offset_pression', 0)),  # OFFSET pression
                             'offset_humidity': int(self.config[b][bb].get('offset_humidity', 0)),  # OFFSET temperature
-                            'offset_temperature': int(self.config[b][bb].get('offset_temperature', 0)),  # OFFSET temperature
+                            # 'offset_temperature': int(self.config[b][bb].get('offset_temperature', 0)),  # OFFSET temperature Sostituito con kadd - kmul
                             'only_fronte_off': int(self.config[b][bb].get('only_fronte_off', 0)),
                             'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
                             'pin_label': bb,
@@ -885,6 +906,7 @@ class Bus(BusDL485, Log):
                             "rms_power_scale_ch1": int(self.config[b][bb].get('rms_power_scale_ch1', 1)),
                             "rms_power_scale_ch2": int(self.config[b][bb].get('rms_power_scale_ch2', 1)),
                             "rms_power_scale": int(self.config[b][bb].get('rms_power_scale', 1)),
+                            'round_value': int(self.config[b][bb].get('round_value', 0)), # sostituisce round
                             'round_humidity': int(self.config[b][bb].get('round_humidity', 0)),
                             'round_pression': int(self.config[b][bb].get('round_pression', 0)),
                             'round_temperature': int(self.config[b][bb].get('round_temperature', 1)),
@@ -944,15 +966,15 @@ class Bus(BusDL485, Log):
             if a <= 255:
                 return crc
 
-    def ADC_value(self, VIN, rvcc, rgnd):
+    def adc_value(self, VIN, rvcc, rgnd):
         """
         Dato il valore della tensione e le resistenze del partitore, ricavo la tensione in ingresso ADC del micro
         """
         try:
             value = VIN / (rvcc + rgnd) * rgnd * 930.0
-            return round(value)
+            return value
         except:
-            self.writelog(f"ERROR ADC_value-> Vin:{VIN} Rvcc:{rvcc} Rgng:{rgnd}")
+            self.writelog(f"ERROR def adc_value -> Vin:{VIN} Rvcc:{rvcc} Rgng:{rgnd}")
             return 0
 
     def byteLSMS2uint(self, byteLS, byteMS):
@@ -977,6 +999,12 @@ class Bus(BusDL485, Log):
         if byte > 127:
             return -128 + byte
         return byte
+
+    def round_value(self, value, round_value):
+        if round_value:
+            return round(value, round_value)
+        else:
+            return int(value)
 
     def calculate(self, board_id, command, logic_io, value):
         """
@@ -1053,13 +1081,13 @@ class Bus(BusDL485, Log):
                                     umidita_relativa_percentuale = 0
                                 # umidita_specifica_alla_saturazione = 0.622 * pressione_vapore_saturo_temperatura_sensore_asciutto / pressione_approssimata_all_altezza
                                 # umidita_specifica = umidita_relativa_percentuale*umidita_specifica_alla_saturazione / 100
-                                self.writelog(f"PSYCHROMETER HUMIDITY: {round(umidita_relativa_percentuale, 1)}")
-                                self.status[board_id_linked]['io'][logic_io_linked - 1] = round(umidita_relativa_percentuale, 1)
+                                val_hum = self.round_value(umidita_relativa_percentuale, self.mapiotype[board_id][logic_io]['round_humidity'])
+
+                                self.writelog(f"PSYCHROMETER HUMIDITY: {val_hum}")
+                                self.status[board_id_linked]['io'][logic_io_linked - 1] = val_hum
                             else:
                                 self.writelog('PSYCHROMETER ERROR: Temp1 or Temp2 have None value')
-                    value = round((((value * kmul) + kadd)+ self.mapiotype[board_id][logic_io]['offset_temperature']), self.mapiotype[board_id][logic_io]['round_temperature'])
-                    if self.mapiotype[board_id][logic_io]['round_temperature'] == 0:
-                        return int(value)
+                    value = self.round_value(adjust(value), self.mapiotype[board_id][logic_io]['round_temperature'])
                     return value
                 else:
                     # print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
@@ -1070,22 +1098,22 @@ class Bus(BusDL485, Log):
                 if 'rms_power_logic_id_ch1' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch1'] == logic_io:
 
                     value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_ch1'] / self.RMS_POWER_DICT[board_id]['rms_power_mul_ch1']
-                    return round(value, 2)
+                    return self.round_value(value, 2)
 
                 elif 'rms_power_logic_id_ch2' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] == logic_io:
                     value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_ch2'] / self.RMS_POWER_DICT[board_id]['rms_power_mul_ch2']
                     # print("==>>> RMS_POWER CH2 {} {} {}".format(board_id, logic_io, value))
-                    return round(value, 0)
+                    return self.round_value(value, 0)
 
                 elif 'rms_power_logic_id_real' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_real'] == logic_io:
                     value = self.byteLSMS2int(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale']
                     # print("==>>> RMS_POWER REAL {} {} {}".format(board_id, logic_io, value))
-                    return round(value, 1)
+                    return self.round_value(value, 1)
 
                 elif 'rms_power_logic_id_apparent' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_apparent'] == logic_io:
                     value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale']
                     # print("==>>> RMS_POWER APPARENT {} {} {}".format(board_id, logic_io, value))
-                    return round(value, 1)
+                    return self.round_value(value, 1)
 
                 elif 'rms_power_logic_id_cosfi' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_cosfi'] == logic_io:
                     value = self.byteLSMS2int(value[0], value[1])
@@ -1099,7 +1127,7 @@ class Bus(BusDL485, Log):
                 elif 'rms_power_logic_id_phase' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_phase'] == logic_io:
                     value = self.byteLSMS2int(value[0], value[1]) / 1000
                     # print("==>>> RMS_POWER PHASE {} {} {}".format(board_id, logic_io, value))
-                    return round(value, 1)
+                    return self.round_value(value, 1)
 
                 elif 'rms_power_logic_id_offset' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_offset'] == logic_io:
                     value = self.byteLSMS2uint(value[0], value[1])
@@ -1280,17 +1308,13 @@ class Bus(BusDL485, Log):
 
                 P /= (0.9877**(self.mapiotype[board_id][logic_io]['altitude'] / 100)) # Compensazione altitudine
                 P += self.mapiotype[board_id][logic_io]['offset_pression'] # Offset pressione
-                P = round(P, self.mapiotype[board_id][logic_io]['round_pression'])
-                if self.mapiotype[board_id][logic_io]['round_pression'] == 0:
-                    P = int(P)
-                T += self.mapiotype[board_id][logic_io]['offset_temperature']
-                T = round(T, self.mapiotype[board_id][logic_io]['round_temperature'])
-                if self.mapiotype[board_id][logic_io]['round_temperature'] == 0:
-                    T = int(T)
+                P = self.round_value(P, self.mapiotype[board_id][logic_io]['round_pression'])
+                # T += self.mapiotype[board_id][logic_io]['offset_temperature']
+                T = adjust(T)
+
+                T = self.round_value(T, self.mapiotype[board_id][logic_io]['round_temperature'])
                 H += self.mapiotype[board_id][logic_io]['offset_humidity']
-                H = round(H, self.mapiotype[board_id][logic_io]['round_humidity'])
-                if self.mapiotype[board_id][logic_io]['round_humidity'] == 0:
-                    H = int(H)
+                H = self.round_value(H, self.mapiotype[board_id][logic_io]['round_humidity'])
 
                 self.writelog(f"T:{T} H:{H} P:{P}")
 
@@ -1301,10 +1325,12 @@ class Bus(BusDL485, Log):
 
                 hum = ((value[1] * 256 + value[2]) / 10.0) + self.mapiotype[board_id][logic_io]['offset_humidity']
 
-                temp = (((value[3] & 0x7F) * 256 + value[4]) / 10.0) + self.mapiotype[board_id][logic_io]['offset_temperature']
+                temp = (((value[3] & 0x7F) * 256 + value[4]) / 10.0)
+                temp = adjust(temp)
+
                 if value[3] & 0x80 == 0x80: temp = -temp
                 # print("AM2320", hum, temp)
-                return [temp, hum]
+                return [self.round_value(temp, self.mapiotype[board_id][logic_io]['round_temperature']), self.round_value(hum, self.mapiotype[board_id][logic_io]['round_humidity'])]
 
             elif device_type == 'TSL2561':
                 # print("TSL2561 Data:", value)
@@ -1316,12 +1342,11 @@ class Bus(BusDL485, Log):
 
                 # value = self.calculateLux(iGain, tInt, ch0, ch1, IC_Package)
                 lux = tsl2561_calculate(lux_gain, lux_integration, ch0, ch1, 'T')
-                return round(adjust(lux), 0)
+                return self.round_value(adjust(lux), self.mapiotype[board_id][logic_io]['round_value'])
 
             elif device_type == 'TEMP_ATMEGA':
                 value = (value[0] + (value[1] * 256)) - 270 + 25
-                return round(value + self.mapiotype[board_id][logic_io]['offset_temperature'], 1)
-                # return round(value, 1)
+                return self.round_value(adjust(value), self.mapiotype[board_id][logic_io]['round_temperature'])
 
             elif device_type == 'VINR1R2' or device_type == 'VINKMKA' or type_io == 'analog' or type_io == 'virtual':
 
@@ -1330,10 +1355,13 @@ class Bus(BusDL485, Log):
                 #print("rvcc:%s - rgnd:%s - kmul:%s - kadd:%s value:%s" %(rvcc, rgnd, kmul, kadd, value))
 
                 if device_type == 'VINR1R2':
-                    value = round((value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0), 1)
+                    value = (value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0)
+                    # value = self.round_value(((value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0)) * kmul, self.mapiotype[board_id][logic_io]['round_value'])
+                    value = self.round_value(adjust(value), self.mapiotype[board_id][logic_io]['round_value'])
                 else:
                     # print("----------------------", value)
-                    value = round((value[0] + (value[1] * 256)) * kmul + kadd, 1)
+                    value = self.round_value(adjust(value[0] + (value[1] * 256)), self.mapiotype[board_id][logic_io]['round_value'])
+
 
                 bio = "{}-{}".format(board_id, logic_io)
                 if bio in self.mapproc:
@@ -2123,7 +2151,7 @@ class Bus(BusDL485, Log):
                         rvcc = self.mapiotype[appboardid][applogicio]['rvcc']
                         power_on_voltage_on = self.mapiotype[board_id][logic_io]['power_on_voltage_on']
 
-                        value_dac_in = self.ADC_value(float(power_on_voltage_on), rvcc, rgnd)
+                        value_dac_in = self.adc_value(float(power_on_voltage_on), rvcc, rgnd)
                         # self.poweron_linked=1111
                         # print(self.mapproc)
                         # print("valuedacin:",value_dac_in,power_on_voltage_on, rvcc, rgnd)
@@ -2615,8 +2643,18 @@ class Bus(BusDL485, Log):
                 value = self.calculate(board_id, command, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
 
                 if self.mqtt_enable:
-                    print("MQTT_ENABLE", board_id, command, logic_io, value)
-                    publish.single(f"{self.topic}/{board_id}/{logic_io}", str(value), hostname=self.broker, auth = {'username':self.username, 'password':self.password})
+
+                    device_type = self.mapiotype[board_id][logic_io]['device_type']
+                    device_type_name = self.device_type_dict[device_type]['dtype']
+                    print("MQTT SEND TO HASSIO:", board_id, logic_io, value, device_type_name)
+                    if device_type_name in ['Switch']:
+                        val = 1 if value & 1 else 0
+                    else:
+                        val = value
+                    msg = f"{self.mqtt_topic}/{board_id}/{logic_io}"
+                    print(f"-------------------SEND TO HA:{msg} {value}")
+                    self.client.publish(msg, val)
+
 
                 # print("CALCULATE VALUE:", self.RXtrama[0], self.RXtrama[2], self.RXtrama[3:], value)
                 try:
