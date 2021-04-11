@@ -24,7 +24,7 @@ import time
 from tsl2561 import tsl2561_calculate
 from bus_dl485 import BusDL485
 from log import Log
-
+from bme280 import getBME280
 # from dl485_mqtt import *
 import paho.mqtt.client as Client
 # import paho.mqtt.publish as publish
@@ -232,227 +232,131 @@ class Bus(BusDL485, Log):
         41: {'name': 'VIRT1',       'fisic_io':   40,    'function': ['VIRTUAL1']},
     }
 
+    common_gpio = {  # Definizione GPIO comuni a tutte le board
+        'VIN':          {'pin':   22,  'name':     'VIN'},
+        'TEMP_ATMEGA':  {'pin':   37,  'name':     'TEMP_ATMEGA'},
+        'SDA':          {'pin':   27,  'name':     'SDA'},
+        'SCL':          {'pin':   28,  'name':     'SCL'},
+        'BME280':       {'pin':   27,  'name':     'BME280'},
+        'BME280_CALIB': {'pin':   27,  'name':     'BME280_CALIB'},
+        'BME280B':      {'pin':   27,  'name':     'BME280'},
+        'AM2320':       {'pin':   27,  'name':     'AM2320'},
+        'TSL2561':      {'pin':   27,  'name':     'TSL2561'},
+        'PCA9535':      {'pin':   27,  'name':     'PCA9535'},
+        'VIRT1':        {'pin':   41,  'name':     'VIRT1'},
+        'VIRT2':        {'pin':   41,  'name':     'VIRT2'},
+        'VIRT3':        {'pin':   41,  'name':     'VIRT3'},
+        'VIRT4':        {'pin':   41,  'name':     'VIRT4'},
+        'VIRT5':        {'pin':   41,  'name':     'VIRT5'},
+        'VIRT6':        {'pin':   41,  'name':     'VIRT6'},
+        'VIRT7':        {'pin':   41,  'name':     'VIRT7'},
+        'VIRT8':        {'pin':   41,  'name':     'VIRT8'},
+        'VIRT9':        {'pin':   41,  'name':     'VIRT9'},
+        'I2C1':         {'pin':   27,  'name':     'I2C1'},
+        'I2C2':         {'pin':   27,  'name':     'I2C2'},
+        'I2C3':         {'pin':   27,  'name':     'I2C3'},
+        'I2C4':         {'pin':   27,  'name':     'I2C4'},
+        'I2C5':         {'pin':   27,  'name':     'I2C5'},
+        'I2C6':         {'pin':   27,  'name':     'I2C6'},
+        'I2C7':         {'pin':   27,  'name':     'I2C7'},
+        'I2C8':         {'pin':   27,  'name':     'I2C8'},
+        'I2C9':         {'pin':   27,  'name':     'I2C9'},
+    }
+
+    dl485m_gpio = {  # Definizione GPIO DL485M
+        'PB0':          {'pin':   12,  'name':     'IO4'},
+        'PB1':          {'pin':   13,  'name':     'IO5'},
+        'PB2':          {'pin':   14,  'name':     'IO8'},
+        'PB3':          {'pin':   15,  'name':     'IO15'},
+        'PB4':          {'pin':   16,  'name':     'IO13'},
+        'PB5':          {'pin':   17,  'name':     'IO14'},
+        'PD3':          {'pin':    1,  'name':     'IO6'},
+        'PD4':          {'pin':    2,  'name':     'IO7'},
+        'PC0':          {'pin':   23,  'name':     'IO9'},
+        'PC1':          {'pin':   24,  'name':     'IO10'},
+        'PC2':          {'pin':   25,  'name':     'IO11'},
+        'PC3':          {'pin':   26,  'name':     'IO12'},
+        'PC4':          {'pin':   27,  'name':     'IO11'},
+        'PC5':          {'pin':   28,  'name':     'IO12'},
+        'PE0':          {'pin':    3,  'name':     'SDA'},
+        'PE1':          {'pin':    6,  'name':     ''},
+        'PE2':          {'pin':   19,  'name':     ''},
+        'DS18B20-1':    {'pin':   35,  'name':     'DS18B20'},
+        'DS18B20-2':    {'pin':   35,  'name':     'DS18B20'},
+        'DS18B20-3':    {'pin':   35,  'name':     'DS18B20'},
+        'DS18B20-4':    {'pin':   35,  'name':     'DS18B20'},
+        'DS18B20-5':    {'pin':   35,  'name':     'DS18B20'},
+        'DS18B20-6':    {'pin':   35,  'name':     'DS18B20'},
+        'DS18B20-7':    {'pin':   35,  'name':     'DS18B20'},
+    }
+    dl485m_gpio.update(common_gpio)
+
+    dl485b_gpio = {  # Definizione GPIO DL485B
+        'IO1':          {'pin':   23,  'name':     'IO1'},
+        'IO2':          {'pin':   24,  'name':     'IO2'},
+        'IO3':          {'pin':   25,  'name':     'IO3'},
+        'IO4':          {'pin':   26,  'name':     'IO4'},
+        'OUT1':         {'pin':    3,  'name':     'RELE1'},
+        'OUT2':         {'pin':    2,  'name':     'RELE2'},
+        'OUT3':         {'pin':    1,  'name':     'RELE3'},
+    }
+    dl485b_gpio.update(common_gpio)
+
+    dl485r_gpio = {  # Definizione GPIO DL485R V.2.2
+        'IO1':          {'pin':  15,   'name':     'IO1',       'function': ['I', 'O', 'A']},
+        'IO2':          {'pin':  16,  'name':      'IO2',       'function': ['I', 'O', 'A']},
+        'IO3':          {'pin':  25,  'name':      'IO3',       'function': ['I', 'O', 'A']},
+        'IO4':          {'pin':  26,  'name':      'IO4',       'function': ['I', 'O', 'A']},
+        'OUT1':         {'pin':   2,  'name':      'RELE1',     'function': ['O']},
+        'OUT2':         {'pin':   1,  'name':      'RELE2',     'function': ['O']},
+        'VIN':          {'pin':  22,  'name':      'VIN',       'function': ['VIN']},
+        'RMS_POWER_CH1':{'pin':  41,  'name':      'RMS_POWER_CH1'},
+        'RMS_POWER_CH2':{'pin':  41,  'name':      'RMS_POWER_CH2'},
+        'RMS_POWER_REAL':        {'pin':  41,  'name':      'RMS_POWER_REAL'},
+        'RMS_POWER_APPARENT':    {'pin':  41,  'name':      'RMS_POWER_APPARENT'},
+        'RMS_POWER_COSFI':       {'pin':  41,  'name':      'RMS_POWER_COSFI'},
+        'RMS_POWER_LOOP':        {'pin':  41,  'name':      'RMS_POWER_LOOP'},
+    }
+    dl485r_gpio.update(common_gpio)
+
+    dl485p_gpio = {  # Definizione GPIO DL485P V.2.2
+        'PB1':          {'pin':  13},
+        'PB2':          {'pin':  14},
+        'PB3':          {'pin':  15},
+        'PB4':          {'pin':  16},
+        'PB5':          {'pin':  17},
+        'PC0':          {'pin':  23},
+        'PC1':          {'pin':  24},
+        'PC2':          {'pin':  25},
+        'PC3':          {'pin':  26},
+        'PD3':          {'pin':   1},
+        'PD5':          {'pin':   9},
+        'PD6':          {'pin':  10},
+        'PE0':          {'pin':   3},
+        'PE1':          {'pin':   6},
+        'PE2':          {'pin':  19},
+    }
+    dl485p_gpio.update(common_gpio)
+
+    dl485d_gpio = {  # Definizione GPIO DL485D
+        'IN1':          {'pin':   23,  'name':     'IO1'},
+        'IN2':          {'pin':   24,  'name':     'IO2'},
+        'IN3':          {'pin':   25,  'name':     'IO3'},
+        'IN4':          {'pin':   26,  'name':     'IO4'},
+        'DIM1':         {'pin':   14,  'name':     'DIMMER1'},
+        'DIM2':         {'pin':   13,  'name':     'DIMMER2'},
+        'DIM3':         {'pin':    1,  'name':     'DIMMER3'},
+        'DIM4':         {'pin':   15,  'name':     'DIMMER4'},
+        'DIMG':         {'pin':   37,  'name':     'DIMMER GENERALE'},
+    }
+    dl485d_gpio.update(common_gpio)
+
     iomap = { # MAP IO of board in base al tipoboard 1,2,3,4,5
-        1: {  # DL485M
-            'PB0':          {'pin':   12,  'name':     'IO4'},
-            'PB1':          {'pin':   13,  'name':     'IO5'},
-            'PB2':          {'pin':   14,  'name':     'IO8'},
-            'PB3':          {'pin':   15,  'name':     'IO15'},
-            'PB4':          {'pin':   16,  'name':     'IO13'},
-            'PB5':          {'pin':   17,  'name':     'IO14'},
-            'PD3':          {'pin':    1,  'name':     'IO6'},
-            'PD4':          {'pin':    2,  'name':     'IO7'},
-            'PC0':          {'pin':   23,  'name':     'IO9'},
-            'PC1':          {'pin':   24,  'name':     'IO10'},
-            'PC2':          {'pin':   25,  'name':     'IO11'},
-            'PC3':          {'pin':   26,  'name':     'IO12'},
-            'PC4':          {'pin':   27,  'name':     'IO11'},
-            'PC5':          {'pin':   28,  'name':     'IO12'},
-            'PE0':          {'pin':    3,  'name':     'SDA'},
-            'PE1':          {'pin':    6,  'name':     ''},
-            'PE2':          {'pin':   19,  'name':     ''},
-            'VIN':          {'pin':   22,  'name':     'VIN'},
-            'PCA9535':      {'pin':   27,  'name':     'PCA9535'},
-            'BME280':       {'pin':   27,  'name':     'BME280'},
-            'BME280_CALIB': {'pin':   27,  'name':     'BME280_CALIB'},
-            'BME280B':      {'pin':   27,  'name':     'BME280'},
-            'AM2320':       {'pin':   27,  'name':     'AM2320'},
-            'TSL2561':      {'pin':   27,  'name':     'TSL2561'},
-            'DS18B20-1':    {'pin':   35,  'name':     'DS18B20'},
-            'DS18B20-2':    {'pin':   35,  'name':     'DS18B20'},
-            'DS18B20-3':    {'pin':   35,  'name':     'DS18B20'},
-            'DS18B20-4':    {'pin':   35,  'name':     'DS18B20'},
-            'DS18B20-5':    {'pin':   35,  'name':     'DS18B20'},
-            'DS18B20-6':    {'pin':   35,  'name':     'DS18B20'},
-            'DS18B20-7':    {'pin':   35,  'name':     'DS18B20'},
-            'TEMP_ATMEGA':  {'pin':   37,  'name':     'TEMP_ATMEGA'},
-            'VIRT1':        {'pin':   41,  'name':     'VIRT1'},
-            'VIRT2':        {'pin':   41,  'name':     'VIRT2'},
-            'VIRT3':        {'pin':   41,  'name':     'VIRT3'},
-            'VIRT4':        {'pin':   41,  'name':     'VIRT4'},
-            'VIRT5':        {'pin':   41,  'name':     'VIRT5'},
-            'VIRT6':        {'pin':   41,  'name':     'VIRT6'},
-            'VIRT7':        {'pin':   41,  'name':     'VIRT7'},
-            'VIRT8':        {'pin':   41,  'name':     'VIRT8'},
-            'VIRT9':        {'pin':   41,  'name':     'VIRT9'},
-            'I2C1':         {'pin':   27,  'name':     'I2C1'},
-            'I2C2':         {'pin':   27,  'name':     'I2C2'},
-            'I2C3':         {'pin':   27,  'name':     'I2C3'},
-            'I2C4':         {'pin':   27,  'name':     'I2C4'},
-            'I2C5':         {'pin':   27,  'name':     'I2C5'},
-            'I2C6':         {'pin':   27,  'name':     'I2C6'},
-            'I2C7':         {'pin':   27,  'name':     'I2C7'},
-            'I2C8':         {'pin':   27,  'name':     'I2C8'},
-            'I2C9':         {'pin':   27,  'name':     'I2C9'},
-        },
-
-        2: {  # DL485B
-            'IO1':          {'pin':   23,  'name':     'IO1'},
-            'IO2':          {'pin':   24,  'name':     'IO2'},
-            'IO3':          {'pin':   25,  'name':     'IO3'},
-            'IO4':          {'pin':   26,  'name':     'IO4'},
-            'OUT1':         {'pin':    3,  'name':     'RELE1'},
-            'OUT2':         {'pin':    2,  'name':     'RELE2'},
-            'OUT3':         {'pin':    1,  'name':     'RELE3'},
-            'VIN':          {'pin':   22,  'name':     'VIN'},
-            'SDA':          {'pin':   27,  'name':     'SDA'},
-            'SCL':          {'pin':   28,  'name':     'SCL'},
-            'PCA9535':      {'pin':    0,  'name':     'PCA9535'},
-            'BME280A':      {'pin':    0,  'name':     'BME280'},
-            'BME280B':      {'pin':    0,  'name':     'BME280'},
-            'BME280_CALIB': {'pin':   27,  'name':     'BME280_CALIB'},
-            'TSL2561':      {'pin':    0,  'name':     'TSL2561'},
-            'DS18B20':      {'pin':   35,  'name':     'DS18B20'},
-            'TEMP_ATMEGA':  {'pin':   37,  'name':     'TEMP_ATMEGA'},
-            'VIRT1':        {'pin':   41,  'name':     'VIRT1'},
-            'VIRT2':        {'pin':   41,  'name':     'VIRT2'},
-            'VIRT3':        {'pin':   41,  'name':     'VIRT3'},
-            'VIRT4':        {'pin':   41,  'name':     'VIRT4'},
-            'VIRT5':        {'pin':   41,  'name':     'VIRT5'},
-            'VIRT6':        {'pin':   41,  'name':     'VIRT6'},
-            'VIRT7':        {'pin':   41,  'name':     'VIRT7'},
-            'VIRT8':        {'pin':   41,  'name':     'VIRT8'},
-            'VIRT9':        {'pin':   41,  'name':     'VIRT9'},
-            'I2C1':         {'pin':   27,  'name':     'I2C1'},
-            'I2C2':         {'pin':   27,  'name':     'I2C2'},
-            'I2C3':         {'pin':   27,  'name':     'I2C3'},
-            'I2C4':         {'pin':   27,  'name':     'I2C4'},
-            'I2C5':         {'pin':   27,  'name':     'I2C5'},
-            'I2C6':         {'pin':   27,  'name':     'I2C6'},
-            'I2C7':         {'pin':   27,  'name':     'I2C7'},
-            'I2C8':         {'pin':   27,  'name':     'I2C8'},
-            'I2C9':         {'pin':   27,  'name':     'I2C9'},
-        },
-
-        5: {  # DL485P V.2.2
-            'PB1':          {'pin':  13},
-            'PB2':          {'pin':  14},
-            'PB3':          {'pin':  15},
-            'PB4':          {'pin':  16},
-            'PB5':          {'pin':  17},
-            'PC0':          {'pin':  23},
-            'PC1':          {'pin':  24},
-            'PC2':          {'pin':  25},
-            'PC3':          {'pin':  26},
-            'PD3':          {'pin':   1},
-            'PD5':          {'pin':   9},
-            'PD6':          {'pin':  10},
-            'PE0':          {'pin':   3},
-            'PE1':          {'pin':   6},
-            'PE2':          {'pin':  19},
-            'SDA':          {'pin':  27},
-            'SCL':          {'pin':  28},
-            'VIN':          {'pin':  22, 'function': ['VIN']},
-            'TEMP_ATMEGA':  {'pin':  37},
-            'PCA9535':      {'pin':   0},
-            'BME280':       {'pin':   27},
-            'BME280B':      {'pin':   0},
-            'BME280_CALIB': {'pin':  27,  'name':      'BME280_CALIB'},
-            'AM2320':       {'pin':   0},
-            'TSL2561':      {'pin':   27},
-            'VIRT1':        {'pin':   41,  'name':     'VIRT1'},
-            'VIRT2':        {'pin':   41,  'name':     'VIRT2'},
-            'VIRT3':        {'pin':   41,  'name':     'VIRT3'},
-            'VIRT4':        {'pin':   41,  'name':     'VIRT4'},
-            'VIRT5':        {'pin':   41,  'name':     'VIRT5'},
-            'VIRT6':        {'pin':   41,  'name':     'VIRT6'},
-            'VIRT7':        {'pin':   41,  'name':     'VIRT7'},
-            'VIRT8':        {'pin':   41,  'name':     'VIRT8'},
-            'VIRT9':        {'pin':   41,  'name':     'VIRT9'},
-            'I2C1':         {'pin':   27,  'name':     'I2C1'},
-            'I2C2':         {'pin':   27,  'name':     'I2C2'},
-            'I2C3':         {'pin':   27,  'name':     'I2C3'},
-            'I2C4':         {'pin':   27,  'name':     'I2C4'},
-            'I2C5':         {'pin':   27,  'name':     'I2C5'},
-            'I2C6':         {'pin':   27,  'name':     'I2C6'},
-            'I2C7':         {'pin':   27,  'name':     'I2C7'},
-            'I2C8':         {'pin':   27,  'name':     'I2C8'},
-            'I2C9':         {'pin':   27,  'name':     'I2C9'},
-        },
-
-        4: {  # Board DL485R
-            'IO1':          {'pin':  15,   'name':     'IO1',       'function': ['I', 'O', 'A']},
-            'IO2':          {'pin':  16,  'name':      'IO2',       'function': ['I', 'O', 'A']},
-            'IO3':          {'pin':  25,  'name':      'IO3',       'function': ['I', 'O', 'A']},
-            'IO4':          {'pin':  26,  'name':      'IO4',       'function': ['I', 'O', 'A']},
-            'OUT1':         {'pin':   2,  'name':      'RELE1',     'function': ['O']},
-            'OUT2':         {'pin':   1,  'name':      'RELE2',     'function': ['O']},
-            'VIN':          {'pin':  22,  'name':      'VIN',       'function': ['VIN']},
-            'SDA':          {'pin':  27,  'name':      'SDA',       'function': ['SDA']},
-            'SCL':          {'pin':  28,  'name':      'SCL',       'function': ['SCL']},
-            'PCA9535':      {'pin':   0,  'name':      'PCA9535'},
-            'BME280':       {'pin':  27,  'name':      'BME280'},
-            'BME280_CALIB': {'pin':  27,  'name':      'BME280_CALIB'},
-            'BME280A':      {'pin':   0,  'name':      'BME280A'},
-            'TSL2561':      {'pin':  27,  'name':      'TSL2561'},
-            'DS18B20':      {'pin':  35,  'name':      'DS18B20'},
-            'TEMP_ATMEGA':  {'pin':  37,  'name':      'VIRT1'},
-            'VIRT1':        {'pin':  41,  'name':      'VIRT1'},
-            'VIRT2':        {'pin':  41,  'name':      'VIRT2'},
-            'VIRT3':        {'pin':  41,  'name':      'VIRT3'},
-            'VIRT4':        {'pin':  41,  'name':      'VIRT4'},
-            'VIRT5':        {'pin':  41,  'name':      'VIRT5'},
-            'VIRT6':        {'pin':  41,  'name':      'VIRT6'},
-            'VIRT7':        {'pin':  41,  'name':      'VIRT7'},
-            'VIRT8':        {'pin':  41,  'name':      'VIRT8'},
-            'VIRT9':        {'pin':  41,  'name':      'VIRT9'},
-            'I2C1':         {'pin':  27,  'name':      'I2C1'},
-            'I2C2':         {'pin':  27,  'name':      'I2C2'},
-            'I2C3':         {'pin':  27,  'name':      'I2C3'},
-            'I2C4':         {'pin':  27,  'name':      'I2C4'},
-            'I2C5':         {'pin':  27,  'name':      'I2C5'},
-            'I2C6':         {'pin':  27,  'name':      'I2C6'},
-            'I2C7':         {'pin':  27,  'name':      'I2C7'},
-            'I2C8':         {'pin':  27,  'name':      'I2C8'},
-            'I2C9':         {'pin':  27,  'name':      'I2C9'},
-            'RMS_POWER_CH1':{'pin':  41,  'name':      'RMS_POWER_CH1'},
-            'RMS_POWER_CH2':{'pin':  41,  'name':      'RMS_POWER_CH2'},
-            'RMS_POWER_REAL':        {'pin':  41,  'name':      'RMS_POWER_REAL'},
-            'RMS_POWER_APPARENT':    {'pin':  41,  'name':      'RMS_POWER_APPARENT'},
-            'RMS_POWER_COSFI':       {'pin':  41,  'name':      'RMS_POWER_COSFI'},
-            'RMS_POWER_LOOP':        {'pin':  41,  'name':      'RMS_POWER_LOOP'},
-
-        },
-
-        6: {  # DL485D Dimmer 1 CH => Basato su DL485B
-            'IN1':          {'pin':   23,  'name':     'IO1'},
-            'IN2':          {'pin':   24,  'name':     'IO2'},
-            'IN3':          {'pin':   25,  'name':     'IO3'},
-            'IN4':          {'pin':   26,  'name':     'IO4'},
-            'DIM1':         {'pin':   14,  'name':     'DIMMER1'},
-            'DIM2':         {'pin':   13,  'name':     'DIMMER2'},
-            'DIM3':         {'pin':    1,  'name':     'DIMMER3'},
-            'DIM4':         {'pin':   15,  'name':     'DIMMER4'},
-            'DIMG':         {'pin':   37,  'name':     'DIMMER GENERALE'},
-            'VIN':          {'pin':   22,  'name':     'VIN'},
-            'SDA':          {'pin':   27,  'name':     'SDA'},
-            'SCL':          {'pin':   28,  'name':     'SCL'},
-            'PCA9535':      {'pin':    0,  'name':     'PCA9535'},
-            'BME280A':      {'pin':    0,  'name':     'BME280'},
-            'BME280B':      {'pin':    0,  'name':     'BME280'},
-            'BME280_CALIB': {'pin':   27,  'name':     'BME280_CALIB'},
-            'TSL2561':      {'pin':    0,  'name':     'TSL2561'},
-            'DS18B20':      {'pin':   35,  'name':     'DS18B20'},
-            'TEMP_ATMEGA':  {'pin':   37,  'name':     'TEMP_ATMEGA'},
-            'VIRT1':        {'pin':   41,  'name':     'VIRT1'},
-            'VIRT2':        {'pin':   41,  'name':     'VIRT2'},
-            'VIRT3':        {'pin':   41,  'name':     'VIRT3'},
-            'VIRT4':        {'pin':   41,  'name':     'VIRT4'},
-            'VIRT5':        {'pin':   41,  'name':     'VIRT5'},
-            'VIRT6':        {'pin':   41,  'name':     'VIRT6'},
-            'VIRT7':        {'pin':   41,  'name':     'VIRT7'},
-            'VIRT8':        {'pin':   41,  'name':     'VIRT8'},
-            'VIRT9':        {'pin':   41,  'name':     'VIRT9'},
-            'I2C1':         {'pin':   27,  'name':     'I2C1'},
-            'I2C2':         {'pin':   27,  'name':     'I2C2'},
-            'I2C3':         {'pin':   27,  'name':     'I2C3'},
-            'I2C4':         {'pin':   27,  'name':     'I2C4'},
-            'I2C5':         {'pin':   27,  'name':     'I2C5'},
-            'I2C6':         {'pin':   27,  'name':     'I2C6'},
-            'I2C7':         {'pin':   27,  'name':     'I2C7'},
-            'I2C8':         {'pin':   27,  'name':     'I2C8'},
-            'I2C9':         {'pin':   27,  'name':     'I2C9'},
-        },
+        1: dl485m_gpio,  # DL485B
+        2: dl485b_gpio,  # DL485B
+        4: dl485r_gpio,  # DL485R
+        5: dl485p_gpio,  # DL485P
+        6: dl485d_gpio,  # DL485DP
     }
 
     def __init__(self, config_file_name, logstate=0):
@@ -787,7 +691,7 @@ class Bus(BusDL485, Log):
                         try:
                             pin = self.iomap[board_type][bb]['pin']
                         except:
-                            self.writelog(f"NOME LABEL {bb} NON TROVATO NELLA DEFINIZIONE DELLA BOARD TIPO: {board_type}")
+                            self.writelog(f"NOME LABEL '{bb}' NON TROVATO NELLA DEFINIZIONE DELLA '{b}' TIPO: {board_type}")
                             sys.exit()
                             pin = 0
 
@@ -1352,14 +1256,11 @@ class Bus(BusDL485, Log):
 
                 rvcc = self.mapiotype[board_id][logic_io]['rvcc']
                 rgnd = self.mapiotype[board_id][logic_io]['rgnd']
-                #print("rvcc:%s - rgnd:%s - kmul:%s - kadd:%s value:%s" %(rvcc, rgnd, kmul, kadd, value))
 
                 if device_type == 'VINR1R2':
                     value = (value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0)
-                    # value = self.round_value(((value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0)) * kmul, self.mapiotype[board_id][logic_io]['round_value'])
                     value = self.round_value(adjust(value), self.mapiotype[board_id][logic_io]['round_value'])
                 else:
-                    # print("----------------------", value)
                     value = self.round_value(adjust(value[0] + (value[1] * 256)), self.mapiotype[board_id][logic_io]['round_value'])
 
 

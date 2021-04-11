@@ -533,6 +533,7 @@
             "kmul": 1.03909465,
             "rvcc": 240000, # Valore resistenza posta tra IO e ingresso alimentazione.
             "rgnd": 1000, # Valore resistenza posta tra IO e 0V.
+            "round_value": 1,
             "name": "V.PANNELLI", # Nome che verrà riportato su DOMOTICZ
             "description": "Tensione pannelli fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
         },
@@ -544,6 +545,7 @@
             "kmul": 1.0097,
             "rvcc": 15000, # Valore resistenza posta tra IO e ingresso alimentazione.
             "rgnd": 1000, # Valore resistenza posta tra IO e 0V.
+            "round_value": 1,
             "name": "V.BATT", # Nome che verrà riportato su DOMOTICZ
             "description": "Tensione batteria fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
         }
@@ -554,7 +556,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA MASTER", # Nome della BOARD
             "board_type_name": "DL485M", # Tipo di Board: Vedi TYPEB
-            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
@@ -614,7 +616,7 @@
             "dtype": "Text"
         },
         "I2C2": {#i2c
-            "enable": 0,
+            "enable": 1,
             "logic_io": 9, # Attenzione: LOGIC_IO della calibrazione deve essere appena precedente al LOGIC_IO del BME associato
             "device_type": "BME280_CALIB",
             "time_refresh": 60,#TBME280
@@ -624,7 +626,7 @@
             "dtype": "None"
         },
         "I2C1": {#i2c
-            "enable": 0,
+            "enable": 1,
             "logic_io": 8,
             "device_type": "BME280",
             "logic_io_calibration": 9,
