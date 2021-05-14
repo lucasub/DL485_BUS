@@ -78,24 +78,21 @@ class BusDL485(Log):
         Calculate trama and return list with right values
         """
         if self.buffricnlung > 100:  # Errore 3
-            self.write("ERR 3 Pacchetto troppo lungo")
+            self.writelog("ERR 3 Pacchetto troppo lungo")
             self.labinitric()
             return []
 
         if self.lastfinepacc:
             self.lastfinepacc = False
             auscrc = (inSerial & 0x0f) | ((inSerial & 0xE0)//2)
-            self.crcric = self.calccrc(
-                self.crcric + 0xaa, self.crcric)  # aggiorna crc
+            self.crcric = self.calccrc(self.crcric + 0xaa, self.crcric)  # aggiorna crc
             ric = self.buffricn
             if (auscrc ^ self.crcric) & 0x7f == 0:  # right crc & end trama
                 self.labinitric()
                 return ric
             else:
                 self.writelog(
-                    f'ERRORE secondo CRC, calcolato - Ricevuto\
-                    {hex(self.crcric)}, {hex(auscrc)},\
-                    len buffricn={len(self.buffricn)} {self.buffricnlung}')
+                    f'SECONDO CRC ERRATO     Ricevuto {hex(auscrc)}    calcolato - {hex(self.crcric)} len_buffricn={len(self.buffricn)} self.buffricnlung:{self.buffricnlung} inSerial:{str(inSerial)}', 'RED')
                 self.labinitric()
                 return []
 
@@ -125,28 +122,26 @@ class BusDL485(Log):
 
             else:  # CRC Errato
                 self.writelog(
-                    f"PRIMO CRC ERRATO       calcolato {self.crcric} ricevuto {inSerial} len buffricn={len(self.buffricn)} {self.buffricnlung}, {str(self.buffricn)} {str(self.buffricnapp)}")
+                    f"PRIMO CRC ERRATO       calcolato {self.crcric:>3} ricevuto {inSerial:>3} Len_buffricn={len(self.buffricn):>3} {self.buffricnlung}, {str(self.buffricn)} {str(self.buffricnapp)}", 'RED')
                 self.labinitric()
                 return []
 
         elif inSerial == 0:  # Errore 1
             self.writelog("ERR 1:                 Tre 0 ricevuti, byte={}".format(
-                hex(inSerial)))
+                hex(inSerial)), 'RED')
             self.labinitric()
             return []
 
         elif inSerial == 0x38:  # Errore 2
             self.writelog("ERR 2:                 Tre 1 ricevuti, byte={}".format(
-                hex(inSerial)))
+                hex(inSerial)), 'RED')
             self.labinitric()
             return []
 
         else:  # carattere normale
             self.crcric = self.calccrc(inSerial, self.crcric)  # aggiorna crc
             self.buffricnapp.insert(
-                self.buffricnlung,
-                ((inSerial & 0x0f) | ((inSerial & 0xE0) // 2))
-                )  # inserisce carattere decodificato
+                self.buffricnlung, ((inSerial & 0x0f) | ((inSerial & 0xE0) // 2)) )  # inserisce carattere decodificato
             if len(self.buffricnapp) == 8:  # Arrivato byte con i bit residui
                 self.seven2eight()
             self.buffricnlung += 1

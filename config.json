@@ -110,12 +110,12 @@
     # Configurazione generale del BUS
     "GENERAL_NET": {
         "bus_port": "/dev/ttyAMA0", # Porta seriale Raspberry PI
-        "bus_baudrate": 19200, # Velocità BUS e seriale
+        "bus_baudrate": 38400, # Velocità BUS e seriale
         "max_board_address": 63, # Numero massimo di Board presenti sul BUS
         "board_address": 2, # ID assegnato a Raspberry. Deve avere l'ID della scheda collegata alla seriale di Raspberry PI +1
         "telegram_token": "", # Telegram TOKEN
         "telegram_enable": 0, # TO activate telegram bot
-        "mqtt_enable": 1, # 1 to enable MQTT
+        "mqtt_enable": 0, # 1 to enable MQTT
         "mqtt_broker": "2.37.188.75", # IP to MQTT broker
         "mqtt_port": "1883", # PORT of MQTT broker
         "mqtt_broker_username": "mqtt_user", # Username to connect to MQTT broker
@@ -126,10 +126,10 @@
         "send_configuration": 0 # Flag to send configurations to all board
     },
 
-    "BOARD6": { # BOARD DIMMER
+    "BOARD10": { # BOARD DIMMER
         "GENERAL_BOARD": {
             "name": "SCHEDA DIMMER", # Nome della BOARD
-            "board_type_name": "DL485D", # Tipo di Board DIMMER
+            "board_type_name": "DL485D3", # Tipo di Board DIMMER
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "DIM1": { # Dimmer 1
@@ -167,7 +167,7 @@
             "default_startup_value": 50, # Livello di luminosità predefinito alla prima accensione
             "dimmer_poweron_state": 0, # Resta acceso e spento quando ritorna la corrente
             "plc_function": "dimmer",
-            "plc_linked_board_id_logic_io": ["*-7"], # ingresso che comando il DIMMER
+            "plc_linked_board_id_logic_io": ["*-7", "*-10"], # ingresso che comando il DIMMER
             "dimmer_max": 255, # Luminosità massima 1-255
             "dimmer_min": 1, # Luminosità minima 1-255
             "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
@@ -193,7 +193,7 @@
             "default_startup_value": 50, # Livello di luminosità predefinito allo startup
             "dimmer_poweron_state": 0, # Resta acceso e spento quando ritorna la corrente
             "plc_function": "dimmer",
-            "plc_linked_board_id_logic_io": ["*-8"], # usa ingressi DIMMER
+            "plc_linked_board_id_logic_io": ["*-8", "*-11"], # usa ingressi DIMMER
             "dimmer_max": 255, # Luminosità massima 1-255
             "dimmer_min": 1, # Luminosità minima 1-255
             "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
@@ -231,7 +231,7 @@
             "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
             "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
             "dimmer_time_reset_dir": 100,
-            "plc_tmax_on": 8, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
+            "plc_tmax_on": 0, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
             "name": "OUT3 DIMM GENERALE", # Nome che verrà riportato su DOMOTICZ
             "description": "OUT3 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Selector Switch Dimmer"
@@ -284,9 +284,21 @@
             "description": "IN Generale", # Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Switch"
         },
-        "SDA": { # test uscita
+        "IN5": { # test uscita
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 10, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_IN_PULLUP",
+            "default_startup_value": 1, # Valore pulsante allo startup
+            "inverted": 1,
+            "filter": 4,
+            "name": "IN Generale", # Nome che verrà riportato su DOMOTICZ
+            "description": "IN Generale", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Switch"
+        },
+        "IN6": { # test uscita
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 11, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "DIGITAL_IN_PULLUP",
             "default_startup_value": 1, # Valore pulsante allo startup
@@ -307,9 +319,9 @@
         },
 
         "RMS_POWER_CONF": {
-            "rms_power_mode": 3,
-            "rms_power_logic_id_ch1": 4, # canale 1 analogico
-            "rms_power_logic_id_ch2" : 5, #canale 2 analogico
+            "rms_power_mode": 1,
+            "rms_power_logic_id_ch1": 4, # canale 1 analogico TV
+            "rms_power_logic_id_ch2" : 5, #canale 2 analogico TA
             "rms_power_logic_id_offset": 6, # canale acquisizione offset per ch1 e ch2, se zero si usano i valori di default rms_power_logic_io_offset_ls/ms
             "rms_power_default_ch2_off" : 225, # Se logic_id_ch2 == 0, quindi canale non collegato, viene preso questo valore se fosse richiesto il calcolo della la potenza (tensione di default)
             "rms_power_logic_id_real": 7, # i/o per lettura potenza reale
@@ -336,6 +348,7 @@
             "device_type": "VINR1R2",
             "rvcc": 12000, # Valore resistenza posta tra IO e ingresso alimentazione.
             "rgnd": 470, # Valore resistenza posta tra IO e 0V.
+            "round_value": 1,
             "name": "Vin", # Nome che verrà riportato su DOMOTICZ
             "description": "Tensione alimentazione scheda" # Descrizione che verrà riportato su DOMOTICZ
         },
@@ -370,7 +383,7 @@
         "IO2": { # Tensione TV
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 5, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
-            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "time_refresh": 60, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "ANALOG_IN",
             "plc_function": "rms_power",
             "name": "TV", # Nome che verrà riportato su DOMOTICZ
@@ -503,7 +516,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA FOTOVOLTAICO", # Nome della BOARD
             "board_type_name": "DL485B", # Tipo di Board: Vedi TYPEB
-            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
 
         "VIN": { # Tensione alimentazione BOARD
@@ -513,6 +526,8 @@
             "device_type": "VINR1R2",
             "rvcc": 12000, # Valore resistenza posta tra IO e ingresso alimentazione.
             "rgnd": 470, # Valore resistenza posta tra IO e 0V.
+            "kmul": 1.012573,
+            "round_value": 2,
             "name": "Vin DL485B", # Nome che verrà riportato su DOMOTICZ
             "description": "Tensione alimentazione scheda fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
         },
@@ -528,24 +543,72 @@
         "IO1": { # Tensione alimentazione
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 3, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
-            "time_refresh": 60, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            "device_type": "VINR1R2",
-            "kmul": 1.03909465,
-            "rvcc": 240000, # Valore resistenza posta tra IO e ingresso alimentazione.
-            "rgnd": 1000, # Valore resistenza posta tra IO e 0V.
-            "round_value": 1,
+            "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINKMKA",
+            "kmul": 1,
+            "round_value": 2,
+            "name": "V.PANNELLI", # Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione pannelli fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+        },
+        "IO2": { # Tensione alimentazione
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 4, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINKMKA",
+            "kmul": 1,
+            "round_value": 2,
             "name": "V.PANNELLI", # Nome che verrà riportato su DOMOTICZ
             "description": "Tensione pannelli fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
         },
         "IO3": { # Tensione alimentazione
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
-            "logic_io": 4, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "logic_io": 5, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINKMKA",
+            "kmul": 1,
+            "round_value": 2,
+            "name": "V.BATT", # Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione batteria fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+        },
+        "IO4": { # Tensione alimentazione
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 6, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINKMKA",
+            "kmul": 1,
+            "round_value": 2,
+            "name": "V.BATT", # Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione batteria fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+        },
+        "SDA": { # Tensione alimentazione
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 7, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINKMKA",
+            "kmul": 1,
+            "round_value": 2,
+            "name": "V.BATT", # Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione batteria fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+        },
+        "SCL": { # Tensione alimentazione
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 8, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINKMKA",
+            "kmul": 1,
+            "round_value": 2,
+            "name": "V.BATT", # Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione batteria fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+        },
+        "PE2": { # Tensione batteria
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 9, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 60, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "VINR1R2",
             "kmul": 1.0097,
-            "rvcc": 15000, # Valore resistenza posta tra IO e ingresso alimentazione.
-            "rgnd": 1000, # Valore resistenza posta tra IO e 0V.
-            "round_value": 1,
+            "rvcc": 12000, # Valore resistenza posta tra IO e ingresso alimentazione.
+            "rgnd": 470, # Valore resistenza posta tra IO e 0V.
+            "round_value": 2,
             "name": "V.BATT", # Nome che verrà riportato su DOMOTICZ
             "description": "Tensione batteria fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
         }
@@ -579,15 +642,15 @@
         "PC0": {
             "enable": 0,
             "logic_io": 3,
-            "device_type": "DIGITAL_IN_PULLUP",
-            "time_refresh": 600,
-            "filter": 4,
-            "name": "Pulsante Dimmer remoto",
-            "description": "Pulsante Dimmer remoto",
+            "device_type": "VINKMKA",
+            "time_refresh": 20,
+            
+            "name": "Analog IN",
+            "description": "Analog IN",
             "dtype": "Switch"
         },
         "PD3": {
-            "enable": 1,
+            "enable": 0,
             "logic_io": 3,
             "device_type": "DS18B20",
             "time_refresh": 60,
@@ -596,7 +659,7 @@
             "dtype": "Temperature"
         },
         "PD4": {
-            "enable": 1,
+            "enable": 0,
             "logic_io": 4,
             "device_type": "DIGITAL_OUT",
             "default_startup_filter_value": 1,
@@ -644,7 +707,7 @@
             "dtype": "Temp+Hum+Baro"
         },
         "TSL2561": { #i2c
-            "enable": 0,
+            "enable": 1,
             "logic_io": 7,
             "device_type": "TSL2561",
             "lux_gain": 1, # 0=1x, 1=16X
@@ -996,11 +1059,11 @@
             "dtype": "Current (Single)"
         }
     },
-    "BOARD7": { #board di prova per video
+    "BOARD17": { #board di prova per video
         "GENERAL_BOARD": {
             "name": "BUS", # Nome della BOARD
             "board_type_name": "DL485P", # Tipo di Board: Vedi TYPEB
-            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO

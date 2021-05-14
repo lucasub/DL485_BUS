@@ -177,13 +177,17 @@ class Bus(BusDL485, Log):
         "DL485Pold": 3, #scheda tipo 3 vecchia sostituita con 5
         "DL485R": 4,
         "DL485P": 5,
-        "DL485D": 6,
+        "DL485D1": 6,
+        "DL485D3": 7,
+        "DL485D4": 8,
         "1": "DL485M",
         "2": "DL485B",
         "3": "DL485Pold",
         "4": "DL485R",
         "5": "DL485P",
-        "6": "DL485D",
+        "6": "DL485D1",
+        "7": "DL485D3",
+        "8": "DL485D4",
     }
 
     """
@@ -296,6 +300,7 @@ class Bus(BusDL485, Log):
         'IO2':          {'pin':   24,  'name':     'IO2'},
         'IO3':          {'pin':   25,  'name':     'IO3'},
         'IO4':          {'pin':   26,  'name':     'IO4'},
+        'PE2':          {'pin':   19,  'name':     'ADC'},
         'OUT1':         {'pin':    3,  'name':     'RELE1'},
         'OUT2':         {'pin':    2,  'name':     'RELE2'},
         'OUT3':         {'pin':    1,  'name':     'RELE3'},
@@ -339,10 +344,12 @@ class Bus(BusDL485, Log):
     dl485p_gpio.update(common_gpio)
 
     dl485d_gpio = {  # Definizione GPIO DL485D
-        'IN1':          {'pin':   23,  'name':     'IO1'},
-        'IN2':          {'pin':   24,  'name':     'IO2'},
-        'IN3':          {'pin':   25,  'name':     'IO3'},
-        'IN4':          {'pin':   26,  'name':     'IO4'},
+        'IN1':          {'pin':   23,  'name':     'IN1'},
+        'IN2':          {'pin':   24,  'name':     'IN2'},
+        'IN3':          {'pin':   25,  'name':     'IN3'},
+        'IN4':          {'pin':   26,  'name':     'IN4'},
+        'IN5':          {'pin':   27,  'name':     'IN5'},
+        'IN6':          {'pin':   28,  'name':     'IN6'},
         'DIM1':         {'pin':   14,  'name':     'DIMMER1'},
         'DIM2':         {'pin':   13,  'name':     'DIMMER2'},
         'DIM3':         {'pin':    1,  'name':     'DIMMER3'},
@@ -356,7 +363,9 @@ class Bus(BusDL485, Log):
         2: dl485b_gpio,  # DL485B
         4: dl485r_gpio,  # DL485R
         5: dl485p_gpio,  # DL485P
-        6: dl485d_gpio,  # DL485DP
+        6: dl485d_gpio,  # DL485D1
+        7: dl485d_gpio,  # DL485D3
+        8: dl485d_gpio,  # DL485D4
     }
 
     def __init__(self, config_file_name, logstate=0):
@@ -444,7 +453,6 @@ class Bus(BusDL485, Log):
         # print("----------------MSG:", board_id, logic_io, [value])
         if device_type_name in ['Switch']:
             msg = self.writeIO(board_id, logic_io, [int(value)])
-            print("----------------MSG:", msg)
             self.TXmsg.append(msg)
         # except:
         #     print("MQTT ERROR RECEIVED:", message._topic.decode(), message.payload.decode() )
@@ -456,6 +464,16 @@ class Bus(BusDL485, Log):
         data = [self.BOARD_ADDRESS]
         return data
 
+    def dict_raise_on_duplicates(self, pairs):
+        error = []
+        board_list = []
+        for k, v in pairs:
+            if k in board_list:
+                error.append(k)
+            else:
+                board_list.append(k)
+        return error
+
     def getJsonConfig(self, config_file_name):
         """
         Create self.config from JSON configuration file
@@ -466,8 +484,14 @@ class Bus(BusDL485, Log):
         config = re.sub(r'\\\n', '', config)
         config = re.sub(r'//.*\n', '\n', config)
         try:
-            config = json.loads(config)
-            self.config = config
+            error = json.loads(config, object_pairs_hook=self.dict_raise_on_duplicates) 
+            if error:
+                print(f"ERROR board {error} duplicated in config.json !!!")
+                sys.exit()
+            else:
+                config = json.loads(config)
+                self.config = config
+
         except json.decoder.JSONDecodeError as e:
             print("Error into config.json file: ", e)
             sys.exit()
@@ -482,7 +506,6 @@ class Bus(BusDL485, Log):
             if isinstance(value, dict):
                 yield from self.recursiveKeyOnDict(value, key)
             # elif key == target:
-            #     print("-----  ", key, target)
             #     yield key
 
     def checkConfigFile(self):
@@ -654,7 +677,6 @@ class Bus(BusDL485, Log):
                 self.status[board_id]['board_type'] = board_type
                 name = self.config[b]['GENERAL_BOARD']['name'] # Board name
                 self.status[board_id]['name'] = name
-
                 try:
                     self.status[board_id]['io'] = [0] * len(self.iomap[board_type])
                     # self.status[board_id]['boardtypename'] = self.config['TYPEB']["%s" %board_type]
@@ -909,6 +931,32 @@ class Bus(BusDL485, Log):
             return round(value, round_value)
         else:
             return int(value)
+
+    def analogFilter(self, old_value, new_value, min, max, max_delta_inc, max_delta_dec, filter):
+        """
+        Filtro per segnali analogici: 
+        Il nuovo valore new_value viene limitato tra min e max e anche nella massima variazione consentita.
+        Poi viene filtrato attraverso il valore filter (tra 0 e 1). 0= nessun filtro e 1= filtro infinito
+        """
+        val_app = new_value
+        if new_value > max:
+            val_app = max
+        elif new_value < min:
+            val_app = min
+        
+        if val_app >= old_value:
+            delta = val_app - old_value
+            if delta > max_delta_inc:
+                delta = max_delta_inc
+            val_app = old_value + delta
+        else:
+            delta = old_value - val_app
+            if delta > max_delta_dec:
+                delta = max_delta_dec
+            val_app = old_value - delta
+        
+        return old_value * filter + val_app * (1 - filter)
+
 
     def calculate(self, board_id, command, logic_io, value):
         """
@@ -1174,6 +1222,8 @@ class Bus(BusDL485, Log):
                 # pprint(self.BME)
 
             elif device_type == 'BME280':
+                if not value:
+                    return
                 T_Raw, H_Raw, P_Raw = self.getBME280(board_id, logic_io, value, )
                 logic_io_calibration = self.mapiotype[board_id][logic_io]['logic_io_calibration']
                 bme_key = '{}-{}'.format(board_id, logic_io_calibration)
@@ -1260,9 +1310,15 @@ class Bus(BusDL485, Log):
                 if device_type == 'VINR1R2':
                     value = (value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0)
                     value = self.round_value(adjust(value), self.mapiotype[board_id][logic_io]['round_value'])
-                else:
-                    value = self.round_value(adjust(value[0] + (value[1] * 256)), self.mapiotype[board_id][logic_io]['round_value'])
-
+                
+                else:                    
+                    old_value = self.status[board_id]['io'][logic_io - 1]
+                    new_value = self.round_value(adjust(value[0] + (value[1] * 256)), self.mapiotype[board_id][logic_io]['round_value'])
+                    # self.analogFilter(old_value, new_value, min, max, max_delta_inc, max_delta_dec, filter):
+                    value = self.analogFilter(old_value, new_value, 0, 180, 10, 10, 0.8)
+                    
+                    # if board_id == 9 and logic_io == 3:
+                    #     print(f"===>>> Valore prima e dopo del filtro analogico: old_value:{old_value}, new_value={new_value}, value_filtrato:{value}")
 
                 bio = "{}-{}".format(board_id, logic_io)
                 if bio in self.mapproc:
@@ -1288,7 +1344,7 @@ class Bus(BusDL485, Log):
                         self.writelog(f"count={self.poweroff_voltage_counter}")
 
                 #print("ANALOG VALUE:", value)
-                return value
+                return self.round_value(value, self.mapiotype[board_id][logic_io]['round_value'])
 
             elif device_type in ['DIGITAL_IN', 'DIGITAL_IN_PULLUP', 'DIGITAL_OUT']:
                 # b0: dato filtrato
@@ -1323,18 +1379,18 @@ class Bus(BusDL485, Log):
         Show to screen the IO status
         """
         msg = "\n" + "-"*83 + "STATUS IO" + "-"*83 +"\n"
-        msg += "ID Name        ID b.type  IO: 1 "
+        msg += "ID Name        ID b.type   IO: 1 "
         for i in range(2, 21):  # estremo superiore viene escluso
             msg += "{:>6} ".format(i)
 
         for b in self.status:
-            msg += f"\n{b:>2} {self.status[b]['name'][:11]:<11} {self.status[b]['board_type']}  {self.status[b]['boardtypename']:>6}"
+            msg += f"\n{b:>2} {self.status[b]['name'][:11]:<11} {self.status[b]['board_type']}  {self.status[b]['boardtypename']:<7}"
 
             for i in self.status[b]['io'][:20]:
                 if i.__class__ == dict:
                     i = 'DICT'
                 msg += " {:>6}".format(str(i))
-        msg += "-" * 83 + "END STATUS" + "-" * 83 + "\n"
+        msg += "\n" + "-" * 83 + "END STATUS" + "-" * 83 + "\n"
         self.writelog(msg)
 
     def int2hex(self, msg):
@@ -1648,7 +1704,6 @@ class Bus(BusDL485, Log):
         """
         From bytes to value Temp, Hum, Press of BME280
         """
-
         bmeValue = value
         pres_raw = (bmeValue[0] << 12) | (bmeValue[1] << 4) | (bmeValue[2] >> 4)
         temp_raw = (bmeValue[3] << 12) | (bmeValue[4] << 4) | (bmeValue[5] >> 4)
@@ -1710,7 +1765,7 @@ class Bus(BusDL485, Log):
                     break
 
                 if appbe != 1:
-                    self.writelog(f"ERRORE CAMPO board enable, BOARD: {board_id}")
+                    self.writelog(f"ERRORE CAMPO board enable, BOARD: {board_id}", 'RED')
                     break
 
 
@@ -2502,7 +2557,7 @@ class Bus(BusDL485, Log):
 
                         if len(msg) > 1:
                             if msg[1] == self.code['CLEARIO_REBOOT']:
-                                self.writelog("REBOOT                 Invio multiplo cleario_reboot")
+                                self.writelog("REBOOT                 Invio multiplo clear_io_reboot")
                                 self.send_data_serial(self.Connection, msg2)  # invio multiplo per superare disturbi
                                 self.send_data_serial(self.Connection, msg2)  # invio multiplo per superare disturbi
 
@@ -2541,10 +2596,13 @@ class Bus(BusDL485, Log):
                 logic_io = self.RXtrama[2]
                 value = self.RXtrama[3:]
                 # print("TRAMA:", board_id, logic_io, value)
-                value = self.calculate(board_id, command, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
+                try:
+                    value = self.calculate(board_id, command, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
+                except:
+                    device_type = self.mapiotype[board_id][logic_io]['device_type']
+                    self.writelog(f"ERROR CALCULATE VALUE: {str(self.RXtrama)} {device_type}", 'RED')
 
                 if self.mqtt_enable:
-
                     device_type = self.mapiotype[board_id][logic_io]['device_type']
                     device_type_name = self.device_type_dict[device_type]['dtype']
                     print("MQTT SEND TO HASSIO:", board_id, logic_io, value, device_type_name)
@@ -2556,8 +2614,6 @@ class Bus(BusDL485, Log):
                     print(f"-------------------SEND TO HA:{msg} {value}")
                     self.client.publish(msg, val)
 
-
-                # print("CALCULATE VALUE:", self.RXtrama[0], self.RXtrama[2], self.RXtrama[3:], value)
                 try:
                     value_old = self.status[board_id]['io'][logic_io - 1]
                     # device_type = self.mapiotype[board_id][logic_io]['device_type']
@@ -2568,7 +2624,7 @@ class Bus(BusDL485, Log):
                         # self.telegram_bot.sendMessage(self.chat_id, res)
 
                 except:
-                    self.writelog("chiave non trovata avviso1 {}".format(self.RXtrama))
+                    self.writelog(f"Key not found          {self.RXtrama}")
 
                 self.writelog(f"RX {self.code[self.RXtrama[1]&0xDF]:<12}        {self.int2hex(self.RXtrama)} {self.RXtrama}")
 
@@ -2580,12 +2636,21 @@ class Bus(BusDL485, Log):
                 # 0: Board_id
                 # 1: Get tipo board command
                 # 2: Tipo board (1: morsetti)
+                """
+                    1: BOARD M
+                    2: BOX
+                    4: RELE
+                    5: PCB
+                    6: DIMMER 1CH
+                    7: DIMMER 3CH
+                    8: DIMMER 4CH
+                """
                 # 3: Numero IO a boardo
                 # 4: Giorno
                 # 5: Mese
                 # 6: anno
                 # 7: Byte: b0: protezione attiva, b1: PLC, b2: PowerOn, b3: PWM out, b5: OneWire, b6: I2C, b7: RFID
-                # 8: Byte: b0: rms_power
+                # 8: Byte: b0: rms_power - b1..b3 numero di DIMMER
                 # 9: Numero IO esclusi (a causa di logic_io o fisico fuori range)
                 # 10: Numero conflitti (es. IO assegnato a RX o assegnato a LED, pulsante, oppure OneWire e ingresso digitale, oppure ingresso analogico e ingresso digitale)
 
@@ -2593,20 +2658,23 @@ class Bus(BusDL485, Log):
                 command = self.RXtrama[1]
                 logic_io = self.RXtrama[2]
                 value = self.RXtrama[3:]
-
-                if not self.RXtrama[0] in self.get_board_type:
-                    self.get_board_type[self.RXtrama[0]] = {}
-                self.get_board_type[board_id]['board_id'] = self.RXtrama[0]
-                self.get_board_type[board_id]['board_type'] = "{} - {}".format(self.RXtrama[2], self.board_type_available[str(self.RXtrama[2])])
-                self.get_board_type[board_id]['io_number'] = self.RXtrama[3]
-                self.get_board_type[board_id]['data_firmware'] = '{:02}/{:02}/{:2}'.format(self.RXtrama[4], self.RXtrama[5], self.RXtrama[6])
-                self.get_board_type[board_id]['protection'] = self.byte2active(self.RXtrama[7], 1)
-                self.get_board_type[board_id]['plc'] = self.byte2active(self.RXtrama[7], 2)
-                self.get_board_type[board_id]['power_on'] = self.byte2active(self.RXtrama[7], 3)
-                self.get_board_type[board_id]['pwm'] = self.byte2active(self.RXtrama[7], 4)
-                self.get_board_type[board_id]['onewire'] = self.byte2active(self.RXtrama[7], 5)
-                self.get_board_type[board_id]['i2c'] = self.byte2active(self.RXtrama[7], 6)
-                self.get_board_type[board_id]['rfid'] = self.byte2active(self.RXtrama[7], 7)
+                try:
+                    if not self.RXtrama[0] in self.get_board_type:
+                        self.get_board_type[self.RXtrama[0]] = {}
+                    self.get_board_type[board_id]['board_id'] = self.RXtrama[0]
+                    self.get_board_type[board_id]['board_type'] = "{} - {}".format(self.RXtrama[2], self.board_type_available[str(self.RXtrama[2])])
+                    self.get_board_type[board_id]['io_number'] = self.RXtrama[3]
+                    self.get_board_type[board_id]['data_firmware'] = '{:02}/{:02}/{:2}'.format(self.RXtrama[4], self.RXtrama[5], self.RXtrama[6])
+                    self.get_board_type[board_id]['protection'] = self.byte2active(self.RXtrama[7], 1)
+                    self.get_board_type[board_id]['plc'] = self.byte2active(self.RXtrama[7], 2)
+                    self.get_board_type[board_id]['power_on'] = self.byte2active(self.RXtrama[7], 3)
+                    self.get_board_type[board_id]['pwm'] = self.byte2active(self.RXtrama[7], 4)
+                    self.get_board_type[board_id]['onewire'] = self.byte2active(self.RXtrama[7], 5)
+                    self.get_board_type[board_id]['i2c'] = self.byte2active(self.RXtrama[7], 6)
+                    self.get_board_type[board_id]['rfid'] = self.byte2active(self.RXtrama[7], 7)
+                except:
+                    print("ERROR: ",  self.RXtrama)
+                    # sys.exit()
 
                 if len(self.RXtrama) == 11:
                     """ Byte aggiunti il 23/10/2020 """
@@ -2674,16 +2742,17 @@ class Bus(BusDL485, Log):
             self.cronoldtime = self.nowtime
             self.cron_sec = 1
 
-            if not self.cronoldtime % 10:
-                self.cron_sec = 10  # Dont remove
-
+            if not self.cronoldtime % 5:
+                self.cron_sec = 5 # Dont remove
+                self.writeLog()
                 # self.writeLog()
                 # self.TXmsg += [self.timeLoop(8)]
+                # self.TXmsg += [self.getBoardType(1)]
 
             if not self.cronoldtime % 30:
                 self.cron_sec = 30  # Dont remove
                 # self.TXmsg += [self.getBoardType(0)]
-                self.writeLog()
+                # self.writeLog()VINKMKA
 
             if not self.cronoldtime % 60:
 
@@ -2848,6 +2917,20 @@ Info su www.domocontrol.info/domocontrol-it/domotica
         print('\n================= You pressed Ctrl+C! ====================')
         sys.exit(0)
 
+    def helpCommand(self):
+        msg = """
+            
+Python3 module to interface DL485 home automation devices.
+    Command to run module:
+        python3 dl485.py p/w num
+        
+        Paramenters: 
+            p -> Print log on screen
+            w -> Print log on file
+            num -> print trama if len >= num (optional)
+        """
+        self.writelog(msg, 'GREEN')
+        
 # END BUS Class
 
 
@@ -2858,6 +2941,14 @@ if __name__ == '__main__':
         logwrite = 1
     if 'p' in sys.argv:  # stampa a schermo
         logscreen = 2
+        
+    print_bus = 99  # Number charaters printed on screen when trama 
+    if len(sys.argv) == 3:
+        try:
+            print_bus = int(sys.argv[2])
+        except:
+            pass
+ 
     if len(sys.argv) < 2:
         logstate = 0
         print("""Avvio programma DL485P \n
@@ -2873,6 +2964,10 @@ if __name__ == '__main__':
     log = Log(logstate=logstate)
     log.writelog("*" * 20 + "START DL485 program" + "*" * 20)
     b = Bus(config_file_name, logstate)  # Istanza la classe bus
+    if '--help' in sys.argv:
+        b.helpCommand()
+        sys.exit()
+        
     log.writelog("BUS_BAUDRATE:{}, BUS_PORT:{}, BOARD_ADDRESS:{}".format(
         b.bus_baudrate, b.bus_port, b.BOARD_ADDRESS
         ))
@@ -2886,7 +2981,7 @@ if __name__ == '__main__':
     # b.TXmsg = msg
 
     """ LOOP """
-    while int(time.time()) - b.oldtime < 5:
+    while int(time.time()) - b.oldtime < 2:
         """ Svuta il buffer della seriale1 """
         res = b.Connection.read()
 
@@ -2901,6 +2996,10 @@ if __name__ == '__main__':
             b.RXtrama = b.readSerial(d)
             if not b.RXtrama:
                 continue
+            
+            if len(b.RXtrama) >= print_bus:  # stampa stringa a TOT caratteri
+                log.writelog(b.RXtrama, 'BLUE')
+  
             b.arrivatatrama()
             b.RXtrama = []  # Azzera trama ricezione
             b.cron()  # Operazioni periodiche

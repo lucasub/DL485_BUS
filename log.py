@@ -1,5 +1,9 @@
 from datetime import datetime
+import colorama
+from colorama import Fore, Style
 import logging
+
+
 
 
 class Log:
@@ -12,9 +16,21 @@ class Log:
         3: write on screen and file
     Pass file_name
     """
+    
+    col = {
+       'BLACK':     30,
+       'RED':       31,
+       'GREEN':     32,
+       'YELLOW':    33,
+       'BLUE':      34,
+       'MAGENTA':   35,
+       'CYAN':      36,
+       'WHITE':     37,
+       'RESET':     39,
+    }
 
     def __init__(self, logstate, file='log.txt'):
-        print("LOGSTATE: ", logstate)
+        # print("LOGSTATE: ", logstate)
         self.logstate = logstate
         if self.logstate & 1:
             self.file = file
@@ -23,14 +39,14 @@ class Log:
                                 filename=self.file,
                                 level=logging.DEBUG)
 
-    def writelog(self, data=''):
+    def writelog(self, data='', color='WHITE'):
         """
         Write log to file or screen
         """
         if self.logstate & 1:
             logging.debug(f'data')  # Write LOG to file
         if self.logstate & 2:
-            print(f'{datetime.now()} {data}')  # Show log to terminal
+            print(f'\033[{self.col[color]}m{datetime.now()}m {data}')  # Show log to terminal
 
 
 if __name__ == '__main__':
