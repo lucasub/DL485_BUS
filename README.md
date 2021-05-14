@@ -3,9 +3,9 @@ DL485 BUS Library
 
 ## DL485P - Tree versions: 
 <div>
-    <img src="document/image/DL485PB.png" width="33%" style="float:left;" title="DL485P PCB Domocontrol" />
-    <img src="document/image/DL485PB.png" width="33%" style="float:left;" title="DL485PPLC PCB Domocontrol con PLC" />
-    <img src="document/image/DL485P1B.png" width="33%"  title="DL485P1 PCB Per progetti CUSTOM" />
+    <img src="document/image/DL485PB.png" width="30%" style="float:left;" title="DL485P PCB Domocontrol" />
+    <img src="document/image/DL485PB.png" width="30%" style="float:left;" title="DL485PPLC PCB Domocontrol con PLC" />
+    <img src="document/image/DL485P1B.png" width="30%"  title="DL485P1 PCB Per progetti CUSTOM" />
 </div>
 
 Mini PCB board with many GPIO, OneWire, I2C, RS485 BUS and Switching step down power supply 5-24Vdc
