@@ -8,10 +8,10 @@ DL485 BUS Library
     <img src="document/image/DL485P1B.png" width="30%"  title="DL485P1 PCB Per progetti CUSTOM" />
 </div>
 
-Mini PCB board with many GPIO, OneWire, I2C, RS485 BUS and Switching step down power supply 5-24Vdc
-- DL485P With domocontrol firmware, 
-- DL485PPLC With Domocontrol firmware and PLC, 
-- DL485P1 Without firmware, for custom project 
+Mini PCB board with many GPIO, OneWire, I2C, RS485 BUS, Switching step down power supply 5-24Vdc, push button and 2 LED
+- DL485P with domocontrol firmware, 
+- DL485PPLC with Domocontrol firmware and PLC system, 
+- DL485P1 without firmware and step down power supply, for custom project. MCU APMEGA328PB 
 
 
 ## DL485B - Tree versions: 
@@ -21,10 +21,10 @@ Mini PCB board with many GPIO, OneWire, I2C, RS485 BUS and Switching step down p
     <img src="document/image/DL485B1B.png" width="30%"  title="DL485P1 BOX Per progetti CUSTOM" />
 </div>
 
-BOX board with 6 GPIO, I2C, OneWire, RS485 BUS, tree relays 230Vac 3A and Switching step down power supply 5-24Vdc
-- DL485B With domocontrol firmware, 
-- DL485BPLC With Domocontrol firmware and PLC, 
-- DL485B1 Without firmware, for custom project 
+BOX board with 6 GPIO, I2C, OneWire, RS485 BUS, tree relays 230Vac 3A, Switching step down power supply 5-24Vdc, push button and 5 LED
+- DL485B with domocontrol firmware, 
+- DL485BPLC with Domocontrol firmware and PLC system, 
+- DL485B1 without firmware and step down power supply, for custom project. MCU APMEGA328PB  
 
 
 ## DL485R - Tree versions: 
@@ -34,10 +34,10 @@ BOX board with 6 GPIO, I2C, OneWire, RS485 BUS, tree relays 230Vac 3A and Switch
     <img src="document/image/DL485R1B.png" width="30%"  title="DL485R1 RELAYS Per progetti CUSTOM" />
 </div>
 
-RELAYS board with 6 GPIO, I2C, OneWire, RS485 BUS, Switching step down power supply 5-24Vdc
-- DL485R With domocontrol firmware, 
-- DL485RPLC With Domocontrol firmware and PLC, 
-- DL485R1 Without firmware, for custom project 
+RELAYS board with 6 GPIO, I2C, OneWire, RS485 BUS, two spdt relays, Switching step down power supply 5-24Vdc, push button and 4 LED
+- DL485R with domocontrol firmware, 
+- DL485RPLC with Domocontrol firmware and PLC system, 
+- DL485R1 without firmware and step down power supply, for custom project. MCU APMEGA328PB  
 
 
 ## DL485M - Tree versions: 
@@ -47,10 +47,10 @@ RELAYS board with 6 GPIO, I2C, OneWire, RS485 BUS, Switching step down power sup
     <img src="document/image/DL485MB.png" width="30%"  title="DL485M1 per progetti CUSTOM" />
 </div>
 
-MAXY board with many GPIO, I2C, OneWire, RS485 BUS, Switching step down power supply 5-24Vdc
+MAXY board with many GPIO, I2C, OneWire, RS485 BUS, Switching step down power supply 5-24Vdc, push button and 2 LED
 - DL485M With domocontrol firmware, 
-- DL485MPLC With Domocontrol firmware and PLC, 
-- DL485M1 Without firmware, for custom project 
+- DL485MPLC With Domocontrol firmware and PLC system, 
+- DL485M1 Without firmware, for custom project. MCU APMEGA328PB
 
 
 ## DL485Dx - Two versions: 
@@ -59,32 +59,41 @@ MAXY board with many GPIO, I2C, OneWire, RS485 BUS, Switching step down power su
     <img src="document/image/DL485D3B.png" width="48%" style="float:left;" title="DL485D3 Smart Dimmer LED 3 channels" />
 </div>
 
-RELAYS board with many GPIO, I2C, OneWire, RS485 BUS, two spdt relays 230Vac 3A and Switching step down power supply 5-24Vdc
-- DL485D Smart dimmer LED,
+SMART Dimmer LED with 1 or 3 channels, master button, programmable, BUS RS485 to control also by Domoticz or other home automation system (Python3 module)
+- DL485D Smart dimmer LED 1 channel,
 - DL485D3 Smart dimmer LED 3 channels
 
 ## English
 
-Library to command DL485 Board's with 2 twisted wires.
+Library to command DL485 Board's by only 2 twisted wires (RS485).
 
 More informations at address <a href="https://wiki.my-tek.it/doku.php">Domocontrol.info</a>
 
 ### Functionality of the DL485x boards
 
-The DL485x series boards are equal nodes that send their data packets in turn on the RS485 network without stall. The data are available to all connected nodes and possibly also to a possible general control system such as Domoticz and / or other home automation systems.
+The DL485x boards are nodes that send their data packets in turn on the RS485 network without stall. The data are available to all connected nodes and possibly also to a possible general control system such as Domoticz and / or other home automation systems.
 
-In rotation, each node, if turned on and connected, sends its data packet in the BUS, when instead a node is turned off, disconnected or busy, it will not enter the network and the tour will continue with the next node ready to operate.
+At rotation, each node, if powered and connected, sends its data packet on the BUS, when instead a node is turned off, disconnected or busy, it will not enter the network and the tour will continue with the next node ready to operate.
 
-A node has no information to send, it just sends a very short packet called Ping to synchronize the whole network.
+If node has no information to send, it just sends a very short packet called Ping to synchronize the whole network.
 
-All the cards of the DL485x series have the possibility of:
+All the DL485x boards have the possibility of:
 - read and write digital I/O
 - Read analog inputs
 - Activate the PWM outputs
 - Read OneWIRE DS18B20 temperature sensors
 - Read I2C sensors (AM2320, BME280, TLS2561 ....)
 
-All distributed on RS485 BUS with a simple twisted pair which can reach hundreds of meters.
+On request, is possible to have DL485B with Power Meter system that can read:
+- AC Voltage
+- AC Current
+- Real power,
+- Apparent power,
+- Cosphi
+- Current phase
+
+The nodes exchange information by RS485 BUS and are connected via a simple and economical twisted pair that can reach hundreds of meters, 
+with very low consumption and the absence of high-frequency electromagnetic waves. 
 
 - Possibility of having a PLC on board on each card to automate the various I/O: example lighting of lights in real time on event.
 - PLC functions available: equal, and, or, xor, odd, even, toggle_on, toggle_on_off, timer, autostart_timer, test_nio_>=_n, test_nio_into_n test_schmitt_nio, analog_in_=_n, analog_in_>_n, analog_in_>=_n, analog_in_schmitt, if_analog_in1_=_analog_in2, if_analog_in1_>_analog_in2, if_analog_in1_>=_analog_in2, if_analog_in1_-_analog_in2_schmitt_value, analog_in_+_n, analog_in_-_n, analog_in_*_n, analog_in_/_n, analog_in_%_n, 
@@ -94,29 +103,43 @@ More information on <a href="https://wiki.my-tek.it/doku.php?id=plc">PLC functio
 
 ## Italiano
 
-Libreria per gestione schede domotiche serie DL485x
+Libreria per comandare la scheda DL485 con soli 2 fili twistati (RS485).
+
+Maggiori informazioni all'indirizzo <a href="https://wiki.my-tek.it/doku.php"> Domocontrol.info </a> 
 
 ### Funzionalità delle schede DL485x
 
-Le schede della serie DL485x sono dei nodi paritari che inviano a turno i loro pacchetti di dati sulla rete RS485 senza stallo. I dati sono a disposizione di tutti i nodi connessi ed eventualmente anche ad un eventuale sistema generale di controllo quale Domoticz e/o altri sistemi domotici.
 
-A rotazione ciascun nodo, se acceso e connesso, invia il suo pacchetto dati nel BUS, quando invece un nodo è spento, scollegato oppure occupato, non si inserirà in rete e il giro proseguirà con il successivo nodo pronto a trasmettere.
+Le schede DL485x sono nodi che inviano a turno i propri pacchetti di dati sulla rete RS485 senza stallo. 
+I dati sono a disposizione di tutti i nodi collegati ed eventualmente anche di un eventuale sistema di controllo generale come Domoticz e / o altri sistemi domotici.
 
-Se un nodo non ha informazioni da inviare si limita ad inviare un brevissimo pacchetto chiamato Ping per la sincronizzazione di tutta la rete.
+A rotazione ogni nodo, se alimentato e connesso, invia il proprio pacchetto dati sul BUS,
+quando invece un nodo è spento, disconnesso o occupato, non entrerà in rete e il tour proseguirà con il nodo successivo pronto ad operare.
 
-Tutte le Board della serie DL485x hanno la possibilità di: 
-- leggere e scrivere I/O digitali
-- Leggere ingressi analogici
-- Attivare delle uscite PWM
-- Leggere sensori di temperatura OneWIRE DS18B20
-- Leggere sensori I2C (AM2320, BME280, TLS2561....)
+Se il nodo non ha informazioni da inviare, invia solo un pacchetto molto breve chiamato Ping per sincronizzare l'intera rete.
 
-Il tutto distribuito su BUS RS485 con semplice doppino twistato che può raggiungere le centinaia di metri.
+Tutte le schede DL485x hanno la possibilità di:
+- leggere e scrivere I / O digitali
+- Leggere gli ingressi analogici
+- Attiva le uscite PWM
+- Leggi sensori di temperatura OneWIRE DS18B20
+- Leggere i sensori I2C (AM2320, BME280, TLS2561 ....)
 
-- Possibilità di avere un PLC a bordo su ciascuna scheda per automatizzare i vari I/O: esempio accensione di Luci in tempo reale su evento.
-- Funzioni PLC disponibili: equal, and, or, xor, odd, even, toggle_on, toggle_on_off, timer, autostart_timer, test_nio_>=_n, test_nio_into_n test_schmitt_nio, analog_in_=_n, analog_in_>_n, analog_in_>=_n, analog_in_schmitt, if_analog_in1_=_analog_in2, if_analog_in1_>_analog_in2, if_analog_in1_>=_analog_in2, if_analog_in1_-_analog_in2_schmitt_value, analog_in_+_n, analog_in_-_n, analog_in_*_n, analog_in_/_n, analog_in_%_n, 
-analog_in_lim_max_n, analog_in_lim_min_n, analog_in1_+_analog_in2, analog_in1_-_analog_in2, analog_in1_*_analog_in2, analog_in1_/_analog_in2, analog_in1_%_analog_in2,  analog_in1_min_analog_in2, analog_in1_max_analog_in2, or_transition_on, last_change, last_change_all, time_meter, counter_up_dw, counter_up, counter_dw, powermeter, power_on.
-Più informazioni sulle <a href="https://www.my-tek.it/wiki/doku.php?id=plc">funzioni PLC</a>
+A richiesta è possibile avere DL485B con sistema Power Meter in grado di leggere:
+- Tensione AC
+- Corrente AC
+- Potenza reale,
+- Poteza apparente,
+- Cosphi
+- Sfasamento della tensione/corrente
+
+I nodi si scambiano informazioni tramite BUS RS485 e sono collegati tramite un semplice ed economico doppino intrecciato che può raggiungere centinaia di metri,
+con consumi molto bassi e assenza di onde elettromagnetiche ad alta frequenza.
+
+- Possibilità di avere un PLC a bordo su ogni scheda per automatizzare i vari I / O: esempio accensione luci in tempo reale su evento.
+- Funzioni PLC disponibili: uguale e, o, xor, dispari, pari, toggle_on, toggle_on_off, timer, autostart_timer, test_nio _> = _ n, test_nio_into_n test_schmitt_nio, analog_in _ = _ n, analog_in _> _ n, analog_in _> = _ n, analog_in_schmitt _analog_in2, if_analog_in1 _> _ analog_in2, if_analog_in1 _> = _ analog_in2, if_analog_in1 _-_ analog_in2_schmitt_value, analog_in _ + _ n, analog_in _-_ n, analog_in _ * _ n, analog_in _ / _ n, analog_in _
+analog_in_lim_max_n, analog_in_lim_min_n, analog_in1 _ + _ analog_in2, analog_in1 _-_ analog_in2, analog_in1 _ * _ analog_in2, analog_in1 _ / _ analog_in2, analog_in1 _% _ analog_in2, analog_in1_min_analog_in2, analog_in1_max_analog_in2, or_transition_on, last_change, last_change_all, time_meter, counter_up_dw, counter_up, counter_dw, PowerMeter, power_on.
+Maggiori informazioni sulle <a href="https://wiki.my-tek.it/doku.php?id=plc"> funzioni PLC </a> 
 
 ### Installazione
 
