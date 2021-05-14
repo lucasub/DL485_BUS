@@ -12,7 +12,7 @@ DL485 BUS Library
 
 Library to command DL485 Board's with 2 twisted wires.
 
-More informations at address <a href="https://www.domocontrol.info">Domocontrol.info</a>
+More informations at address <a href="https://wiki.my-tek.it/doku.php">Domocontrol.info</a>
 
 ### Functionality of the DL485x boards
 
@@ -34,7 +34,7 @@ All distributed on RS485 BUS with a simple twisted pair which can reach hundreds
 - Possibility of having a PLC on board on each card to automate the various I/O: example lighting of lights in real time on event.
 - PLC functions available: equal, and, or, xor, odd, even, toggle_on, toggle_on_off, timer, autostart_timer, test_nio_>=_n, test_nio_into_n test_schmitt_nio, analog_in_=_n, analog_in_>_n, analog_in_>=_n, analog_in_schmitt, if_analog_in1_=_analog_in2, if_analog_in1_>_analog_in2, if_analog_in1_>=_analog_in2, if_analog_in1_-_analog_in2_schmitt_value, analog_in_+_n, analog_in_-_n, analog_in_*_n, analog_in_/_n, analog_in_%_n, 
 analog_in_lim_max_n, analog_in_lim_min_n, analog_in1_+_analog_in2, analog_in1_-_analog_in2, analog_in1_*_analog_in2, analog_in1_/_analog_in2, analog_in1_%_analog_in2,  analog_in1_min_analog_in2, analog_in1_max_analog_in2, or_transition_on, last_change, last_change_all, time_meter, counter_up_dw, counter_up, counter_dw, powermeter, power_on.
-More information on <a href="https://www.my-tek.it/wiki/doku.php?id=plc">PLC functions</a>
+More information on <a href="https://wiki.my-tek.it/doku.php?id=plc">PLC functions</a>
 
 
 ## Italiano
@@ -98,11 +98,7 @@ sudo pip3 install -r requirements.txt
 
 ### Impostazione del file di configurazione config.json
 
-Vedere a questo indirizzo <a href="https://www.domocontrol.info/wiki">Domocontrol Wiki</a>
-
-Software per creare la configurazione dei vari dipositivi <a href="https://dl485.dmy-tek.it">DL485</a>
-
-<img src="document/image/DL485_configuration.png" width="500px" />
+Vedere a questo indirizzo <a href="https://wiki.my-tek.it/doku.php">Domocontrol Wiki</a>
 
 ### Esecuzione del programma
 
@@ -128,4 +124,4 @@ Verrà mostrato a video tutte le fasi con la programmazione e la ricezione dei v
 
 ### Contribuire
 
-Visita https://www.domnocontrol.info
+Visita https://wiki.my-tek.it/doku.php
