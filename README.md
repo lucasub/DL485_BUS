@@ -1,12 +1,67 @@
 DL485 BUS Library
 =================
 
+## DL485P - Tree versions: 
 <div>
-    <img src="document/image/DL485P.png" width="22%" style="float:left;" />
-    <img src="document/image/DL485M.png" width="22%" style="float:left;" />
-    <img src="document/image/DL485B.png" width="22%" style="float:left;" />
-    <img src="document/image/DL485R.png" width="22%" style="float:left;" />
+    <img src="document/image/DL485PB.png" width="33%" style="float:left;" title="DL485P PCB Domocontrol" />
+    <img src="document/image/DL485PB.png" width="33%" style="float:left;" title="DL485PPLC PCB Domocontrol con PLC" />
+    <img src="document/image/DL485P1B.png" width="33%"  title="DL485P1 PCB Per progetti CUSTOM" />
 </div>
+
+Mini PCB board with many GPIO, OneWire, I2C, RS485 BUS and Switching step down power supply 5-24Vdc
+- DL485P With domocontrol firmware, 
+- DL485PPLC With Domocontrol firmware and PLC, 
+- DL485P1 Without firmware, for custom project 
+
+
+## DL485B - Tree versions: 
+<div>
+    <img src="document/image/DL485BB.png" width="33%" style="float:left;" title="DL485B BOX Domocontrol" />
+    <img src="document/image/DL485BB.png" width="33%" style="float:left;" title="DL485PPLC BOX Domocontrol con PLC" />
+    <img src="document/image/DL485B1B.png" width="33%"  title="DL485P1 BOX Per progetti CUSTOM" />
+</div>
+
+BOX board with 6 GPIO, I2C, OneWire, RS485 BUS, tree relays 230Vac 3A and Switching step down power supply 5-24Vdc
+- DL485B With domocontrol firmware, 
+- DL485BPLC With Domocontrol firmware and PLC, 
+- DL485B1 Without firmware, for custom project 
+
+
+## DL485R - Tree versions: 
+<div>
+    <img src="document/image/DL485RB.png" width="33%" style="float:left;" title="DL485R RELAYS Domocontrol" />
+    <img src="document/image/DL485RB.png" width="33%" style="float:left;" title="DL485RPLC RELAYS Domocontrol con PLC" />
+    <img src="document/image/DL485R1B.png" width="33%"  title="DL485R1 RELAYS Per progetti CUSTOM" />
+</div>
+
+RELAYS board with 6 GPIO, I2C, OneWire, RS485 BUS, Switching step down power supply 5-24Vdc
+- DL485R With domocontrol firmware, 
+- DL485RPLC With Domocontrol firmware and PLC, 
+- DL485R1 Without firmware, for custom project 
+
+
+## DL485M - Tree versions: 
+<div>
+    <img src="document/image/DL485MB.png" width="33%" style="float:left;" title="DL485M Domocontrol" />
+    <img src="document/image/DL485MB.png" width="33%" style="float:left;" title="DL485MPLC Domocontrol con PLC" />
+    <img src="document/image/DL485MB.png" width="33%"  title="DL485M1 per progetti CUSTOM" />
+</div>
+
+MAXY board with many GPIO, I2C, OneWire, RS485 BUS, Switching step down power supply 5-24Vdc
+- DL485M With domocontrol firmware, 
+- DL485MPLC With Domocontrol firmware and PLC, 
+- DL485M1 Without firmware, for custom project 
+
+
+## DL485Dx - Two versions: 
+<div>
+    <img src="document/image/DL485DB.png" width="49%" style="float:left;" title="DL485D Smart Dimmer LED" />
+    <img src="document/image/DL485D3B.png" width="49%" style="float:left;" title="DL485D3 Smart Dimmer LED 3 channels" />
+</div>
+
+RELAYS board with many GPIO, I2C, OneWire, RS485 BUS, two spdt relays 230Vac 3A and Switching step down power supply 5-24Vdc
+- DL485D Smart dimmer LED,
+- DL485D3 Smart dimmer LED 3 channels
 
 ## English
 
