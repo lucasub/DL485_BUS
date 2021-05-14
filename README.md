@@ -63,7 +63,7 @@ SMART Dimmer LED with 1 or 3 channels, master button, programmable, BUS RS485 to
 - DL485D Smart dimmer LED 1 channel,
 - DL485D3 Smart dimmer LED 3 channels
 
-## English
+# English
 
 Library to command DL485 Board's by only 2 twisted wires (RS485).
 
@@ -100,8 +100,70 @@ with very low consumption and the absence of high-frequency electromagnetic wave
 analog_in_lim_max_n, analog_in_lim_min_n, analog_in1_+_analog_in2, analog_in1_-_analog_in2, analog_in1_*_analog_in2, analog_in1_/_analog_in2, analog_in1_%_analog_in2,  analog_in1_min_analog_in2, analog_in1_max_analog_in2, or_transition_on, last_change, last_change_all, time_meter, counter_up_dw, counter_up, counter_dw, powermeter, power_on.
 More information on <a href="https://wiki.my-tek.it/doku.php?id=plc">PLC functions</a>
 
+### Installation
 
-## Italiano
+1. Update and Install the following packages from the terminal: 
+```
+sudo apt update
+sudo apt upgrade
+sudo apt install python3-dev python3-serial git python3-pip
+```
+
+2. Installation DL485_BUS_2:
+```
+cd /home/pi/
+git clone https://github.com/lucasub/DL485_BUS_2.git
+```
+
+3. Enter the DL485_BUS_2 folder with:
+
+```
+cd ~/DL485_BUS_2
+```
+
+4. Inside there are some files including:
+- dl485p.py -> python3 file to node management
+- config.json -> contains all the configuration of the boards to be controlled
+- bus_dl485.py -> RS485 and serial BUS management module
+- log.py -> module to printing LOGs on screen and files
+- bme280.py -> BME280 temperature - humidity - pressure management module - to be completed -
+- tsl2561.py -> module for managing the brightness sensor
+- dl485_mqtt.py -> MQTT management module - to be completed -
+- README.md -> this file describing the system and installation 
+
+### Setting the configuration file config.json  
+
+See at this address <a href="https://wiki.my-tek.it/doku.php"> Domocontrol Wiki </a> 
+
+### Execution of the program 
+
+From terminal:
+
+```
+python3 dl485.py p
+```
+
+<img src="document/image/DL485_execute.png" width="500px" style="float:left;" />
+
+Send configuration 
+
+<img src="document/image/DL485_invio_configurazione.png" width="500px" style="float:left;" />
+
+Monitoring of I/O and sensors 
+
+<img src="document/image/DL485_monitor.png" width="500px" style="float:left;" />
+
+All the phases with the programming and reception of the various data will be shown on the screen 
+
+### Contribute 
+
+If you want to contribute to the project, you will be welcome. 
+
+See https://wiki.my-tek.it/doku.php
+
+
+
+# Italiano
 
 Libreria per comandare la scheda DL485 con soli 2 fili twistati (RS485).
 
@@ -153,26 +215,24 @@ sudo apt install python3-dev python3-serial git python3-pip
 2. Installare la libreria DL485_BUS
 ```
 cd /home/pi/
-git clone https://github.com/lucasub/DL485_BUS.git DL485_BUS
+git clone https://github.com/lucasub/DL485_BUS_2.git
 ```
 
-3. Entrare nella cartella DL485_BUS con
+3. Entrare nella cartella DL485_BUS_2 con
 
 ```
-cd ~/DL485_BUS
+cd ~/DL485_BUS_2
 ```
 
 4. All'interno sono presenti alcuni file tra cui:
-- dl485p.py -> libreria
-- config.json -> contiene tutta la configurazione delle schede
-- TSL2561.py -> modulo per la gestione del sensore luminosità
-- requirements.txt con tutte le dipendenze
+- dl485p.py -> modulo python gestione nodi
+- config.json -> contiene tutta la configurazione delle board da controllare
+- bus_dl485.py -> modulo gestione BUS RS485 e seriale
+- log.py -> modulo per la stampa dei LOG su schermo e file
+- bme280.py -> modulo gestione temperatura - umidità - pressione BME280 --da completare--
+- tsl2561.py -> modulo per la gestione del sensore luminosità
+- dl485_mqtt.py -> modulo di gestione MQTT --da completare--
 - README.md -> questo file che descrive il sistema e l'installazione
-
-5. Installare le dipendenze con il comando: 
-```
-sudo pip3 install -r requirements.txt
-```
 
 ### Impostazione del file di configurazione config.json
 
@@ -196,10 +256,10 @@ Monitoraggio degli I/O e sensori
 
 <img src="document/image/DL485_monitor.png" width="500px" style="float:left;" />
 
-
 Verrà mostrato a video tutte le fasi con la programmazione e la ricezione dei vari dati
 
-
 ### Contribuire
+
+Se vuoi icontribuire al progetto, sarai il benvenuto.
 
 Visita https://wiki.my-tek.it/doku.php
