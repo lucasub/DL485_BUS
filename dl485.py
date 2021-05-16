@@ -24,13 +24,13 @@ import time
 from tsl2561 import tsl2561_calculate
 from bus_dl485 import BusDL485
 from log import Log
-# from bme280 import getBME280
+from bme280 import BME280
 # from dl485_mqtt import *
 import paho.mqtt.client as Client
 # import paho.mqtt.publish as publish
 
 
-class Bus(BusDL485, Log):
+class Bus(BusDL485, Log, BME280):
     EEPROM_LANGUAGE = 1  # 1=NEW,  0=old
     BROADCAST = 0  # Invia il comando a tutti i nodi.
 
@@ -366,6 +366,7 @@ class Bus(BusDL485, Log):
 
     def __init__(self, config_file_name, logstate=0):
         super().__init__(config_file_name, logstate)
+
         self.system = ''  # Variabile con il sistema che instanzia la classe (Domoticz, Home Assistence, ....)
         self.boardbadcounter_n = 10  # Numero di conteggi prima che la board venga disabilitata
         self.boardbadcounter = [self.boardbadcounter_n for x in range(64)] # Contatore SCHEDE che non rispondono. Per evitare che la configurazione si blocchi
@@ -394,7 +395,6 @@ class Bus(BusDL485, Log):
         self.BUFF_MSG_TX = {}  # dizionario dei messaggi trasmessi indicizzato secondo indirizzo destinatario
         self.NLOOPTIMEOUT = 4  # numero di giri del loop dopo i quali si ritrasmettera il messaggio
         self.Connection = False   # Setup serial
-        self.BME = {}
         self.send_configuration = int(self.config['GENERAL_NET'].get('send_configuration', 1))  # Flag per inviare la configurazone dei nodi al boot
         self.telegram_enable = int(self.config['GENERAL_NET'].get('telegram_enable', False))  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
         self.telegram_token = self.config['GENERAL_NET'].get('telegram_token', False)  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
@@ -407,6 +407,7 @@ class Bus(BusDL485, Log):
         self.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
         self.cronStartup = False  # Flag per invio di cron una sola volta dopo lo startup
         self.mqtt_enable = int(self.config['GENERAL_NET']['mqtt_enable'])
+
 
         if self.mqtt_enable:
             try:
@@ -954,6 +955,11 @@ class Bus(BusDL485, Log):
             val_app = old_value - delta
         return old_value * filter + val_app * (1 - filter)
 
+    def adjust(self, value, kmul, kadd):
+        """ Ritorna il valore aggiustato con KMUL e KADD """
+        # adjust = lambda value: (value * kmul) + kadd  # Funzione che aggiusta il risultato
+        return (value * kmul) + kadd  # Funzione che aggiusta il risultato
+
     def calculate(self, board_id, command, logic_io, value):
         """
         Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso:
@@ -979,7 +985,7 @@ class Bus(BusDL485, Log):
         if board_id in self.mapiotype and logic_io in self.mapiotype[board_id]:
             kmul = self.mapiotype[board_id][logic_io]['kmul']
             kadd = self.mapiotype[board_id][logic_io]['kadd']
-            adjust = lambda value: (value * kmul) + kadd  # Funzione che aggiusta il risultato
+            # adjust = lambda value: (value * kmul) + kadd  # Funzione che aggiusta il risultato
             type_io = self.mapiotype[board_id][logic_io]['type_io']
             device_type = self.mapiotype[board_id][logic_io]['device_type']
             plc_function = self.mapiotype[board_id][logic_io]['plc_function']
@@ -1033,7 +1039,7 @@ class Bus(BusDL485, Log):
                                 self.status[board_id_linked]['io'][logic_io_linked - 1] = val_hum
                             else:
                                 self.writelog('PSYCHROMETER ERROR: Temp1 or Temp2 have None value', 'RED')
-                    value = self.round_value(adjust(value), self.mapiotype[board_id][logic_io]['round_temperature'])
+                    value = self.round_value(self.adjust(value, kmul, kadd), self.mapiotype[board_id][logic_io]['round_temperature'])
                     return value
                 else:
                     # print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
@@ -1086,7 +1092,7 @@ class Bus(BusDL485, Log):
             elif plc_function == 'powermeter':
                 value = self.byteLSMS2uint(value[0], value[1])
                 # value = value[0] + (value[1] * 256)
-                return adjust(value)
+                return self.adjust(value, kmul, kadd)
 
             elif type_io in ['digital', 'discrete'] and plc_function == 'time_meter':
                 value = self.byteLSMS2uint(value[0], value[1])
@@ -1120,149 +1126,26 @@ class Bus(BusDL485, Log):
                 return 0
 
             elif device_type == 'BME280_CALIB':
-                bme_key = '{}-{}'.format(board_id, logic_io)
-                if bme_key not in self.BME:
-                    self.BME[bme_key] = {}
-
-                if len(value) == 26:  # value from 0x88 to 0xA1
-                    flag_ok = True
-
-                    if self.BME[bme_key].get('dig_T1') != self.byteLSMS2uint(value[0], value[1]):
-                        flag_ok = False
-                        self.BME[bme_key]['dig_T1'] = self.byteLSMS2uint(value[0], value[1])  # 0x88
-
-                    if self.BME[bme_key].get('dig_T2') != self.byteLSMS2int(value[2], value[3]):
-                        flag_ok = False
-                        self.BME[bme_key]['dig_T2'] = self.byteLSMS2int(value[2], value[3])  # 0x8A
-
-                    if self.BME[bme_key].get('dig_T3') != self.byteLSMS2int(value[4], value[5]):
-                        flag_ok = False
-                        self.BME[bme_key]['dig_T3'] = self.byteLSMS2int(value[4], value[5])  # 0x8C
-
-                    if self.BME[bme_key].get('dig_P1') != self.byteLSMS2uint(value[6], value[7]):  # 0x8E:
-                        flag_ok = False
-                        self.BME[bme_key]['dig_P1'] = self.byteLSMS2uint(value[6], value[7])  # 0x8E
-
-                    if self.BME[bme_key].get('dig_P2') != self.byteLSMS2int(value[8], value[9]):  # 0x90
-                        flag_ok = False
-                        self.BME[bme_key]['dig_P2'] = self.byteLSMS2int(value[8], value[9])  # 0x90
-
-                    if self.BME[bme_key].get('dig_P3') != self.byteLSMS2int(value[10], value[11]):  # 0x92
-                        flag_ok = False
-                        self.BME[bme_key]['dig_P3'] = self.byteLSMS2int(value[10], value[11])  # 0x92
-
-                    if self.BME[bme_key].get('dig_P4') != self.byteLSMS2int(value[12], value[13]):  # 0x94
-                        flag_ok = False
-                        self.BME[bme_key]['dig_P4'] = self.byteLSMS2int(value[12], value[13])  # 0x94
-
-                    if self.BME[bme_key].get('dig_P5') != self.byteLSMS2int(value[14], value[15]):  # 0x96
-                        flag_ok = False
-                        self.BME[bme_key]['dig_P5'] = self.byteLSMS2int(value[14], value[15])  # 0x96
-
-                    if self.BME[bme_key].get('dig_P6') != self.byteLSMS2int(value[16], value[17]):  # 0x98
-                        flag_ok = False
-                        self.BME[bme_key]['dig_P6'] = self.byteLSMS2int(value[16], value[17])  # 0x98
-
-                    if self.BME[bme_key].get('dig_P7') != self.byteLSMS2int(value[18], value[19]):  # 0x9A
-                        flag_ok = False
-                        self.BME[bme_key]['dig_P7'] = self.byteLSMS2int(value[18], value[19])  # 0x9A
-
-                    if self.BME[bme_key].get('dig_P8') != self.byteLSMS2int(value[20], value[21]):  # 0x9C
-                        flag_ok = False
-                        self.BME[bme_key]['dig_P8'] = self.byteLSMS2int(value[20], value[21])  # 0x9C
-
-                    if self.BME[bme_key].get('dig_P9') != self.byteLSMS2int(value[22], value[23]):  # 0x9E
-                        flag_ok = False
-                        self.BME[bme_key]['dig_P9'] = self.byteLSMS2int(value[22], value[23])  # 0x9E
-
-                    if self.BME[bme_key].get('dig_H1') != value[25]:  # 0xA1
-                        flag_ok = False
-                        self.BME[bme_key]['dig_H1'] = value[25]  # 0xA1
-
-                    self.BME[bme_key]['flag26'] = flag_ok
-
-                if len(value) == 7:  # value from 0xE1 to 0xE7
-
-                    flag_ok = True
-                    if self.BME[bme_key].get('dig_H2') != self.byteLSMS2int(value[0], value[1]):  # 0xE1:
-                        flag_ok = False
-                        self.BME[bme_key]['dig_H2'] = self.byteLSMS2int(value[0], value[1])  # 0xE1
-
-                    if self.BME[bme_key].get('dig_H3') != value[2]:  # 0xE3:
-                        flag_ok = False
-                        self.BME[bme_key]['dig_H3'] = value[2]  # 0xE3
-
-                    h4 = self.byte2signed(value[3])
-                    h4 = h4 << 4
-
-                    if self.BME[bme_key].get('dig_H4') != h4 | (value[4] & 0x0f):
-                        flag_ok = False
-                        self.BME[bme_key]['dig_H4'] = h4 | (value[4] & 0x0f)
-                    h5 = self.byte2signed(value[5])  # 0xE6
-
-                    if self.BME[bme_key].get('dig_H5') != (h5 << 4) | ((value[4] >> 4) & 0x0f):
-                        flag_ok = False
-                        self.BME[bme_key]['dig_H5'] = (h5 << 4) | ((value[4] >> 4) & 0x0f)
-
-                    if self.BME[bme_key].get('dig_H5') != ((value[4] >> 4) & 0x0F) | (value[5] << 4):
-                        flag_ok = False
-                        self.BME[bme_key]['dig_H5'] = ((value[4] >> 4) & 0x0F) | (value[5] << 4)
-
-                    if self.BME[bme_key].get('dig_H6') != self.byte2signed(value[6]):  # 0xE7
-                        flag_ok = False
-                        self.BME[bme_key]['dig_H6'] = self.byte2signed(value[6])  # 0xE7
-
-                    self.BME[bme_key]['flag7'] = flag_ok
-                # pprint(self.BME)
+                self.calibBME(board_id, logic_io, value)  # Genera valori di calibrazione sul dict BME280
 
             elif device_type == 'BME280':
-                if not value:
-                    return
-                T_Raw, H_Raw, P_Raw = self.getBME280(board_id, logic_io, value, )
+                T_Raw, H_Raw, P_Raw = self.getRawValueBME280(value)  #Return RAW value that need adust with CALIB DATA on DICT BME
                 logic_io_calibration = self.mapiotype[board_id][logic_io]['logic_io_calibration']
-                bme_key = '{}-{}'.format(board_id, logic_io_calibration)
-                if (bme_key in self.BME) and self.BME[bme_key].get('flag26') and self.BME[bme_key].get('flag7'):
-
-                    v1 = (T_Raw / 16384.0 - self.BME[bme_key]['dig_T1'] / 1024.0) * self.BME[bme_key]['dig_T2']
-                    v2 = ((T_Raw / 131072.0 - self.BME[bme_key]['dig_T1'] / 8192.0) ** 2) * self.BME[bme_key]['dig_T3']
-                    T_fine = (v1 + v2)
-                    T = T_fine / 5120.0
-
-                    H = T_fine - 76800.0
-                    H = (H_Raw - (self.BME[bme_key]['dig_H4'] * 64.0 + self.BME[bme_key]['dig_H5'] / 16384.0 * H)) * \
-                        (self.BME[bme_key]['dig_H2'] / 65536.0 * (1.0 + self.BME[bme_key]['dig_H6'] / 67108864.0 * H *
-                                                                  (1.0 + self.BME[bme_key]['dig_H3'] / 67108864.0 * H)))
-                    H = H * (1.0 - (self.BME[bme_key]['dig_H1'] * H / 524288.0))
-
-                    v1 = T_fine / 2.0 - 64000.0
-                    v2 = v1 * v1 * self.BME[bme_key]['dig_P6'] / 32768.0
-                    v2 = v2 + v1 * self.BME[bme_key]['dig_P5'] * 2.0
-                    v2 = v2 / 4.0 + self.BME[bme_key]['dig_P4'] * 65536.0
-                    v1 = (self.BME[bme_key]['dig_P3'] * v1 * v1 / 524288.0 + self.BME[bme_key]['dig_P2'] * v1) / 524288.0
-                    v1 = (1.0 + v1 / 32768.0) * self.BME[bme_key]['dig_P1']
-
-                    # Prevent divide by zero
-                    if v1 == 0:
-                        P = 0
-
-                    res = 1048576.0 - P_Raw
-                    res = ((res - v2 / 4096.0) * 6250.0) / v1
-                    v1 = self.BME[bme_key]['dig_P9'] * res * res / 2147483648.0
-                    v2 = res * self.BME[bme_key]['dig_P8'] / 32768.0
-                    P = (res + (v1 + v2 + self.BME[bme_key]['dig_P7']) / 16.0) / 100
-
-                else:
-                    return None
+                val = self.valueBME280(board_id, logic_io, logic_io_calibration, T_Raw, H_Raw, P_Raw)
+                if not val:
+                    return
+                T, H, P = val
 
                 P /= (0.9877**(self.mapiotype[board_id][logic_io]['altitude'] / 100))  # Compensazione altitudine
                 P += self.mapiotype[board_id][logic_io]['offset_pression']  # Offset pressione
-                P = self.round_value(P, self.mapiotype[board_id][logic_io]['round_pression'])
-                # T += self.mapiotype[board_id][logic_io]['offset_temperature']
-                T = adjust(T)
+                P = self.round_value(P, self.mapiotype[board_id][logic_io]['round_pression'])  # Round pressione
 
-                T = self.round_value(T, self.mapiotype[board_id][logic_io]['round_temperature'])
-                H += self.mapiotype[board_id][logic_io]['offset_humidity']
-                H = self.round_value(H, self.mapiotype[board_id][logic_io]['round_humidity'])
+                # T += self.mapiotype[board_id][logic_io]['offset_temperature']  # Offset temperature
+                # T = self.round_value(T, self.mapiotype[board_id][logic_io]['round_temperature'])  # Round temperature
+                T = self.round_value(self.adjust(T, kmul, kadd), self.mapiotype[board_id][logic_io]['round_temperature'])
+
+                H += self.mapiotype[board_id][logic_io]['offset_humidity']  # Offset humidity
+                H = self.round_value(H, self.mapiotype[board_id][logic_io]['round_humidity'])  # Round humidity
 
                 self.writelog(f"T:{T} H:{H} P:{P}")
 
@@ -1274,7 +1157,7 @@ class Bus(BusDL485, Log):
                 hum = ((value[1] * 256 + value[2]) / 10.0) + self.mapiotype[board_id][logic_io]['offset_humidity']
 
                 temp = (((value[3] & 0x7F) * 256 + value[4]) / 10.0)
-                temp = adjust(temp)
+                temp = self.adjust(temp, kmul, kadd)
 
                 if value[3] & 0x80 == 0x80:
                     emp = -temp
@@ -1291,11 +1174,11 @@ class Bus(BusDL485, Log):
 
                 # value = self.calculateLux(iGain, tInt, ch0, ch1, IC_Package)
                 lux = tsl2561_calculate(lux_gain, lux_integration, ch0, ch1, 'T')
-                return self.round_value(adjust(lux), self.mapiotype[board_id][logic_io]['round_value'])
+                return self.round_value(self.adjust(lux, kmul, kadd), self.mapiotype[board_id][logic_io]['round_value'])
 
             elif device_type == 'TEMP_ATMEGA':
                 value = (value[0] + (value[1] * 256)) - 270 + 25
-                return self.round_value(adjust(value), self.mapiotype[board_id][logic_io]['round_temperature'])
+                return self.round_value(self.adjust(value, kmul, kadd), self.mapiotype[board_id][logic_io]['round_temperature'])
 
             elif device_type == 'VINR1R2' or device_type == 'VINKMKA' or type_io == 'analog' or type_io == 'virtual':
 
@@ -1304,11 +1187,11 @@ class Bus(BusDL485, Log):
 
                 if device_type == 'VINR1R2':
                     value = (value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0)
-                    value = self.round_value(adjust(value), self.mapiotype[board_id][logic_io]['round_value'])
+                    value = self.round_value(self.adjust(value, kmul, kadd), self.mapiotype[board_id][logic_io]['round_value'])
 
                 else:
                     old_value = self.status[board_id]['io'][logic_io - 1]
-                    new_value = self.round_value(adjust(value[0] + (value[1] * 256)), self.mapiotype[board_id][logic_io]['round_value'])
+                    new_value = self.round_value(self.adjust(value[0] + (value[1] * 256), kmul, kadd), self.mapiotype[board_id][logic_io]['round_value'])
                     # self.analogFilter(old_value, new_value, min, max, max_delta_inc, max_delta_dec, filter):
                     value = self.analogFilter(old_value, new_value, 0, 180, 10, 10, 0.8)
 
@@ -1695,7 +1578,7 @@ class Bus(BusDL485, Log):
         """
         self.writelog("Return Configuration PCA9535")
 
-    def getBME280(self, board_id, logic_io, value):
+    def getBME280_old(self, board_id, logic_io, value):
         """
         From bytes to value Temp, Hum, Press of BME280
         """
@@ -2577,11 +2460,11 @@ class Bus(BusDL485, Log):
                 logic_io = self.RXtrama[2]
                 value = self.RXtrama[3:]
                 # print("TRAMA:", board_id, logic_io, value)
-                try:
-                    value = self.calculate(board_id, command, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
-                except:
-                    device_type = self.mapiotype[board_id][logic_io]['device_type']
-                    self.writelog(f"ERROR CALCULATE VALUE: {str(self.RXtrama)} {device_type}", 'RED')
+                # try:
+                value = self.calculate(board_id, command, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
+                # except:
+                #     device_type = self.mapiotype[board_id][logic_io]['device_type']
+                #     self.writelog(f"ERROR CALCULATE VALUE: {str(self.RXtrama)} {device_type}", 'RED')
 
                 if self.mqtt_enable:
                     device_type = self.mapiotype[board_id][logic_io]['device_type']
