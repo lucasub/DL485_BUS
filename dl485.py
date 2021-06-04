@@ -350,9 +350,24 @@ class Bus(BusDL485, Log, BME280):
         'DIM2':         {'pin':   13,  'name':     'DIMMER2'},
         'DIM3':         {'pin':    1,  'name':     'DIMMER3'},
         'DIM4':         {'pin':   15,  'name':     'DIMMER4'},
-        'DIMG':         {'pin':   37,  'name':     'DIMMER GENERALE'},
+        'DIMG':         {'pin':   41,  'name':     'DIMMER GENERALE'},
     }
     dl485d_gpio.update(common_gpio)
+    
+    dl485d4_gpio = {  # Definizione GPIO DL485D
+        'IN1':          {'pin':   23,  'name':     'IN1'},
+        'IN2':          {'pin':   24,  'name':     'IN2'},
+        'IN3':          {'pin':   25,  'name':     'IN3'},
+        'IN4':          {'pin':   26,  'name':     'IN4'},
+        'IN5':          {'pin':   27,  'name':     'IN5'},
+        'IN6':          {'pin':   28,  'name':     'IN6'},
+        'DIM1':         {'pin':   1,  'name':      'DIMMER1'},
+        'DIM2':         {'pin':   13,  'name':     'DIMMER2'},
+        'DIM3':         {'pin':   15,  'name':     'DIMMER3'},
+        'DIM4':         {'pin':   14,  'name':     'DIMMER4'},
+        'DIMG':         {'pin':   41,  'name':     'DIMMER GENERALE'},
+    }
+    dl485d4_gpio.update(common_gpio)
 
     iomap = {  # MAP IO of board in base al tipoboard 1,2,3,4,5
         1: dl485m_gpio,  # DL485B
@@ -361,7 +376,7 @@ class Bus(BusDL485, Log, BME280):
         5: dl485p_gpio,  # DL485P
         6: dl485d_gpio,  # DL485D1
         7: dl485d_gpio,  # DL485D3
-        8: dl485d_gpio,  # DL485D4
+        8: dl485d4_gpio,  # DL485D4
     }
 
     def __init__(self, config_file_name, logstate=0):
@@ -393,7 +408,8 @@ class Bus(BusDL485, Log, BME280):
         self.TXmsg = []  # Lista che contiene le liste da trasmettere sul BUS
         self.board_ready = {}
         self.BUFF_MSG_TX = {}  # dizionario dei messaggi trasmessi indicizzato secondo indirizzo destinatario
-        self.NLOOPTIMEOUT = 4  # numero di giri del loop dopo i quali si ritrasmettera il messaggio
+        self.NLOOPTIMEOUT = 5  # numero di giri del loop dopo i quali si ritrasmettera il messaggio
+        self.LOOP_WAIT_REINSERIMENTO = 3
         self.Connection = False   # Setup serial
         self.send_configuration = int(self.config['GENERAL_NET'].get('send_configuration', 1))  # Flag per inviare la configurazone dei nodi al boot
         self.telegram_enable = int(self.config['GENERAL_NET'].get('telegram_enable', False))  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
@@ -571,7 +587,7 @@ class Bus(BusDL485, Log, BME280):
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'VINKMKA':
-                        key_VINKMKA = ['kadd', 'kmul', 'round_value']
+                        key_VINKMKA = ['kadd', 'kmul', 'round_value', 'va', 'ada', 'vb', 'adb']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_VINKMKA and ccc not in key_general:
                                 self.writelog(f"ERROR config.json in board: {c:<6} - logic_io: {self.config[c][cc].get('logic_io'):>1}: wrong key: {ccc:<20}  on section {self.config[c][cc].get('device_type'):<10}", 'RED')
@@ -708,7 +724,7 @@ class Bus(BusDL485, Log, BME280):
                             device_type = self.config[b][bb]['device_type']
                         else:
                             self.writelog(f"DEVICE_TYPE NON DEFINITO IN FILE JSON: board_id: {b} - logic_io: {logic_io} - io_name: {bb}%s")
-                            self.writelog(f"----------------------------\nVALORI AMMESSI PER device_type su FILE JSON.\nValori validi:\n")
+                            self.writelog(f"\nVALORI AMMESSI PER device_type su FILE JSON.\nValori validi:\n")
                             for k in self.device_type_dict.keys():
                                 self.writelog(k)
                             sys.exit()
@@ -842,6 +858,11 @@ class Bus(BusDL485, Log, BME280):
                             'type_io': self.device_type_dict[device_type].get('type_io'),
                             'dunit': self.config[b][bb].get('dunit'),
                             'write_ee': self.config[b][bb].get('write_ee', []),
+                            
+                            'va': int(self.config[b][bb].get('va', 0)),
+                            'ada': int(self.config[b][bb].get('ada', 0)),
+                            'vb': int(self.config[b][bb].get('vb', 0)),
+                            'adb': int(self.config[b][bb].get('adb', 0)),
                         }
 
                         app = []
@@ -955,9 +976,13 @@ class Bus(BusDL485, Log, BME280):
             val_app = old_value - delta
         return old_value * filter + val_app * (1 - filter)
 
-    def adjust(self, value, kmul, kadd):
+    def adjust(self, value, kmul, kadd, va, ada, vb, adb):
         """ Ritorna il valore aggiustato con KMUL e KADD """
         # adjust = lambda value: (value * kmul) + kadd  # Funzione che aggiusta il risultato
+        if ada != adb:
+            kmul = (vb - va) / (adb - ada)
+            kadd = va - (kmul * ada)
+            
         return (value * kmul) + kadd  # Funzione che aggiusta il risultato
 
     def calculate(self, board_id, command, logic_io, value):
@@ -985,7 +1010,11 @@ class Bus(BusDL485, Log, BME280):
         if board_id in self.mapiotype and logic_io in self.mapiotype[board_id]:
             kmul = self.mapiotype[board_id][logic_io]['kmul']
             kadd = self.mapiotype[board_id][logic_io]['kadd']
-            # adjust = lambda value: (value * kmul) + kadd  # Funzione che aggiusta il risultato
+            va = self.mapiotype[board_id][logic_io]['va']
+            ada = self.mapiotype[board_id][logic_io]['ada']
+            vb = self.mapiotype[board_id][logic_io]['vb']
+            adb = self.mapiotype[board_id][logic_io]['adb']
+
             type_io = self.mapiotype[board_id][logic_io]['type_io']
             device_type = self.mapiotype[board_id][logic_io]['device_type']
             plc_function = self.mapiotype[board_id][logic_io]['plc_function']
@@ -1039,7 +1068,7 @@ class Bus(BusDL485, Log, BME280):
                                 self.status[board_id_linked]['io'][logic_io_linked - 1] = val_hum
                             else:
                                 self.writelog('PSYCHROMETER ERROR: Temp1 or Temp2 have None value', 'RED')
-                    value = self.round_value(self.adjust(value, kmul, kadd), self.mapiotype[board_id][logic_io]['round_temperature'])
+                    value = self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_temperature'])
                     return value
                 else:
                     # print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
@@ -1092,7 +1121,7 @@ class Bus(BusDL485, Log, BME280):
             elif plc_function == 'powermeter':
                 value = self.byteLSMS2uint(value[0], value[1])
                 # value = value[0] + (value[1] * 256)
-                return self.adjust(value, kmul, kadd)
+                return self.adjust(value, kmul, kadd, va, ada, vb, adb)
 
             elif type_io in ['digital', 'discrete'] and plc_function == 'time_meter':
                 value = self.byteLSMS2uint(value[0], value[1])
@@ -1142,7 +1171,7 @@ class Bus(BusDL485, Log, BME280):
 
                 # T += self.mapiotype[board_id][logic_io]['offset_temperature']  # Offset temperature
                 # T = self.round_value(T, self.mapiotype[board_id][logic_io]['round_temperature'])  # Round temperature
-                T = self.round_value(self.adjust(T, kmul, kadd), self.mapiotype[board_id][logic_io]['round_temperature'])
+                T = self.round_value(self.adjust(T, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_temperature'])
 
                 H += self.mapiotype[board_id][logic_io]['offset_humidity']  # Offset humidity
                 H = self.round_value(H, self.mapiotype[board_id][logic_io]['round_humidity'])  # Round humidity
@@ -1157,7 +1186,7 @@ class Bus(BusDL485, Log, BME280):
                 hum = ((value[1] * 256 + value[2]) / 10.0) + self.mapiotype[board_id][logic_io]['offset_humidity']
 
                 temp = (((value[3] & 0x7F) * 256 + value[4]) / 10.0)
-                temp = self.adjust(temp, kmul, kadd)
+                temp = self.adjust(temp, kmul, kadd, va, ada, vb, adb)
 
                 if value[3] & 0x80 == 0x80:
                     emp = -temp
@@ -1174,11 +1203,11 @@ class Bus(BusDL485, Log, BME280):
 
                 # value = self.calculateLux(iGain, tInt, ch0, ch1, IC_Package)
                 lux = tsl2561_calculate(lux_gain, lux_integration, ch0, ch1, 'T')
-                return self.round_value(self.adjust(lux, kmul, kadd), self.mapiotype[board_id][logic_io]['round_value'])
+                return self.round_value(self.adjust(lux, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_value'])
 
             elif device_type == 'TEMP_ATMEGA':
                 value = (value[0] + (value[1] * 256)) - 270 + 25
-                return self.round_value(self.adjust(value, kmul, kadd), self.mapiotype[board_id][logic_io]['round_temperature'])
+                return self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_temperature'])
 
             elif device_type == 'VINR1R2' or device_type == 'VINKMKA' or type_io == 'analog' or type_io == 'virtual':
 
@@ -1187,12 +1216,11 @@ class Bus(BusDL485, Log, BME280):
 
                 if device_type == 'VINR1R2':
                     value = (value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0)
-                    value = self.round_value(self.adjust(value, kmul, kadd), self.mapiotype[board_id][logic_io]['round_value'])
+                    value = self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_value'])
 
                 else:
                     old_value = self.status[board_id]['io'][logic_io - 1]
-                    new_value = self.round_value(self.adjust(value[0] + (value[1] * 256), kmul, kadd), self.mapiotype[board_id][logic_io]['round_value'])
-                    # self.analogFilter(old_value, new_value, min, max, max_delta_inc, max_delta_dec, filter):
+                    new_value = self.round_value(self.adjust(value[0] + (value[1] * 256), kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_value'])
                     value = self.analogFilter(old_value, new_value, 0, 180, 10, 10, 0.8)
 
                     # if board_id == 9 and logic_io == 3:
@@ -1632,10 +1660,12 @@ class Bus(BusDL485, Log, BME280):
 
                 if appbe == 0:
                     # print("Configurazione board: BOARD DISABILITATA: ", board_id)
+                    # msg.append(self.setMaxBoardAddress(board_id))  # Set max board address
                     break
 
                 if appbe == 2:
                     msg.append(self.clearIO_boardReboot(board_id))
+                    # msg.append(self.setMaxBoardAddress(board_id, self.MAX_BOARD_ADDRESS))  # Set max board address
                     break
 
                 if appbe != 1:
@@ -1646,13 +1676,8 @@ class Bus(BusDL485, Log, BME280):
 
                 if flagreset:
                     flagreset = False
-                    msg.append(self.clearIO_boardReboot(board_id))
-                    # msg.append(self.clearIO_boardReboot(board_id))
-                    # msg.append(self.clearIO_boardReboot(board_id))
-
-                # print(msg)
-
-                # board_type = self.mapiotype[board_id][logic_io]['board_type']
+                    msg.append(self.clearIO_boardReboot(board_id))  # Clear IO and Reboot
+                    # msg.append(self.setMaxBoardAddress(board_id, self.MAX_BOARD_ADDRESS))  # Set max board address
 
                 message_conf_app = []
                 write_ee = self.mapiotype[board_id][logic_io]['write_ee']
@@ -2354,11 +2379,11 @@ class Bus(BusDL485, Log, BME280):
         msg += set_max_board_address
 
         if msg:
+            # msg.append(self.setMaxBoardAddress(0, self.MAX_BOARD_ADDRESS))
             msg.append(self.boardReboot(0))
-            # msg.append(self.boardReboot(0))
         else:
             self.writelog("NESSUNA CONFIGURAZIONE BOARD DA INVIARE")
-        # pprint(msg)
+        pprint(msg)
         self.TXmsg = msg
 
     def arrivatatrama(self):
@@ -2368,14 +2393,14 @@ class Bus(BusDL485, Log, BME280):
         if self.RXtrama[0] + 1 == self.BOARD_ADDRESS:  # test su address ricevuto, e' ora di trasmettere
 
             for x in self.BUFF_MSG_TX:  # aggiornamento timeout
-                # print(b.BUFF_MSG_TX[x][1])
+                # print("=====>>>>",b.BUFF_MSG_TX)
                 if self.BUFF_MSG_TX[x][1]:
                     self.BUFF_MSG_TX[x][1] -= 1
+                # print("=====>>>>",b.BUFF_MSG_TX)
 
             for x in self.BUFF_MSG_TX:  # cerca msg in timeout, fatto in un secondo ciclo for perchè questa modifica il dizionario e crea un errore se si continua la ricerca dopo la modifica
                 if not self.BUFF_MSG_TX[x][1]:  # trovato messaggio in timeout
-                    # print("TIMEOUT MSG:",b.BUFF_MSG_TX[x][0])
-                    self.writelog(f"CONFIG. TIMEOUT MSG    {str(self.int2hex(self.BUFF_MSG_TX[x][0])):<18}")
+                    self.writelog(f"CONFIG. TIMEOUT MSG    {str(self.int2hex(self.BUFF_MSG_TX[x][0])):<18}", 'RED')
 
                     self.TXmsg.insert(0, self.BUFF_MSG_TX[x][0])  # lo mette al primo posto nella lista di trasmissione
                     del self.BUFF_MSG_TX[x]  # lo cancella per poterlo reinserire tutto perche non c'è il goto
@@ -2383,9 +2408,10 @@ class Bus(BusDL485, Log, BME280):
 
             if len(self.TXmsg):  # se qualcosa da trasmettere
                 msg = self.TXmsg.pop(0)  # prende dalla lista la prima trama da trasmettere (msg piu vecchio)
-                if len(msg) > 1 and msg[1] == self.code['CR_REBOOT']:  # il comando reboot va trasmesso alla fine della configurazione
+                
+                if (len(msg) > 1 and msg[1] == self.code['CR_REBOOT']):  # il comando reboot va trasmesso alla fine della configurazione
                     if self.BUFF_MSG_TX or self.TXmsg:
-                        self.writelog("{REBOOT NO              RIMESSO IN LISTA X ATTESA DIZIONARIO VUOTO")
+                        # self.writelog("REBOOT NO              RIMESSO IN LISTA X ATTESA DIZIONARIO VUOTO")
                         self.TXmsg.append(msg)  # lo rimetto in fondo alla lista perchè attesa dizionario vuoto
                     else:
                         # print(" OKTRASM REBOOT")
@@ -2394,18 +2420,20 @@ class Bus(BusDL485, Log, BME280):
                         msg2 = self.encodeMsgCalcCrcTx(msg1)  # restituisce il messaggio codificato e completo di crc (1 o 2 crc in base al flag crcdoppio)
                         self.send_data_serial(self.Connection, msg2)  # invia alla seriale comando REBOOT,
                         self.send_data_serial(self.Connection, msg2)  # se non capisce il primo reboot, invia un secondo e un terzo reboot
-
+                
+                elif  len(msg) > 1 and msg[2] == 0:
+                    print("-----------------", msg)
+                    self.writelog(f"TX                     {str(self.int2hex(msg)):<18} SEND BROADCAST")
+                    msg1 = self.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui
+                    msg2 = self.encodeMsgCalcCrcTx(msg1)  # restituisce il messaggio codificato e completo di crc (1 o 2 crc in base al flag crcdoppio)
+                    self.send_data_serial(self.Connection, msg2)  # invia alla seriale comando REBOOT,
+                    self.send_data_serial(self.Connection, msg2)  # se non capisce il primo reboot, invia un secondo e un terzo reboot
+                    
                 else:
                     if len(msg) > 1 and msg[2] in self.BUFF_MSG_TX:  # controllo se nodo deve ancora dare feedback a un msg precedente
-                        self.writelog(f"CONFIGURAZIONE         REINSERIMENTO IN LISTA PER ATTESA FEEDBACK DA NODO {msg[2]} N° ELEMENTI IN LISTA: {len(self.TXmsg)}")
-                        # self.boardbadcounter[msg[2]] -= 1
-                        # print("=======>>>>>>>>>>>>>>>>>", self.boardbadcounter, len(self.TXmsg))
-                        # if self.boardbadcounter[msg[2]] <= 0:
-                        #     pass
-                        # else:
+                        # self.writelog(f"CONFIGURAZIONE         NODO OCCUPATO, POSTICIPATA TRASMISSIONE, MSG SOSPESI:{len(self.TXmsg)} - {msg} ")
                         self.TXmsg.append(msg)  # attesa feedback dallo stesso nodo: lo rimetto in lista al primo posto perchè deve stare prima di reboot
                     else:  # tx messaggio lungo o ping
-                        # if (len(msg)>1):print(" OKTRASM, ATTESA FEEDBACK")
                         self.writelog(f"TX                     {str(self.int2hex(msg)):<18} OK TRASM")
 #                        print("****SENZA BYTE RESIDUI*******",self.int2hex(msg))
                         if len(msg) > 1:  # non è un ping, aggiunge byte residui
@@ -2416,6 +2444,7 @@ class Bus(BusDL485, Log, BME280):
                             # print("TXPING:", self.int2hex(msg))
                         msg2 = self.encodeMsgCalcCrcTx(msg1)  # restituisce il messaggio codificato e completo di crc (1 o 2 crc in base al flag crcdoppio)
 
+                        
                         self.send_data_serial(self.Connection, msg2)  # invia alla seriale
 
                         if len(msg) > 1:
@@ -2425,15 +2454,15 @@ class Bus(BusDL485, Log, BME280):
                                 self.send_data_serial(self.Connection, msg2)  # invio multiplo per superare disturbi
 
                             if msg[1] == self.code['CR_WR_EE']:  # inserisce solo se comando writeEE
-                                self.writelog("ATTESA FEEDBACK")
-                                self.BUFF_MSG_TX[msg[2]] = [msg, self.NLOOPTIMEOUT+len(msg)]  # inserisce in dizionario messaggio originale per controllo feedback
+                                # self.writelog(f"CARICA SU BUFFER PER ATTESA FEEDBACK DAL NODO {msg[2]} MSG:{msg}")
+                                self.BUFF_MSG_TX[msg[2]] = [msg, self.NLOOPTIMEOUT+len(self.int2hex(msg))]  # inserisce in dizionario messaggio originale per controllo feedback
+                                # print(self.BUFF_MSG_TX[msg[2]])
+                                # self.LOOP_WAIT_REINSERIMENTO_LISTA = self.LOOP_WAIT_REINSERIMENTO
 
         self.RXtrama[0] &= 0x3F  # Trasforma la trama di nodo occupato in libero (serve solo per la trasmissione)
 
         if len(self.RXtrama) > 1:  # Analizza solo comunicazioni valide (senza PING) di tutta la rete
-
             if self.RXtrama[1] == 0x26:  # feedback al comando CR_WR_EE <<<==============================
-
                 self.writelog(f"TX                     VERIFICA_FEEDBACK TRAMA RIC {str(self.int2hex(self.RXtrama)):<18}")
                 # print("VERIFICA_FEEDBACK, TRAMA RIC:", self.int2hex(self.RXtrama), end='')
                 if self.RXtrama[0] in self.BUFF_MSG_TX:
@@ -2460,11 +2489,11 @@ class Bus(BusDL485, Log, BME280):
                 logic_io = self.RXtrama[2]
                 value = self.RXtrama[3:]
                 # print("TRAMA:", board_id, logic_io, value)
-                # try:
-                value = self.calculate(board_id, command, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
-                # except:
-                #     device_type = self.mapiotype[board_id][logic_io]['device_type']
-                #     self.writelog(f"ERROR CALCULATE VALUE: {str(self.RXtrama)} {device_type}", 'RED')
+                try:
+                    value = self.calculate(board_id, command, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
+                except:
+                    device_type = self.mapiotype[board_id][logic_io]['device_type']
+                    self.writelog(f"ERROR CALCULATE VALUE: {str(self.RXtrama)} {device_type}", 'RED')
 
                 if self.mqtt_enable:
                     device_type = self.mapiotype[board_id][logic_io]['device_type']
@@ -2475,7 +2504,7 @@ class Bus(BusDL485, Log, BME280):
                     else:
                         val = value
                     msg = f"{self.mqtt_topic}/{board_id}/{logic_io}"
-                    print(f"-------------------SEND TO HA:{msg} {value}")
+                    print(f"SEND TO HA:{msg} {value}")
                     self.client.publish(msg, val)
 
                 try:
@@ -2492,6 +2521,8 @@ class Bus(BusDL485, Log, BME280):
 
                 self.writelog(f"RX {self.code[self.RXtrama[1]&0xDF]:<12}        {self.int2hex(self.RXtrama)} {self.RXtrama}")
 
+
+                
             elif self.RXtrama[1] == self.code['CR_GET_BOARD_TYPE'] | 32:  # GetTipoBoard
                 """
                 Creare DICT con caratteristiche della BOARD
@@ -2517,7 +2548,7 @@ class Bus(BusDL485, Log, BME280):
                 # 8: Byte: b0: rms_power - b1..b3 numero di DIMMER
                 # 9: Numero IO esclusi (a causa di logic_io o fisico fuori range)
                 # 10: Numero conflitti (es. IO assegnato a RX o assegnato a LED, pulsante, oppure OneWire e ingresso digitale, oppure ingresso analogico e ingresso digitale)
-
+                
                 board_id = self.RXtrama[0]
                 command = self.RXtrama[1]
                 logic_io = self.RXtrama[2]
@@ -2570,7 +2601,7 @@ class Bus(BusDL485, Log, BME280):
                         err = self.error[self.RXtrama[4]] \
                             if self.RXtrama[4] in self.error \
                             else 'ERRORE NON DEFINITO'
-                    self.writelog(f"RX  {self.code[apprx]:<18} {self.int2hex(self.RXtrama)} {err}", 'RED')
+                    self.writelog(f"RX  {self.code[apprx]:<18} {self.int2hex(self.RXtrama)} {err}")
 
             else:
                 self.writelog(f"TRAMA ALTRO COMANDO    {self.RXtrama} Codice: {self.code.get(self.RXtrama[1])}")
@@ -2610,8 +2641,10 @@ class Bus(BusDL485, Log, BME280):
                 self.cron_sec = 5  # Dont remove
                 self.writeLog()
                 # self.writeLog()
+                # self.TXmsg += [self.setMaxBoardAddress(0, self.MAX_BOARD_ADDRESS)]
+                # self.TXmsg += [self.boardReboot(0)]
                 # self.TXmsg += [self.timeLoop(8)]
-                # self.TXmsg += [self.getBoardType(1)]
+                # self.TXmsg += [self.getBoardType(0)]
 
             if not self.cronoldtime % 30:
                 self.cron_sec = 30  # Dont remove

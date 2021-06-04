@@ -36,7 +36,8 @@ class BME280:
         """
         From bytes to value Temp, Hum, Press of BME280
         """
-        print(value)
+        if len(value) < 5:
+            return
         bmeValue = value
         pres_raw = (bmeValue[0] << 12) | (bmeValue[1] << 4) | (bmeValue[2] >> 4)
         temp_raw = (bmeValue[3] << 12) | (bmeValue[4] << 4) | (bmeValue[5] >> 4)
@@ -194,9 +195,9 @@ if __name__ == '__main__':
         other = sensor value
     """
 
-    bme_val = [1, 14, 8, 77, 223, 128, 124, 47, 160, 137, 160]
-    bme_calib1 = [1, 14, 9, 128, 108, 163, 101, 50, 0, 73, 144, 205, 213, 208, 11, 65, 32, 169, 255, 249, 255, 172, 38, 10, 216, 189, 16, 0, 75]
-    bme_calib2 = [1, 14, 9, 90, 1, 0, 22, 6, 0, 30]
+    bme_val = [1, 14, 8, 77, 223, 128, 124, 47, 160, 137, 160]  # Calibration list
+    bme_calib1 = [1, 14, 9, 128, 108, 163, 101, 50, 0, 73, 144, 205, 213, 208, 11, 65, 32, 169, 255, 249, 255, 172, 38, 10, 216, 189, 16, 0, 75]  # Calibration list
+    bme_calib2 = [1, 14, 9, 90, 1, 0, 22, 6, 0, 30]  # Data
 
     board_id = bme_calib1[0]
     logic_io = bme_calib1[2]

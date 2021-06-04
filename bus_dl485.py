@@ -183,7 +183,7 @@ if __name__ == '__main__':
 
     while 1:
         rxbytes = b.Connection.read()
-
+        
         if not rxbytes:
             continue
 
