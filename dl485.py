@@ -580,7 +580,7 @@ class Bus(BusDL485, Log, BME280):
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'DIGITAL_OUT':
-                        key_DIGITAL_OUT = ['default_startup_filter_value', 'default_startup_value', 'inverted']
+                        key_DIGITAL_OUT = ['default_startup_filter_value', 'default_startup_value', 'inverted', 'plc_preset_input']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_DIGITAL_OUT and ccc not in key_general and ccc not in key_plc:
                                 self.writelog(f"ERROR config.json in board: {c:<6} - logic_io: {self.config[c][cc].get('logic_io'):>1}: wrong key: {ccc:<20}  on section {self.config[c][cc].get('device_type'):<10}", 'RED')
@@ -1018,6 +1018,9 @@ class Bus(BusDL485, Log, BME280):
             type_io = self.mapiotype[board_id][logic_io]['type_io']
             device_type = self.mapiotype[board_id][logic_io]['device_type']
             plc_function = self.mapiotype[board_id][logic_io]['plc_function']
+            
+            if board_id == 8 and logic_io == 13:
+                print("-" * 100, board_id, logic_io, type_io, device_type, plc_function, value)
 
             if device_type == 'DS18B20':  # Digital temperature
                 # print(">> DS18B20", value)
@@ -1210,11 +1213,10 @@ class Bus(BusDL485, Log, BME280):
                 return self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_temperature'])
 
             elif device_type == 'VINR1R2' or device_type == 'VINKMKA' or type_io == 'analog' or type_io == 'virtual':
-
-                rvcc = self.mapiotype[board_id][logic_io]['rvcc']
-                rgnd = self.mapiotype[board_id][logic_io]['rgnd']
-
+                
                 if device_type == 'VINR1R2':
+                    rvcc = self.mapiotype[board_id][logic_io]['rvcc']
+                    rgnd = self.mapiotype[board_id][logic_io]['rgnd']
                     value = (value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0)
                     value = self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_value'])
 
@@ -1261,7 +1263,8 @@ class Bus(BusDL485, Log, BME280):
                 # b5: fronte ON da trasmettere
                 # value = value[0]
                 # value_io = value & 1
-                value = value[0]
+
+                value = value[0] & 1  # Trasforma uscita in binatio 0 / 1
                 return value
 
             elif device_type == 'PSICROMETRO':
@@ -2371,15 +2374,16 @@ class Bus(BusDL485, Log, BME280):
                     # If not I2C or OneWire, set 0, 0 at address 10 and 11.
                     msg.append(self.writeEEnIOoffset(board_id, logic_io, 10, [0, 0]))  # 0 = lunghezza programma periodico, 0 = lunghezza prg. inizializzazione
 
-        set_max_board_address = []
-        for board_id in self.config.keys():
-            if "GENERAL_BOARD" in self.config[board_id]:
-                if self.config[board_id]["GENERAL_BOARD"].get("enable") == 1:
-                    set_max_board_address += [self.setMaxBoardAddress(int(board_id[5:]), self.MAX_BOARD_ADDRESS)]  # Set Max Board Address
-        msg += set_max_board_address
+        """ NON FUNZIONA. Bisgona dare il comando in broadcast altrimenti puo' essere che la rete si blocchi!!! """
+        # set_max_board_address = []
+        # for board_id in self.config.keys():
+        #     if "GENERAL_BOARD" in self.config[board_id]:
+        #         if self.config[board_id]["GENERAL_BOARD"].get("enable") == 1:
+        #             set_max_board_address += [self.setMaxBoardAddress(int(board_id[5:]), self.MAX_BOARD_ADDRESS)]  # Set Max Board Address
+        # msg += set_max_board_address
 
         if msg:
-            # msg.append(self.setMaxBoardAddress(0, self.MAX_BOARD_ADDRESS))
+            msg.append(self.setMaxBoardAddress(0, self.MAX_BOARD_ADDRESS))
             msg.append(self.boardReboot(0))
         else:
             self.writelog("NESSUNA CONFIGURAZIONE BOARD DA INVIARE")
@@ -2421,8 +2425,7 @@ class Bus(BusDL485, Log, BME280):
                         self.send_data_serial(self.Connection, msg2)  # invia alla seriale comando REBOOT,
                         self.send_data_serial(self.Connection, msg2)  # se non capisce il primo reboot, invia un secondo e un terzo reboot
                 
-                elif  len(msg) > 1 and msg[2] == 0:
-                    print("-----------------", msg)
+                elif  len(msg) > 1 and msg[2] == 0:  # Trasmissione comando BROADCAST
                     self.writelog(f"TX                     {str(self.int2hex(msg)):<18} SEND BROADCAST")
                     msg1 = self.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui
                     msg2 = self.encodeMsgCalcCrcTx(msg1)  # restituisce il messaggio codificato e completo di crc (1 o 2 crc in base al flag crcdoppio)
@@ -2893,6 +2896,9 @@ if __name__ == '__main__':
             b.RXtrama = b.readSerial(d)
             if not b.RXtrama:
                 continue
+            
+            # if len(b.RXtrama) >=5 and b.RXtrama[0] == 8 and (b.RXtrama[2] == 4 or b.RXtrama[2] == 5):
+            #     print("-------------------"*6, b.RXtrama)
 
             if len(b.RXtrama) >= print_bus:  # stampa stringa a TOT caratteri
                 log.writelog(b.RXtrama, 'BLUE')

@@ -1,77 +1,77 @@
-// File di configurazione DL485
-// COMMENTI DEVONO INIZIARE SOLO CON # OPPURE con
+# File di configurazione DL485
+# COMMENTI DEVONO INIZIARE SOLO CON # OPPURE con
 
-// Dispositivi / Device Domoticz. Not all device are working and implemented
-// 'Temperature'                   : { 'Type': 80,         'SubType': 5,       'SwitchType': False},
-// 'Humidity'                      : { 'Type': 81,         'SubType': 1,       'SwitchType': False},
-// 'Temp+Hum'                      : { 'Type': 82,         'SubType': 1,       'SwitchType': False},
-// 'Temp+Hum+Baro'                 : { 'Type': 84,         'SubType': 1,       'SwitchType': False},
-// 'Temp+Hum+Baro2'                : { 'Type': 84,         'SubType': 2,       'SwitchType': False},
-// 'Weather Station Temp+Hum+Baro' : { 'Type': 84,         'SubType': 16,      'SwitchType': False},
-// 'Rain'                          : { 'Type': 85,         'SubType': 1,       'SwitchType': False},
-// 'Wind'                          : { 'Type': 86,         'SubType': 1,       'SwitchType': False},
-// 'UV'                            : { 'Type': 87,         'SubType': 1,       'SwitchType': False},
-// 'Ampere (3 Phase)'              : { 'Type': 89,         'SubType': 1,       'SwitchType': False},
-// 'Scale Weight'                  : { 'Type': 93,         'SubType': 1,       'SwitchType': False},
-// 'Counter'                       : { 'Type': 113,        'SubType': 0,       'SwitchType': False},
-// 'RGBW'                          : { 'Type': 241,        'SubType': 1,       'SwitchType': False},
-// 'RGB'                           : { 'Type': 241,        'SubType': 2,       'SwitchType': False},
-// 'White'                         : { 'Type': 241,        'SubType': 3,       'SwitchType': False},
-// 'RGBWW'                         : { 'Type': 241,        'SubType': 4,       'SwitchType': False},
-// 'RGBWZ'                         : { 'Type': 241,        'SubType': 6,       'SwitchType': False},
-// 'RGBWWZ'                        : { 'Type': 241,        'SubType': 7,       'SwitchType': False},
-// 'Cold white+Warm white'         : { 'Type': 241,        'SubType': 8,       'SwitchType': False},
-// 'Setpoint'                      : { 'Type': 242,        'SubType': 1,       'SwitchType': False},
-// 'General Visibility'            : { 'Type': 243,        'SubType': 1,       'SwitchType': False},
-// 'General Solar Radiation'       : { 'Type': 243,        'SubType': 2,       'SwitchType': False},
-// 'General Solar Moisture'        : { 'Type': 243,        'SubType': 3,       'SwitchType': False},
-// 'General Leaf Wetness'          : { 'Type': 243,        'SubType': 4,       'SwitchType': False},
-// 'General Percentage'            : { 'Type': 243,        'SubType': 6,       'SwitchType': False},
-// 'Voltage'                       : { 'Type': 243,        'SubType': 8,       'SwitchType': False}, # General Voltage
-// 'General Pressure'              : { 'Type': 243,        'SubType': 9,       'SwitchType': False},
-// 'Text'                          : { 'Type': 243,        'SubType': 19,      'SwitchType': False}, # General Text
-// 'General Alert'                 : { 'Type': 243,        'SubType': 22,      'SwitchType': False},
-// 'Current (Single)'              : { 'Type': 243,        'SubType': 23,      'SwitchType': False}, # General Ampere (1 Phase)
-// 'General Sound Level'           : { 'Type': 243,        'SubType': 24,      'SwitchType': False},
-// 'General Barometer'             : { 'Type': 243,        'SubType': 26,      'SwitchType': False},
-// 'General Distance'              : { 'Type': 243,        'SubType': 27,      'SwitchType': False},
-// 'Counter Incremental'           : { 'Type': 243,        'SubType': 28,      'SwitchType': False}, # General Counter Incremental
-// 'kWh'                           : { 'Type': 243,        'SubType': 29,      'SwitchType': False}, # General kWh
-// 'General Waterflow'             : { 'Type': 243,        'SubType': 30,      'SwitchType': False},
-// 'Custom Sensor'                 : { 'Type': 243,        'SubType': 31,      'SwitchType': False},
-// 'General Managed counter Energy': { 'Type': 243,        'SubType': 33,      'SwitchType': 0},
-// 'General Managed counter Gas'   : { 'Type': 243,        'SubType': 33,      'SwitchType': 1},
-// 'General Managed counter Water' : { 'Type': 243,        'SubType': 33,      'SwitchType': 2},
-// 'General Managed counter Counter':{ 'Type': 243,        'SubType': 33,      'SwitchType': 3},
-// 'General Managed counter Energy Generated': {'Type': 243, 'SubType': 33,      'SwitchType': 4},
-// 'General Managed counter Time'  : { 'Type': 243,        'SubType': 33,      'SwitchType': 5},
-// 'Switch'                        : { 'Type': 244,        'SubType': 62,      'SwitchType': 0}, # Selector Switch On/Off
-// 'Selector Switch Doorbell'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 1},
-// 'Selector Switch Contact'       : { 'Type': 244,        'SubType': 62,      'SwitchType': 2},
-// 'Selector Switch Blinds'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 3},
-// 'Selector Switch X10 Siren'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 4},
-// 'Selector Switch Smoke Detector': { 'Type': 244,        'SubType': 62,      'SwitchType': 5},
-// 'Selector Switch Blinds Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 6},
-// 'Selector Switch Dimmer'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 7},
-// 'Selector Switch Motion Sensor' : { 'Type': 244,        'SubType': 62,      'SwitchType': 8},
-// 'Selector Switch Push On Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 9},
-// 'Selector Switch Push Off Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 10},
-// 'Switch Door Contact'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 11},
-// 'Switch Dusk Sensor'            : { 'Type': 244,        'SubType': 62,      'SwitchType': 12},
-// 'Switch Blinds Percentage'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 13},
-// 'Switch Venetian Blinds US'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 14},
-// 'Switch Venetian Blinds EU'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 15},
-// 'Switch Blinds Percentage Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 16},
-// 'Switch Media Player'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 17},
-// 'Switch Selector'               : { 'Type': 244,        'SubType': 62,      'SwitchType': 18},
-// 'Switch Door Lock'              : { 'Type': 244,        'SubType': 62,      'SwitchType': 19},
-// 'Switch Door Lock Inverted'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 20},
-// 'Illumination'                  : { 'Type': 246,        'SubType': 1,      'SwitchType': False}, # Lux
-// 'Temp+Baro'                     : { 'Type': 247,        'SubType': 1,      'SwitchType': False},
-// 'Usage Electric'                : { 'Type': 248,        'SubType': 1,      'SwitchType': False},
-// 'Air Quality'                   : { 'Type': 249,        'SubType': 1,      'SwitchType': False},
-// 'P1 Smart Meter Energy'         : { 'Type': 250,        'SubType': 1,      'SwitchType': False},
-// 'P1 Smart Meter Gas'            : { 'Type': 246,        'SubType': 1,      'SwitchType': False},
+# Dispositivi / Device Domoticz. Not all device are working and implemented
+# 'Temperature'                   : { 'Type': 80,         'SubType': 5,       'SwitchType': False},
+# 'Humidity'                      : { 'Type': 81,         'SubType': 1,       'SwitchType': False},
+# 'Temp+Hum'                      : { 'Type': 82,         'SubType': 1,       'SwitchType': False},
+# 'Temp+Hum+Baro'                 : { 'Type': 84,         'SubType': 1,       'SwitchType': False},
+# 'Temp+Hum+Baro2'                : { 'Type': 84,         'SubType': 2,       'SwitchType': False},
+# 'Weather Station Temp+Hum+Baro' : { 'Type': 84,         'SubType': 16,      'SwitchType': False},
+# 'Rain'                          : { 'Type': 85,         'SubType': 1,       'SwitchType': False},
+# 'Wind'                          : { 'Type': 86,         'SubType': 1,       'SwitchType': False},
+# 'UV'                            : { 'Type': 87,         'SubType': 1,       'SwitchType': False},
+# 'Ampere (3 Phase)'              : { 'Type': 89,         'SubType': 1,       'SwitchType': False},
+# 'Scale Weight'                  : { 'Type': 93,         'SubType': 1,       'SwitchType': False},
+# 'Counter Incremental'           : { 'Type': 113,        'SubType': 0,       'SwitchType': False},
+# 'RGBW'                          : { 'Type': 241,        'SubType': 1,       'SwitchType': False},
+# 'RGB'                           : { 'Type': 241,        'SubType': 2,       'SwitchType': False},
+# 'White'                         : { 'Type': 241,        'SubType': 3,       'SwitchType': False},
+# 'RGBWW'                         : { 'Type': 241,        'SubType': 4,       'SwitchType': False},
+# 'RGBWZ'                         : { 'Type': 241,        'SubType': 6,       'SwitchType': False},
+# 'RGBWWZ'                        : { 'Type': 241,        'SubType': 7,       'SwitchType': False},
+# 'Cold white+Warm white'         : { 'Type': 241,        'SubType': 8,       'SwitchType': False},
+# 'Setpoint'                      : { 'Type': 242,        'SubType': 1,       'SwitchType': False},
+# 'General Visibility'            : { 'Type': 243,        'SubType': 1,       'SwitchType': False},
+# 'General Solar Radiation'       : { 'Type': 243,        'SubType': 2,       'SwitchType': False},
+# 'General Solar Moisture'        : { 'Type': 243,        'SubType': 3,       'SwitchType': False},
+# 'General Leaf Wetness'          : { 'Type': 243,        'SubType': 4,       'SwitchType': False},
+# 'General Percentage'            : { 'Type': 243,        'SubType': 6,       'SwitchType': False},
+# 'Voltage'                       : { 'Type': 243,        'SubType': 8,       'SwitchType': False}, # General Voltage
+# 'General Pressure'              : { 'Type': 243,        'SubType': 9,       'SwitchType': False},
+# 'Text'                          : { 'Type': 243,        'SubType': 19,      'SwitchType': False}, # General Text
+# 'General Alert'                 : { 'Type': 243,        'SubType': 22,      'SwitchType': False},
+# 'Current (Single)'              : { 'Type': 243,        'SubType': 23,      'SwitchType': False}, # General Ampere (1 Phase)
+# 'General Sound Level'           : { 'Type': 243,        'SubType': 24,      'SwitchType': False},
+# 'General Barometer'             : { 'Type': 243,        'SubType': 26,      'SwitchType': False},
+# 'General Distance'              : { 'Type': 243,        'SubType': 27,      'SwitchType': False},
+# 'Counter Incremental'           : { 'Type': 243,        'SubType': 28,      'SwitchType': False}, # General Counter Incremental
+# 'kWh'                           : { 'Type': 243,        'SubType': 29,      'SwitchType': False}, # General kWh
+# 'General Waterflow'             : { 'Type': 243,        'SubType': 30,      'SwitchType': False},
+# 'Custom Sensor'                 : { 'Type': 243,        'SubType': 31,      'SwitchType': False},
+# 'General Managed counter Energy': { 'Type': 243,        'SubType': 33,      'SwitchType': 0},
+# 'General Managed counter Gas'   : { 'Type': 243,        'SubType': 33,      'SwitchType': 1},
+# 'General Managed counter Water' : { 'Type': 243,        'SubType': 33,      'SwitchType': 2},
+# 'General Managed counter Counter':{ 'Type': 243,        'SubType': 33,      'SwitchType': 3},
+# 'General Managed counter Energy Generated': {'Type': 243, 'SubType': 33,      'SwitchType': 4},
+# 'General Managed counter Time'  : { 'Type': 243,        'SubType': 33,      'SwitchType': 5},
+# 'Switch'                        : { 'Type': 244,        'SubType': 62,      'SwitchType': 0}, # Selector Switch On/Off
+# 'Selector Switch Doorbell'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 1},
+# 'Selector Switch Contact'       : { 'Type': 244,        'SubType': 62,      'SwitchType': 2},
+# 'Selector Switch Blinds'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 3},
+# 'Selector Switch X10 Siren'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 4},
+# 'Selector Switch Smoke Detector': { 'Type': 244,        'SubType': 62,      'SwitchType': 5},
+# 'Selector Switch Blinds Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 6},
+# 'Selector Switch Dimmer'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 7},
+# 'Selector Switch Motion Sensor' : { 'Type': 244,        'SubType': 62,      'SwitchType': 8},
+# 'Selector Switch Push On Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 9},
+# 'Selector Switch Push Off Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 10},
+# 'Switch Door Contact'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 11},
+# 'Switch Dusk Sensor'            : { 'Type': 244,        'SubType': 62,      'SwitchType': 12},
+# 'Switch Blinds Percentage'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 13},
+# 'Switch Venetian Blinds US'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 14},
+# 'Switch Venetian Blinds EU'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 15},
+# 'Switch Blinds Percentage Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 16},
+# 'Switch Media Player'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 17},
+# 'Switch Selector'               : { 'Type': 244,        'SubType': 62,      'SwitchType': 18},
+# 'Switch Door Lock'              : { 'Type': 244,        'SubType': 62,      'SwitchType': 19},
+# 'Switch Door Lock Inverted'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 20},
+# 'Illumination'                  : { 'Type': 246,        'SubType': 1,      'SwitchType': False}, # Lux
+# 'Temp+Baro'                     : { 'Type': 247,        'SubType': 1,      'SwitchType': False},
+# 'Usage Electric'                : { 'Type': 248,        'SubType': 1,      'SwitchType': False},
+# 'Air Quality'                   : { 'Type': 249,        'SubType': 1,      'SwitchType': False},
+# 'P1 Smart Meter Energy'         : { 'Type': 250,        'SubType': 1,      'SwitchType': False},
+# 'P1 Smart Meter Gas'            : { 'Type': 246,        'SubType': 1,      'SwitchType': False},
 
 
 
@@ -94,23 +94,21 @@
 #    inverted            => uscita negata
 #        0               => non invertita
 #        1               => invertita
-#
 
-// Board Type Available:
-// "DL485M": 1,
-// "DL485B": 2,
-// "DL485R": 4,
-// "DL485P": 5,
-// "DL485D": 6, Dimmer 1 canali
-// "DL485D3": 7, Dimmer 3 canali
-// "DL485D4": 8, Dimmer 4 canali
+# Board Type Available:
+# "DL485M": 1,
+# "DL485B": 2,
+# "DL485R": 4,
+# "DL485P": 5,
+# "DL485D": 6, Dimmer 1 canali
+# "DL485D3": 7, Dimmer 3 canali
+# "DL485D4": 8, Dimmer 4 canali
 
 { #inizio file
-
     # Configurazione generale del BUS
     "GENERAL_NET": {
         "bus_port": "/dev/ttyAMA0", # Porta seriale Raspberry PI
-        "bus_baudrate": 38400, # Velocità BUS e seriale
+        "bus_baudrate": 19200, # Velocità BUS e seriale
         "max_board_address": 63, # Numero massimo di Board presenti sul BUS
         "board_address": 2, # ID assegnato a Raspberry. Deve avere l'ID della scheda collegata alla seriale di Raspberry PI +1
         "telegram_token": "", # Telegram TOKEN
@@ -123,7 +121,217 @@
         "mqtt_topic": "dl485", # MQTT topic
         "mqtt_client_id": "dl485", # MQTT client id
         "overwrite_text": 1, // Flag per sovrascrivere "nome" e "descrizione" su Domoticz !!! Attenzione
-        "send_configuration": 0 # Flag to send configurations to all board
+        "send_configuration": 1 # Flag to send configurations to all board
+    },
+
+    "BOARD3": { # BOARD DIMMER 4CH
+        "GENERAL_BOARD": {
+            "name": "SCHEDA DIMMER", # Nome della BOARD
+            "board_type_name": "DL485D4", # Tipo di Board DIMMER
+            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+        },
+        "DIM1": { # Dimmer 0
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 1, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_OUT_PWM", # Tipo di uscita => DIGITALE PWM
+            "default_startup_value": 50, # Livello di luminosità predefinito alla prima accensione
+            "dimmer_poweron_state": 0, # Resta acceso e spento quando ritorna la corrente
+            "plc_function": "dimmer",
+            "plc_linked_board_id_logic_io": ["*-6"], # ingresso che comando il DIMMER
+            "dimmer_max": 255, # Luminosità massima 1-255
+            "dimmer_min": 1, # Luminosità minima 1-255
+            "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
+            "dimmer_fraction_limit": 12, # dimmer_fraction_limit
+            "dimmer_delay_auto_up": 2, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
+            "dimmer_delay_auto_dw": 2, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
+            "dimmer_delay_manual": 4, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
+            "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
+            "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
+            "dimmer_time_reset_dir": 100, # Tempo di reset pressone tasto
+            "dimmer_memory": 1, # Imposta se le variazioni devono essere memorizzate
+            "dimmer_manual_go_off": 0, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
+            "dimmer_mode_fraction": 0, # 0=Si sale a passi di 1 fino al limite frazione aggiunta poi ahhiunge la frazione 1=modo 2
+            "plc_tmax_on": 4, # Max time output ON, 1-255 (0=infinito). 255=16256 secondi
+            "name": "OUT1 DIMM RED", # Nome che verrà riportato su DOMOTICZ
+            "description": "OUT1 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Selector Switch Dimmer"
+        },
+        "DIM2": { # Dimmer 2
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 2, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_OUT_PWM", # Tipo di uscita => DIGITALE PWM
+            "default_startup_value": 50, # Livello di luminosità predefinito alla prima accensione
+            "dimmer_poweron_state": 0, # Resta acceso e spento quando ritorna la corrente
+            "plc_function": "dimmer",
+            "plc_linked_board_id_logic_io": ["*-7"], # ingresso che comando il DIMMER
+            "dimmer_max": 255, # Luminosità massima 1-255
+            "dimmer_min": 1, # Luminosità minima 1-255
+            "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
+            "dimmer_fraction_limit": 12, # dimmer_fraction_limit
+            "dimmer_delay_auto_up": 2, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
+            "dimmer_delay_auto_dw": 2, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
+            "dimmer_delay_manual": 4, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
+            "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
+            "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
+            "dimmer_time_reset_dir": 100,
+            "dimmer_change_memory": 1, # Imposta se le variazioni devono essere memorizzate
+            "dimmer_manual_go_off": 0, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
+            "plc_tmax_on": 6, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
+            "name": "OUT2 DIMM GREEN", # Nome che verrà riportato su DOMOTICZ
+            "description": "OUT2 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Selector Switch Dimmer"
+        },
+        "DIM3": { # Dimmer 3
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 3, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_OUT_PWM", # Tipo di uscita => DIGITALE PWM
+            "default_startup_value": 50, # Livello di luminosità predefinito allo startup
+            "dimmer_poweron_state": 0, # Resta acceso e spento quando ritorna la corrente
+            "plc_function": "dimmer",
+            "plc_linked_board_id_logic_io": ["*-8"], # usa ingressi DIMMER
+            "dimmer_max": 255, # Luminosità massima 1-255
+            "dimmer_min": 1, # Luminosità minima 1-255
+            "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
+            "dimmer_fraction_limit": 12, # dimmer_fraction_limit
+            "dimmer_delay_auto_up": 2, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
+            "dimmer_delay_auto_dw": 2, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
+            "dimmer_delay_manual": 4, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
+            "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
+            "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
+            "dimmer_time_reset_dir": 100,
+            "dimmer_change_memory": 1, # Imposta se le variazioni devono essere memorizzate
+            "dimmer_manual_go_off": 0, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
+            "plc_tmax_on": 7, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
+            "name": "OUT3 DIMM BLUE", # Nome che verrà riportato su DOMOTICZ
+            "description": "OUT3 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Selector Switch Dimmer"
+        },
+        "DIM4": { # Dimmer 4
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 4, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_OUT_PWM", # Tipo di uscita => DIGITALE PWM
+            "default_startup_value": 50, # Livello di luminosità predefinito allo startup
+            "dimmer_poweron_state": 0, # Resta acceso e spento quando ritorna la corrente
+            "plc_function": "dimmer",
+            "plc_linked_board_id_logic_io": ["*-9"], # usa ingressi DIMMER
+            "dimmer_max": 255, # Luminosità massima 1-255
+            "dimmer_min": 1, # Luminosità minima 1-255
+            "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
+            "dimmer_fraction_limit": 12, # dimmer_fraction_limit
+            "dimmer_delay_auto_up": 2, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
+            "dimmer_delay_auto_dw": 2, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
+            "dimmer_delay_manual": 4, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
+            "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
+            "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
+            "dimmer_time_reset_dir": 100,
+            "dimmer_change_memory": 1, # Imposta se le variazioni devono essere memorizzate
+            "dimmer_manual_go_off": 0, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
+            "plc_tmax_on": 7, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
+            "name": "OUT4 DIMM BLUE", # Nome che verrà riportato su DOMOTICZ
+            "description": "OUT4 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Selector Switch Dimmer"
+        },
+        "DIMG": { # Dimmer generale
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 5, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_OUT_PWM", # Tipo di uscita => DIGITALE PWM
+            "default_startup_value": 128, # Livello di luminosità predefinito allo startup
+            "dimmer_poweron_state": 0, # Resta acceso e spento quando ritorna la corrente
+            "plc_function": "dimmer",
+            "plc_linked_board_id_logic_io": ["*-10"], # usa ingressi DIMMER
+            "dimmer_linked": 4, # I dimmer 1=Escluso - 2, 3 dimmer sono comandati anche dal dimmer generale
+            "dimmer_max": 255, # Luminosità massima 1-255
+            "dimmer_min": 1, # Luminosità minima 1-255
+            "dimmer_step_pwm": 50, # Velocità UP/WN del dimmer. default 200 - Limit
+            "dimmer_fraction_limit": 12, # dimmer_fraction_limit
+            "dimmer_delay_auto_up": 2, # Pausa tra step del dimmer in rampa accensione automatica in centesimi. default 3
+            "dimmer_delay_auto_dw": 2, # Pausa tra step del dimmer in rampa di spegnemento automatica in centesimi. default 3
+            "dimmer_delay_manual": 4, # Pausa tra step del dimmer in rampa accensione o spegnimento automatica in centesimi. default 4
+            "dimmer_button_time": 40, # Tempo per stabilire la differenza tra pressione impulso prolungato o breve default 0.3 sec
+            "dimmer_time_reverse_dir": 200, # Tempo di attesa prima di invertire la rampa
+            "dimmer_time_reset_dir": 100,
+            "plc_tmax_on": 0, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
+            "name": "OUT3 DIMM GENERALE", # Nome che verrà riportato su DOMOTICZ
+            "description": "OUT3 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Selector Switch Dimmer"
+        },
+        "IN1": { #
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 6, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_IN_PULLUP",
+            "default_startup_value": 1, # Valore pulsante allo startup
+            "inverted": 1,
+            "filter": 2,
+            "name": "IN1 DIMMER", # Nome che verrà riportato su DOMOTICZ
+            "description": "IN1 DIMMER" # Descrizione che verrà riportato su DOMOTICZ
+            // "dtype": "Current (Single)"
+        },
+        "IN2": { #
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 7, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_IN_PULLUP",
+            "default_startup_value": 1, # Valore pulsante allo startup
+            "inverted": 1,
+            "filter": 2,
+            "name": "IN2 DIMMER", # Nome che verrà riportato su DOMOTICZ
+            "description": "IN2 DIMMER" # Descrizione che verrà riportato su DOMOTICZ
+            // "dtype": "Current (Single)"
+        },
+        "IN3": { # test uscita
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 8, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_IN_PULLUP",
+            "default_startup_value": 1, # Valore pulsante allo startup
+            "inverted": 1,
+            "filter": 1,
+            "name": "IN3 DIMMER", # Nome che verrà riportato su DOMOTICZ
+            "description": "IN3 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Switch"
+        },
+        "IN4": { # test uscita
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 9, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_IN_PULLUP",
+            "default_startup_value": 1, # Valore pulsante allo startup
+            "inverted": 1,
+            "filter": 4,
+            "name": "IN Generale", # Nome che verrà riportato su DOMOTICZ
+            "description": "IN Generale", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Switch"
+        },
+        "IN5": { # test uscita
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 10, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_IN_PULLUP",
+            "default_startup_value": 1, # Valore pulsante allo startup
+            "inverted": 1,
+            "filter": 4,
+            "name": "IN Generale", # Nome che verrà riportato su DOMOTICZ
+            "description": "IN Generale", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Switch"
+        },
+        "IN6": { # test uscita
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 11, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "DIGITAL_IN_PULLUP",
+            "default_startup_value": 1, # Valore pulsante allo startup
+            "inverted": 1,
+            "filter": 4,
+            "name": "IN Generale", # Nome che verrà riportato su DOMOTICZ
+            "description": "IN Generale", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Switch"
+        }
     },
 
     "BOARD10": { # BOARD DIMMER
@@ -317,7 +525,6 @@
             "board_type_name": "DL485B", # Tipo di Board: Vedi TYPEB
             "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
-
         "RMS_POWER_CONF": {
             "rms_power_mode": 1,
             "rms_power_logic_id_ch1": 4, # canale 1 analogico TV
@@ -340,7 +547,6 @@
             "rms_power_logic_offset_ls": 0, # valori di default per offset ch1 e ch2 se mancasse il canale di acquisizione offset, in totale ms/ls è circa 512, quindi ms=2, ls=0
             "rms_power_logic_offset_ms": 0
         },
-
         "VIN": { # Tensione alimentazione BOARD
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 1, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
@@ -373,7 +579,7 @@
         "IO1": { # Corrente TA
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 4, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
-            "time_refresh": 60, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "time_refresh": 200, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "ANALOG_IN",
             "plc_function": "rms_power",
             "name": "TA", # Nome che verrà riportato su DOMOTICZ
@@ -383,7 +589,7 @@
         "IO2": { # Tensione TV
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 5, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
-            "time_refresh": 60, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "time_refresh": 200, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "ANALOG_IN",
             "plc_function": "rms_power",
             "name": "TV", # Nome che verrà riportato su DOMOTICZ
@@ -393,7 +599,7 @@
         "IO3": { # Offset ingressi corrente e tensione
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 6, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
-            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "time_refresh": 200, # Valori: 0...16382 decimi di secondo, Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "ANALOG_IN",
             "plc_function": "rms_power",
             "name": "OFFSET", # Nome che verrà riportato su DOMOTICZ
@@ -406,7 +612,7 @@
             "logic_io": 7,
             "device_type": "VIRTUAL",
             "plc_function": "rms_power",
-            "time_refresh": 600,
+            "time_refresh": 200,
             "name": "Potenza Reale",
             "description": "Potenza Reale",
             "dtype": "kWh"
@@ -416,7 +622,7 @@
             "logic_io": 8,
             "device_type": "VIRTUAL",
             "plc_function": "rms_power",
-            "time_refresh": 600,
+            "time_refresh": 200,
             "name": "Potenza Apparente",
             "description": "Potenza Apparente",
             "dtype": "kWh"
@@ -426,7 +632,7 @@
             "logic_io": 9,
             "device_type": "VIRTUAL",
             "plc_function": "rms_power",
-            "time_refresh": 6000,
+            "time_refresh": 200,
             "name": "COSFI",
             "description": "COSFI",
             "dtype": "Custom Sensor"
@@ -436,7 +642,7 @@
             "logic_io": 10,
             "device_type": "VIRTUAL",
             "plc_function": "rms_power",
-            "time_refresh": 600,
+            "time_refresh": 200,
             "name": "SFASAMENTO",
             "description": "SFASAMENTO TENSIONE CORRENTE",
             "dtype": "Custom Sensor",
@@ -451,7 +657,10 @@
             "inverted":1,
             "filter": 1, # Valore basso del filtro perchè il lampo del contatore dura poco
             "name": "SENS. IMPULSI", # Nome che verrà riportato su DOMOTICZ
-            "description": "LDR" # Descrizione che verrà riportato su DOMOTICZ
+            "description": "LDR", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Counter Incremental",  # Grafico conta impulsi
+            "dunit": "Wh"
+
         },
 
         "VIRT5": { # stima potenza dal tempo tra impulsi
@@ -460,7 +669,7 @@
             "device_type": "VIRTUAL",
             // "filter": 1, # Non deve esserci
             // "default_startup_value": 0,
-            "time_refresh": 600,
+            "time_refresh": 200,
             "plc_function": "powermeter",
             "plc_counter_mode": 27, # b011011, memoria del valore precendente e aggiorna dato a periodo ottenuto (b5b4=01),
                                 # azzera tempo ad ogni start a conteggio finito (b3=1),
@@ -475,7 +684,11 @@
             "plc_linked_board_id_logic_io": ["*-11"], # usa ingresso LDR
             "name": "POWER METER",
             "description": "POWER METER",
-            "dtype": "kWh"
+            //"dtype": "kWh"
+            "dtype": "Custom Sensor",
+            "dunit": "W"
+
+
         },
         "OUT1": { # replica di LDR per sentire il suono dell'impulso tramite rele
             "enable": 1,
@@ -483,7 +696,7 @@
             "device_type": "DIGITAL_OUT",
             "default_startup_value": 0,
             "time_refresh": 600,
-            "plc_function": "nequal", // PLC function, invertito con nequal perche il relè è invertito
+            "plc_function": "equal", // PLC function, invertito con nequal perche il relè è invertito
             "plc_linked_board_id_logic_io": ["*-11"], //usa ingresso LDR
             "plc_time_unit": 0.01, // Time unit (1: 1 second - 0.1 - 0.01 - 2.5)
             #"plc_tmax_on": 10, // Max time output ON, if omitted: default = 65635 (infinite)
@@ -491,7 +704,8 @@
             "plc_delay_off_on": 0, // Delay OFF->ON, if omitted: default = 0
             "name": "LDR RELE",
             "description": "LDR RELE",
-            "dtype": "Switch"
+            "dtype": "Counter",
+            "dtype": "kWh"
         },
         "VIRT6": {
             "enable": 1, # conta impulsi
@@ -516,7 +730,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA FOTOVOLTAICO", # Nome della BOARD
             "board_type_name": "DL485B", # Tipo di Board: Vedi TYPEB
-            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
 
         "VIN": { # Tensione alimentazione BOARD
@@ -545,60 +759,91 @@
             "logic_io": 3, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "VINKMKA",
-            "kmul": 1,
+            "va": 0, 
+            "ada": 477.1, # 0.513V
+            "vb": 4.35, # 4,35A
+            "adb": 365.5,  # 0.393V 
             "round_value": 2,
-            "name": "V.PANNELLI", # Nome che verrà riportato su DOMOTICZ
-            "description": "Tensione pannelli fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+            "name": "A. PANN 1", # Nome che verrà riportato su DOMOTICZ
+            "description": "A. PANN 1", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Custom Sensor",
+            "dunit": "A"
         },
         "IO2": { # Tensione alimentazione
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 4, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "VINKMKA",
-            "kmul": 1,
+            "va": 0, 
+            "ada": 484.5, # 0.521V 
+            "vb": 4.17, # 4.17A
+            "adb": 373.9,  # 0.402V 
             "round_value": 2,
-            "name": "V.PANNELLI", # Nome che verrà riportato su DOMOTICZ
-            "description": "Tensione pannelli fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+            "name": "A. PANN 2", # Nome che verrà riportato su DOMOTICZ
+            "description": "A. PANN 2", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Custom Sensor",
+            "dunit": "A"
         },
+        //
         "IO3": { # Tensione alimentazione
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 5, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "VINKMKA",
-            "kmul": 1,
+            "va": 0, 
+            "ada": 475.2, # 0.511V 
+            "vb": 4.26, # 4.26A
+            "adb": 361,  # 0.398V 
             "round_value": 2,
-            "name": "V.BATT", # Nome che verrà riportato su DOMOTICZ
-            "description": "Tensione batteria fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+            "name": "A. PANN 3", # Nome che verrà riportato su DOMOTICZ
+            "description": "A. PANN 3", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Custom Sensor",
+            "dunit": "A"
         },
         "IO4": { # Tensione alimentazione
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 6, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "VINKMKA",
-            "kmul": 1,
+            "va": 0, 
+            "ada": 474.3, # 0.510V 
+            "vb": 4.31, # 4.31A
+            "adb": 362.7,  # 0.390V 
             "round_value": 2,
-            "name": "V.BATT", # Nome che verrà riportato su DOMOTICZ
-            "description": "Tensione batteria fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+            "name": "A. PANN 4", # Nome che verrà riportato su DOMOTICZ
+            "description": "A. PANN 4", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Custom Sensor",
+            "dunit": "A"
         },
         "SDA": { # Tensione alimentazione
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 7, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "VINKMKA",
-            "kmul": 1,
+            "va": 0, 
+            "ada": 479, # 0.515V 
+            "vb": 4.11, # 4.11A
+            "adb": 357,  # 0.393V 
             "round_value": 2,
-            "name": "V.BATT", # Nome che verrà riportato su DOMOTICZ
-            "description": "Tensione batteria fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+            "name": "A. PANN 5", # Nome che verrà riportato su DOMOTICZ
+            "description": "A. PANN 5", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Custom Sensor",
+            "dunit": "A"
         },
         "SCL": { # Tensione alimentazione
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 8, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "VINKMKA",
-            "kmul": 1,
+            "va": 0, 
+            "ada": 475.2, # 0.511V 
+            "vb": 4.27, # 4.27A
+            "adb": 365,  # 0.402V 
             "round_value": 2,
-            "name": "V.BATT", # Nome che verrà riportato su DOMOTICZ
-            "description": "Tensione batteria fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+            "name": "A. PANN 6", # Nome che verrà riportato su DOMOTICZ
+            "description": "A. PANN 6", # Descrizione che verrà riportato su DOMOTICZ
+            "dtype": "Custom Sensor",
+            "dunit": "A"
         },
         "PE2": { # Tensione batteria
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
@@ -643,8 +888,8 @@
             "enable": 0,
             "logic_io": 3,
             "device_type": "VINKMKA",
-            "time_refresh": 20,
-            
+            "time_refresh": 600,
+
             "name": "Analog IN",
             "description": "Analog IN",
             "dtype": "Switch"
@@ -653,7 +898,7 @@
             "enable": 0,
             "logic_io": 3,
             "device_type": "DS18B20",
-            "time_refresh": 60,
+            "time_refresh": 600,
             "name": "DS18B20",
             "description": "Sensore Temperatura",
             "dtype": "Temperature"
@@ -673,7 +918,7 @@
             "enable": 0,
             "logic_io": 5,
             "device_type": "VIRTUAL",
-            "time_refresh": 60,
+            "time_refresh": 600,
             "name": "Tipo BOARD1",
             "description": "Descrizione Board ID:1",
             "dtype": "Text"
@@ -682,7 +927,7 @@
             "enable": 1,
             "logic_io": 9, # Attenzione: LOGIC_IO della calibrazione deve essere appena precedente al LOGIC_IO del BME associato
             "device_type": "BME280_CALIB",
-            "time_refresh": 60,#TBME280
+            "time_refresh": 600,#TBME280
             "address": "0xEC",
             "name": "BME280",
             "description": "Sensore T+U+B bagno",
@@ -693,9 +938,9 @@
             "logic_io": 8,
             "device_type": "BME280",
             "logic_io_calibration": 9,
-            "time_refresh": 60,#TBME280
+            "time_refresh": 600,#TBME280
             "address": "0xEC",
-            "altitude": 76, #Altitudine sappada
+            "altitude": 76, # Altitudine sappada
             "offset_pression": 0,
             "round_pression": 1,
             "kadd": 0,
@@ -712,7 +957,7 @@
             "device_type": "TSL2561",
             "lux_gain": 1, # 0=1x, 1=16X
             "lux_integration": 1, # 0=13.7 msec, 1=101 msec, 2=402 msec
-            "time_refresh": 60,
+            "time_refresh": 600,
             "address": "0x72", # Indirizzo TSL2561
             "name": "TSL2561",
             "description": "Sensore Luminosità"
@@ -726,7 +971,7 @@
                 "4-1"
             ],
             "plc_rfid_card_code": [102, 235, 87, 142, 152, 0],
-            "time_refresh": 120,
+            "time_refresh": 600,
             "name": "RFID_CARD",
             "description": "RFID_CARD"
         }
@@ -888,64 +1133,7 @@
             "dtype": "Switch"
         }
     }, #fine board
-    # Definizione della BOARD con ID n.3. Sul BUS ogni Board deve avere un ID univoco
-    "BOARD3": { # Configurazione generale della BOARD
-        "GENERAL_BOARD": {
-            "name": "SCHEDA CONTATORE", # Nome della BOARD
-            "board_type_name": "DL485M", # Tipo di Board: Vedi TYPEB
-            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
-        },
-        "VIN": { # Tensione alimentazione BOARD
-            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
-            "logic_io": 1, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
-            "time_refresh": 20, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            "device_type": "VINR1R2",
-            "rvcc": 12000, # Valore resistenza posta tra IO e ingresso alimentazione.
-            "rgnd": 470, # Valore resistenza posta tra IO e 0V.
-            "name": "Vin", # Nome che verrà riportato su DOMOTICZ
-            "description": "Tensione alimentazione scheda" # Descrizione che verrà riportato su DOMOTICZ
-        },
-        "TEMP_ATMEGA": {
-            "enable": 1,
-            "logic_io": 2,
-            "time_refresh": 30,
-            "device_type": "TEMP_ATMEGA",
-            "name": "TEMP_ATMEGA",
-            "description": "Temperatura Board ATMEGA328PB"
-        },
-        "PD3": {
-            "enable": 1,
-            "logic_io": 3,
-            "device_type": "DS18B20",
-            "time_refresh": 30,
-            "name": "DS18B20",
-            "description": "Sensore Temperatura",
-            "dtype": "Temperature"
-        },
-        "PD4": {
-            "enable": 1,
-            "logic_io": 4,
-            "device_type": "DS18B20",
-            "time_refresh": 30,
-            "name": "DS18B20",
-            "description": "Sensore Temperatura",
-            "dtype": "Temperature"
-        },
-        "PC0": {
-            "enable": 1,
-            "logic_io": 5,
-            "device_type": "DIGITAL_IN_PULLUP",
-            "default_startup_filter_value": 1,
-            "time_refresh": 20,
-            "n_refresh_on": 1,
-            "n_refresh_off": 1,
-            "filter": 20,
-            "inverted": 1,
-            "name": "pulsante",
-            "description": "pulsantexxx",
-            "dtype": "Switch"
-        }
-    }, #fine board
+
     "BOARD5": {
         "GENERAL_BOARD": {
             "name": "SCHEDA CONTATORE", # Nome della BOARD
@@ -1271,5 +1459,251 @@
             "description": "Sensore T+U bagno",
             "dtype": "Temp+Hum"
         }
-    } #fine board 7
+    }, #fine board 7
+
+    "BOARD11": { # Arnaldo
+        //         Configurazione generale della BOARD
+        "GENERAL_BOARD": {
+            "name": "SCHEDA MASTER", // Nome della BOARD
+            "board_type_name": "DL485M", // Tipo di Board: Vedi TYPEB
+            "enable": 0 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
+        },
+        "VIN": { // Tensione alimentazione BOARD
+            "enable": 1, // Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 1, // Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, // Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINR1R2",
+            "rvcc": 12000, // Valore resistenza posta tra IO e ingresso alimentazione.
+            "rgnd": 470, // Valore resistenza posta tra IO e 0V.
+            "name": "Vin", // Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione alimentazione scheda" // Descrizione che verrà riportato su DOMOTICZ
+        },
+        "TEMP_ATMEGA": {
+            "enable": 1,
+            "logic_io": 2,
+            "time_refresh": 600,
+            "device_type": "TEMP_ATMEGA",
+            "name": "TEMP_ATMEGA",
+            "description": "Temperatura Board ATMEGA328PB"
+        },
+        "PD3": {
+            "enable": 1,
+            "logic_io": 3,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "time_refresh": 600,
+            "name": "IN MANSARDA",
+            "description": "Ingresso Riscaldamento Mansarda",
+            "dtype": "Switch"
+        },
+        "PD4": {
+            "enable": 1,
+            "logic_io": 4,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 600,
+            "plc_preset_input": 0, // Preset data byte input until arrive communication, if omitted: default = 0
+            "plc_function": "toggle_off", // PLC function
+            "plc_linked_board_id_logic_io": [ // PLC inputs
+                "*-3"
+            ],
+            "name": "OUT MANSARDA",
+            "description": "Riscaldamento Mansarda",
+            "dtype": "Switch"
+        },
+        "PE0": {
+            "enable": 1,
+            "logic_io": 5,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "time_refresh": 600,
+            "name": "IN CAMERETTA",
+            "description": "Ingresso Cameretta",
+            "dtype": "Switch"
+        },
+        "PE1": {
+            "enable": 1,
+            "logic_io": 6,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 600,
+            "plc_preset_input": 0, // Preset data byte input until arrive communication, if omitted: default = 0
+            "plc_function": "toggle_off", // PLC function
+            "plc_linked_board_id_logic_io": [ // PLC inputs
+                "*-5"
+            ],
+            "name": "OUT CAMERETTA",
+            "description": "Riscaldamento Mansarda",
+            "dtype": "Switch"
+        },
+        "PB0": {
+            "enable": 1,
+            "logic_io": 7,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "time_refresh": 600,
+            "name": "IN CUCINA",
+            "description": "Ingresso Cucina",
+            "dtype": "Switch"
+        },
+        "PB1": {
+            "enable": 1,
+            "logic_io": 8,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 600,
+            "plc_preset_input": 0, // Preset data byte input until arrive communication, if omitted: default = 0
+            "plc_function": "toggle_off", // PLC function
+            "plc_linked_board_id_logic_io": [ // PLC inputs
+                "*-7"
+            ],
+            "name": "OUT CUCINA",
+            "description": "Riscaldamento Cucina",
+            "dtype": "Switch"
+        },
+        "PB2": {
+            "enable": 1,
+            "logic_io": 9,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "time_refresh": 600,
+            "name": "IN BAGNO BLU",
+            "description": "Ingresso Bagno BLU",
+            "dtype": "Switch"
+        },
+        "PE2": {
+            "enable": 1,
+            "logic_io": 10,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 600,
+            "plc_preset_input": 0, // Preset data byte input until arrive communication, if omitted: default = 0
+            "plc_function": "toggle_off", // PLC function
+            "plc_linked_board_id_logic_io": [ // PLC inputs
+                "*-9"
+            ],
+            "name": "OUT Bagno BLU",
+            "description": "Riscaldamento  Bagno BLU",
+            "dtype": "Switch"
+        },
+        "PC0": {
+            "enable": 1,
+            "logic_io": 11,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "time_refresh": 600,
+            "name": "IN BAGNO BEIGE",
+            "description": "Ingresso Bagno BEIGE",
+            "dtype": "Switch"
+        },
+        "PC1": {
+            "enable": 1,
+            "logic_io": 12,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 600,
+            "plc_preset_input": 0, // Preset data byte input until arrive communication, if omitted: default = 0
+            "plc_function": "toggle_off", // PLC function
+            "plc_linked_board_id_logic_io": [ // PLC inputs
+                "*-11"
+            ],
+            "name": "OUT Bagno BEIGE",
+            "description": "Riscaldamento Bagno BEIGE",
+            "dtype": "Switch"
+        },      
+        "PC2": {
+            "enable": 1,
+            "logic_io": 13,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "time_refresh": 600,
+            "name": "IN TAVERNA",
+            "description": "Ingresso TAVERNA",
+            "dtype": "Switch"
+        },
+        "PC3": {
+            "enable": 1,
+            "logic_io": 14,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 600,
+            "plc_preset_input": 0, // Preset data byte input until arrive communication, if omitted: default = 0
+            "plc_function": "toggle_off", // PLC function
+            "plc_linked_board_id_logic_io": [ // PLC inputs
+                "*-13"
+            ],
+            "name": "OUT TAVERNA",
+            "description": "Riscaldamento Taverna",
+            "dtype": "Switch"
+        },    
+        "PC5": {
+            "enable": 1,
+            "logic_io": 15,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "time_refresh": 600,
+            "name": "IN SALOTTO",
+            "description": "Ingresso SALOTTO",
+            "dtype": "Switch"
+        },
+        "PC4": {
+            "enable": 1,
+            "logic_io": 16,
+            "device_type": "DIGITAL_OUT",
+            "time_refresh": 600,
+            "plc_preset_input": 0, // Preset data byte input until arrive communication, if omitted: default = 0
+            "plc_function": "toggle_off", // PLC function
+            "plc_linked_board_id_logic_io": [ // PLC inputs
+                "*-15"
+            ],
+            "name": "OUT SALOTTO",
+            "description": "Riscaldamento Salotto",
+            "dtype": "Switch"
+        },    
+        "PB5": { # LDR per rilevare impulsi
+            "enable": 1,
+            "logic_io": 17,
+            "device_type": "DIGITAL_IN_PULLUP",
+            "time_refresh": 600,
+            "inverted":1,
+            "filter": 1,
+            "name": "SENS. IMPULSI",
+            "description": "LDR SENS. IMPULSI",
+            "dtype": "Counter Incremental",  # Grafico conta impulsi
+            "dunit": "Wh"
+
+
+        },
+
+        "VIRT5": { # stima potenza dal tempo tra impulsi
+            "enable": 1,
+            "logic_io": 18,
+            "device_type": "VIRTUAL",
+            // "filter": 1, # Non deve esserci
+            // "default_startup_value": 0,
+            "time_refresh": 200,
+            "plc_function": "powermeter",
+            "plc_counter_mode": 27, # b011011, memoria del valore precendente e aggiorna dato a periodo ottenuto (b5b4=01),
+                                # azzera tempo ad ogni start a conteggio finito (b3=1),
+                                # considera end come nuovo start (b1=1),
+                                # end su fronte ON (b0=1)
+            "plc_powermeter_k": 60000, # numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale) questo perchè il campo a 16 bit non consente di scrivere 360000
+            "kmul": 6, #moltiplica per 6 la lettura di 1/6 della potenza
+            "kadd": 0,
+            "plc_counter_filter": 0, # non usato
+            "plc_time_unit": 0.01, # Centesimi di secondo per la misura del periodo impulsi
+            "plc_counter_timeout": 500, # 500 centesimi=5 secondi
+            "plc_linked_board_id_logic_io": ["*-17"], # usa ingresso LDR
+            "name": "POWER METER",
+            "description": "POWER METER",
+            //"dtype": "kWh"
+            "dtype": "Custom Sensor",
+            "dunit": "W"
+
+        },
+        "VIRT6": {
+            "enable": 1, # conta impulsi
+            "logic_io": 19,
+            "device_type": "VIRTUAL",
+            // "default_startup_value": 0,
+            // "inverted": 1,
+            // "filter": 127,
+            "time_refresh": 300,
+            "plc_function": "counter_up",
+            "plc_counter_mode": 0, # b00000
+            "plc_counter_filter": 0, # non usato
+            "plc_counter_timeout": 65535, # mai
+            "plc_linked_board_id_logic_io": ["*-17"], //usa ingresso LDR
+            "name": "watt ora",
+            "description": "watt ora rilevati da LDR",
+            "dtype": "kWh"
+        }
+    }
 } #fine file
