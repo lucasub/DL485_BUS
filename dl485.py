@@ -379,6 +379,32 @@ class Bus(BusDL485, Log, BME280):
         8: dl485d4_gpio,  # DL485D4
     }
 
+    # Speed Baudate
+    speed = {
+        1: 1200,
+        2: 2400,
+        3: 4800,
+        4: 9600,
+        5: 14400,
+        6: 19200,  # Default
+        7: 28800,
+        8: 38400,
+        9: 57600,
+        0: 115200,
+
+        1200: 1,
+        2400: 2,
+        4800: 3,
+        9600: 4,
+        14400: 5,
+        19200: 6,
+        28800: 7,
+        38400: 8,
+        57600: 9,
+        115200: 0,
+    }
+
+
     def __init__(self, config_file_name, logstate=0):
         super().__init__(config_file_name, logstate)
 
@@ -470,12 +496,7 @@ class Bus(BusDL485, Log, BME280):
         # except:
         #     print("MQTT ERROR RECEIVED:", message._topic.decode(), message.payload.decode() )
 
-    def ping(self):
-        """
-        Make Ping
-        """
-        data = [self.BOARD_ADDRESS]
-        return data
+
 
     def dict_raise_on_duplicates(self, pairs):
         error = []
@@ -1161,6 +1182,7 @@ class Bus(BusDL485, Log, BME280):
                 self.calibBME(board_id, logic_io, value)  # Genera valori di calibrazione sul dict BME280
 
             elif device_type == 'BME280':
+                print("value BME280", board_id, logic_io, value)
                 T_Raw, H_Raw, P_Raw = self.getRawValueBME280(value)  #Return RAW value that need adust with CALIB DATA on DICT BME
                 logic_io_calibration = self.mapiotype[board_id][logic_io]['logic_io_calibration']
                 val = self.valueBME280(board_id, logic_io, logic_io_calibration, T_Raw, H_Raw, P_Raw)
@@ -1387,12 +1409,6 @@ class Bus(BusDL485, Log, BME280):
         """
         return [self.BOARD_ADDRESS, self.code['CR_GET_BOARD_TYPE'], board_id]  # Get board type
 
-    def setMaxBoardAddress(self, board_id=0, max_board_address=63):
-        """
-        Setta il numero massimo di board presenti nella rete. Serve per velocizzare il loop
-        """
-        return [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, 6, 0, max_board_address]  # Max Board Address
-
     def calcAddressLsMs8(self, address):
         """
         scompone word in due byte
@@ -1400,6 +1416,13 @@ class Bus(BusDL485, Log, BME280):
         LS = address & 255
         MS = address >> 8
         return LS, MS
+
+    def ping(self):
+        """
+        Make Ping
+        """
+        data = [self.BOARD_ADDRESS]
+        return data
 
     def readEEadd(self, board_id, address, nbyte):
         """
@@ -1414,83 +1437,6 @@ class Bus(BusDL485, Log, BME280):
         """
         address = (logic_io * 32) + offset
         return self.readEEadd(board_id, address, nbyte)
-
-    def writeEEadd(self, board_id, address, data):
-        """
-        Write EEPROM bytes
-        """
-        LS, MS = self.calcAddressLsMs8(address)
-        msg = [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, LS, MS] + data  # Read EE
-        return msg
-
-    def writeEEnIOoffset(self, board_id, logic_io, offset, data):
-        """
-        Write EEPROM bytes
-        """
-        address = (logic_io * 32) + offset
-        return self.writeEEadd(board_id, address, data)
-
-    def readIO(self, board_id, logic_io):
-        """
-        Read IO status
-        """
-        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, logic_io, 0]
-        # print("ReadIO:", data)
-        return data
-
-    def writeIO(self, board_id, logic_io, data, ms=0):
-        """
-        Write IO
-        """
-        # Su analogico è necessario inviare anche un MS byte per andare fino al valore 1023 (7 bit LS + 3 bit MS)
-        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, logic_io, ] + data + [ms]
-        return data
-
-    def writeOneWire(self, board_id, logic_io, byteopzioni, data=[]):
-        """
-        Write One Wire command
-        """
-        # Su analogico è necessario inviare anche un MS byte per andare fino al valore 1023 (7 bit LS + 3 bit MS)
-        # Byteopzioni:
-        # b0: reset iniziali
-        # b1: 1 bit a 1 su OneWire
-        # b2: scrive BIT a ZERO
-        # b3: Occupa BUS
-
-        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, logic_io, byteopzioni] + data
-        return data
-
-    def readOneWire(self, board_id, logic_io, byteopzioni, data=[]):
-        """
-        Read OneWire data
-        """
-        # Su analogico è necessario inviare anche un MS byte per andare fino al valore 1023 (7 bit LS + 3 bit MS)
-        # Byteopzioni:
-        # b0: reset iniziali
-        # b1: 1 bit a 1 su OneWire
-        # b2: scrive BIT a ZERO
-        # b3: Occupa BUS
-
-        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, logic_io, byteopzioni] + data
-        return data
-
-    def writeI2C(self, board_id, logic_io, byteopzioni, data):
-        """
-        Write I2C command
-        """
-        # byteOpzioni comando scrittura:
-        # bit0: start iniziale
-        #    1: stop finale
-        #    2: ritorno stato ultimo ACK
-        #    3: termina trasmissione per ridare start senza stop
-        #    4: manda start dopo ultimo trasmissione di ultimo byte
-        #    5: reset I2c prima di iniziare
-
-        # print(board_id, logic_io, byteopzioni, data)
-        # data = self.get8to7(data)
-        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, logic_io, byteopzioni] + data
-        # print("WriteI2C:", data)
-        return data
 
     def readI2C(self, board_id, logic_io, byteopzioni, data):
         """
@@ -1515,6 +1461,89 @@ class Bus(BusDL485, Log, BME280):
         # print("WriteI2C:", data)
         return data
 
+    def writeEEadd(self, board_id, address, data):
+        """
+        Write EEPROM bytes
+        """
+        LS, MS = self.calcAddressLsMs8(address)
+        msg = [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, LS, MS] + data  # Read EE
+        return msg
+
+    def writeEEnIOoffset(self, board_id, logic_io, offset, data):
+        """
+        Write EEPROM bytes
+        """
+        address = (logic_io * 32) + offset
+        return self.writeEEadd(board_id, address, data)
+
+    def readIO(self, board_id, logic_io):
+        """
+        Read IO status
+        """
+        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, logic_io, 0]
+        # print("ReadIO:", data)
+        return data
+
+    def readOneWire(self, board_id, logic_io, byteopzioni, data=[]):
+        """
+        Read OneWire data
+        """
+        # Su analogico è necessario inviare anche un MS byte per andare fino al valore 1023 (7 bit LS + 3 bit MS)
+        # Byteopzioni:
+        # b0: reset iniziali
+        # b1: 1 bit a 1 su OneWire
+        # b2: scrive BIT a ZERO
+        # b3: Occupa BUS
+
+        data = [self.BOARD_ADDRESS, self.code['CR_RD_IN'], board_id, logic_io, byteopzioni] + data
+        return data
+
+    def setMaxBoardAddress(self, board_id=0, max_board_address=63):
+        """
+        Setta il numero massimo di board presenti nella rete. Serve per velocizzare il loop
+        """
+        return [self.BOARD_ADDRESS, self.code['CR_WR_EE'], board_id, 6, 0, max_board_address]  # Max Board Address
+
+    def writeI2C(self, board_id, logic_io, byteopzioni, data):
+        """
+        Write I2C command
+        """
+        # byteOpzioni comando scrittura:
+        # bit0: start iniziale
+        #    1: stop finale
+        #    2: ritorno stato ultimo ACK
+        #    3: termina trasmissione per ridare start senza stop
+        #    4: manda start dopo ultimo trasmissione di ultimo byte
+        #    5: reset I2c prima di iniziare
+
+        # print(board_id, logic_io, byteopzioni, data)
+        # data = self.get8to7(data)
+        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, logic_io, byteopzioni] + data
+        # print("WriteI2C:", data)
+        return data
+
+    def writeIO(self, board_id, logic_io, data, ms=0):
+        """
+        Write IO
+        """
+        # Su analogico è necessario inviare anche un MS byte per andare fino al valore 1023 (7 bit LS + 3 bit MS)
+        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, logic_io, ] + data + [ms]
+        return data
+
+    def writeOneWire(self, board_id, logic_io, byteopzioni, data=[]):
+        """
+        Write One Wire command
+        """
+        # Su analogico è necessario inviare anche un MS byte per andare fino al valore 1023 (7 bit LS + 3 bit MS)
+        # Byteopzioni:
+        # b0: reset iniziali
+        # b1: 1 bit a 1 su OneWire
+        # b2: scrive BIT a ZERO
+        # b3: Occupa BUS
+
+        data = [self.BOARD_ADDRESS, self.code['CR_WR_OUT'], board_id, logic_io, byteopzioni] + data
+        return data
+
     def initIO(self, board_id, logic_io):
         """
         Init IO of board (read configuration in EEPROM)
@@ -1522,30 +1551,6 @@ class Bus(BusDL485, Log, BME280):
         data = [self.BOARD_ADDRESS, self.code['CR_INIT_SINGOLO_IO'], board_id, logic_io]
         return data
 
-    # Speed Baudate
-    speed = {
-        1: 1200,
-        2: 2400,
-        3: 4800,
-        4: 9600,
-        5: 14400,
-        6: 19200,  # Default
-        7: 28800,
-        8: 38400,
-        9: 57600,
-        0: 115200,
-
-        1200: 1,
-        2400: 2,
-        4800: 3,
-        9600: 4,
-        14400: 5,
-        19200: 6,
-        28800: 7,
-        38400: 8,
-        57600: 9,
-        115200: 0,
-    }
 
     def enableSerial(self, board_id, speed):
         """
@@ -2480,7 +2485,7 @@ class Bus(BusDL485, Log, BME280):
                     else:
                         self.writelog(f" ERR VERIFICA BUFF={msgapp[3:]} TRAMARIC={self.RXtrama[2:]}")
                 else:
-                    self.writelog(" ERR RICEVUTO FEEDBACK DI MSG MAI INVIATO")
+                    self.writelog("ERR RICEVUTO FEEDBACK DI MSG MAI INVIATO")
 
             # if self.RXtrama[1] in [self.code['COMUNICA_IO'], self.code['CR_WR_OUT'] | 32 ]:  # COMUNICA_IO / Scrive valore USCITA
             if self.RXtrama[1] in [self.code['COMUNICA_IO'], self.code['RFID']]:  # COMUNICA_IO / Scrive valore USCITA
@@ -2604,7 +2609,7 @@ class Bus(BusDL485, Log, BME280):
                         err = self.error[self.RXtrama[4]] \
                             if self.RXtrama[4] in self.error \
                             else 'ERRORE NON DEFINITO'
-                    self.writelog(f"RX  {self.code[apprx]:<18} {self.int2hex(self.RXtrama)} {err}")
+                    self.writelog(f"RX {self.code[apprx]:<18}  {self.int2hex(self.RXtrama)} {err}")
 
             else:
                 self.writelog(f"TRAMA ALTRO COMANDO    {self.RXtrama} Codice: {self.code.get(self.RXtrama[1])}")
@@ -2648,6 +2653,9 @@ class Bus(BusDL485, Log, BME280):
                 # self.TXmsg += [self.boardReboot(0)]
                 # self.TXmsg += [self.timeLoop(8)]
                 # self.TXmsg += [self.getBoardType(0)]
+                # self.TXmsg += [self.writeIO(8, 15, [0])]
+                # self.TXmsg += [self.writeIO(1, 4, [1])]
+                # self.TXmsg += [self.readIO(1, 4)]
 
             if not self.cronoldtime % 30:
                 self.cron_sec = 30  # Dont remove
@@ -2897,8 +2905,8 @@ if __name__ == '__main__':
             if not b.RXtrama:
                 continue
             
-            # if len(b.RXtrama) >=5 and b.RXtrama[0] == 8 and (b.RXtrama[2] == 4 or b.RXtrama[2] == 5):
-            #     print("-------------------"*6, b.RXtrama)
+            if len(b.RXtrama) >=2 and b.RXtrama[0] == 8 and (b.RXtrama[2] == 4 or b.RXtrama[2] == 5):
+                print("-------------------"*6, b.RXtrama)
 
             if len(b.RXtrama) >= print_bus:  # stampa stringa a TOT caratteri
                 log.writelog(b.RXtrama, 'BLUE')

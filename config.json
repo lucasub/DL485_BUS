@@ -723,6 +723,36 @@
             "name": "watt ora",
             "description": "watt ora rilevati da LDR",
             "dtype": "kWh"
+        },
+        "OUT2": { # RELE2 TEST
+            "enable": 1,
+            "logic_io": 15,
+            "device_type": "DIGITAL_OUT",
+            "default_startup_value": 0,
+            "time_refresh": 600,
+            // "plc_function": "equal", // PLC function, invertito con nequal perche il relè è invertito
+            // "plc_linked_board_id_logic_io": ["*-11"], //usa ingresso LDR
+            // "plc_time_unit": 0.01, // Time unit (1: 1 second - 0.1 - 0.01 - 2.5)
+            // "plc_tmax_on": 10, // Max time output ON, if omitted: default = 65635 (infinite)
+            // "plc_delay_on_off": 0, // Delay ON->OFF, if omitted: default = 0
+            // "plc_delay_off_on": 0, // Delay OFF->ON, if omitted: default = 0
+            "name": "OUT2 TEST",
+            "description": "OUT2 TEST"
+        },
+        "OUT3": { # RELE3 TEST
+            "enable": 1,
+            "logic_io": 16,
+            "device_type": "DIGITAL_OUT",
+            "default_startup_value": 0,
+            "time_refresh": 600,
+            // "plc_function": "equal", // PLC function, invertito con nequal perche il relè è invertito
+            // "plc_linked_board_id_logic_io": ["*-11"], //usa ingresso LDR
+            // "plc_time_unit": 0.01, // Time unit (1: 1 second - 0.1 - 0.01 - 2.5)
+            // "plc_tmax_on": 10, // Max time output ON, if omitted: default = 65635 (infinite)
+            // "plc_delay_on_off": 0, // Delay ON->OFF, if omitted: default = 0
+            // "plc_delay_off_on": 0, // Delay OFF->ON, if omitted: default = 0
+            "name": "OUT3 TEST",
+            "description": "OUT3 TEST"
         }
     },
 
@@ -869,7 +899,7 @@
         "VIN": { # Tensione alimentazione BOARD
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 1, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
-            "time_refresh": 60, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
             "device_type": "VINR1R2",
             "rvcc": 12000, # Valore resistenza posta tra IO e ingresso alimentazione.
             "rgnd": 470, # Valore resistenza posta tra IO e 0V.
@@ -904,7 +934,7 @@
             "dtype": "Temperature"
         },
         "PD4": {
-            "enable": 0,
+            "enable": 1,
             "logic_io": 4,
             "device_type": "DIGITAL_OUT",
             "default_startup_filter_value": 1,
@@ -918,7 +948,7 @@
             "enable": 0,
             "logic_io": 5,
             "device_type": "VIRTUAL",
-            "time_refresh": 600,
+            "time_refresh": 300,
             "name": "Tipo BOARD1",
             "description": "Descrizione Board ID:1",
             "dtype": "Text"
@@ -927,7 +957,7 @@
             "enable": 1,
             "logic_io": 9, # Attenzione: LOGIC_IO della calibrazione deve essere appena precedente al LOGIC_IO del BME associato
             "device_type": "BME280_CALIB",
-            "time_refresh": 600,#TBME280
+            "time_refresh": 300,#TBME280
             "address": "0xEC",
             "name": "BME280",
             "description": "Sensore T+U+B bagno",
@@ -938,7 +968,7 @@
             "logic_io": 8,
             "device_type": "BME280",
             "logic_io_calibration": 9,
-            "time_refresh": 600,#TBME280
+            "time_refresh": 300,#TBME280
             "address": "0xEC",
             "altitude": 76, # Altitudine sappada
             "offset_pression": 0,

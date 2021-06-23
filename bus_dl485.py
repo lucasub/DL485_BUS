@@ -84,20 +84,20 @@ class BusDL485(Log):
 
         if self.lastfinepacc:
             self.lastfinepacc = False
-            auscrc = (inSerial & 0x0f) | ((inSerial & 0xE0)//2)
+            auscrc = (inSerial & 0x0f) | ((inSerial & 0xE0) // 2)
             self.crcric = self.calccrc(self.crcric + 0xaa, self.crcric)  # aggiorna crc
             ric = self.buffricn
             if (auscrc ^ self.crcric) & 0x7f == 0:  # right crc & end trama
                 self.labinitric()
                 return ric
             else:
-                self.writelog(
-                    f'SECONDO CRC ERRATO     Ricevuto {hex(auscrc)}    calcolato - {hex(self.crcric)} len_buffricn={len(self.buffricn)} self.buffricnlung:{self.buffricnlung} inSerial:{str(inSerial)}', 'RED')
+                self.writelog(f'SECONDO CRC ERRATO     Ricevuto {hex(auscrc)}    calcolato - {hex(self.crcric)} len_buffricn={len(self.buffricn)} self.buffricnlung:{self.buffricnlung} inSerial:{str(inSerial)}', 'RED')
                 self.labinitric()
                 return []
 
         if (inSerial & 0x38) == 0x18 or (inSerial & 0x38) == 0x20:  # end trama
             inSerial = (inSerial & 0x0f) | ((inSerial & 0xc0) // 4)
+            
             if (inSerial ^ self.crcric) & 0x3F == 0:  # crc corretto
 
                 appn = len(self.buffricn) + len(self.buffricnapp)
@@ -122,23 +122,27 @@ class BusDL485(Log):
 
             else:  # CRC Errato
                 self.writelog(
-                    f"PRIMO CRC ERRATO       calcolato {self.crcric:>3} ricevuto {inSerial:>3} Len_buffricn={len(self.buffricn):>3} {self.buffricnlung}, {str(self.buffricn)} {str(self.buffricnapp)}", 'RED')
+                    f"PRIMO CRC ERRATO       CRC calcolato:{self.crcric:>3} CRC ricevuto {inSerial:>3} Len_buffricn={len(self.buffricn):>3} {self.buffricnlung}, {str(self.buffricn)} {str(self.buffricnapp)}", 'RED')
                 self.labinitric()
                 return []
 
         elif inSerial == 0:  # Errore 1
-            self.writelog("ERR 1:                 Tre 0 ricevuti, byte={}".format(
-                hex(inSerial)), 'RED')
+            try:
+                self.writelog("ERR 1:                 Tre 0 ricevuti, byte={} buffer={}".format(
+                    hex(inSerial)), self.buffricnlung, 'RED')
+            except:
+                pass
             self.labinitric()
             return []
 
         elif inSerial == 0x38:  # Errore 2
-            self.writelog("ERR 2:                 Tre 1 ricevuti, byte={}".format(
-                hex(inSerial)), 'RED')
+            self.writelog("ERR 2:                 Tre 1 ricevuti, byte={} buffer={}".format(
+                hex(inSerial), self.buffricnlung), 'RED')
             self.labinitric()
             return []
 
         else:  # carattere normale
+            # print("************CN", (inSerial & 0x0f) | ((inSerial & 0xE0) // 2))
             self.crcric = self.calccrc(inSerial, self.crcric)  # aggiorna crc
             self.buffricnapp.insert(
                 self.buffricnlung, ((inSerial & 0x0f) | ((inSerial & 0xE0) // 2)) )  # inserisce carattere decodificato
