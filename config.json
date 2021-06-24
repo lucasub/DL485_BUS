@@ -675,12 +675,14 @@
                                 # azzera tempo ad ogni start a conteggio finito (b3=1),
                                 # considera end come nuovo start (b1=1),
                                 # end su fronte ON (b0=1)
-            "plc_powermeter_k": 60000, # numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale) questo perchè il campo a 16 bit non consente di scrivere 360000
-            "kmul": 6, #moltiplica per 6 la lettura di 1/6 della potenza
+            "plc_powermeter_k": 65534, # numeratore (nel caso del contatore enel, il risultato è 1/6 della potenza attuale) questo perchè il campo a 16 bit non consente di scrivere 360000
+            "kmul": 5.493331705679, #moltiplica per 6 la lettura di 1/6 della potenza
             "kadd": 0,
             "plc_counter_filter": 0, # non usato
             "plc_time_unit": 0.01, # Centesimi di secondo per la misura del periodo impulsi
-            "plc_counter_timeout": 500, # 500 centesimi=5 secondi
+            "round_value": 0,
+            // "plc_counter_timeout": 500, # 500 centesimi=5 secondi
+            "plc_counter_timeout": 3000, # 500 centesimi=5 secondi
             "plc_linked_board_id_logic_io": ["*-11"], # usa ingresso LDR
             "name": "POWER METER",
             "description": "POWER METER",

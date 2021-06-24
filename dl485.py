@@ -1040,8 +1040,8 @@ class Bus(BusDL485, Log, BME280):
             device_type = self.mapiotype[board_id][logic_io]['device_type']
             plc_function = self.mapiotype[board_id][logic_io]['plc_function']
             
-            if board_id == 8 and logic_io == 13:
-                print("-" * 100, board_id, logic_io, type_io, device_type, plc_function, value)
+            # if board_id == 8 and logic_io == 13:
+            #     print("-" * 100, board_id, logic_io, type_io, device_type, plc_function, value)
 
             if device_type == 'DS18B20':  # Digital temperature
                 # print(">> DS18B20", value)
@@ -1144,8 +1144,8 @@ class Bus(BusDL485, Log, BME280):
 
             elif plc_function == 'powermeter':
                 value = self.byteLSMS2uint(value[0], value[1])
-                # value = value[0] + (value[1] * 256)
-                return self.adjust(value, kmul, kadd, va, ada, vb, adb)
+                value = self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_value'])
+                return value
 
             elif type_io in ['digital', 'discrete'] and plc_function == 'time_meter':
                 value = self.byteLSMS2uint(value[0], value[1])
@@ -1913,6 +1913,7 @@ class Bus(BusDL485, Log, BME280):
                     elif plc_time_unit == 2.5:
                         plc_time_unit_app = 0xC0
 
+                    
                     if sbyte8 == 'rfid_unit':
                         plc_rfid_unit_tpolling_nocard = self.mapiotype[board_id][logic_io]['plc_rfid_unit_tpolling_nocard']
                         plc.append(plc_rfid_unit_tpolling_nocard)
@@ -2072,7 +2073,7 @@ class Bus(BusDL485, Log, BME280):
                             plc_mode_timer = self.mapiotype[board_id][logic_io]['plc_mode_timer']
 
                             plc.append((plc_mode_timer & 0x3F) | plc_time_unit_app)
-
+                            
                             plc_timer_n_transitions = self.mapiotype[board_id][logic_io]['plc_timer_n_transitions']
                             if plc_timer_n_transitions > 255:
                                 self.writelog("ERRORE CONFIGURATION: plc_timer_n_transitions 0...255", 'RED')
@@ -2225,7 +2226,7 @@ class Bus(BusDL485, Log, BME280):
                                 self.writelog(f'plc ERROR {sbyte8} -> {board_id}, {logic_io}', 'RED')
                                 sys.exit()
 
-                            plc.append(plc_counter_mode)
+                            plc.append((plc_counter_mode & 0x3F) | plc_time_unit_app)
                             plc_counter_filter = self.mapiotype[board_id][logic_io]['plc_counter_filter']
                             plc.append(plc_counter_filter)
                             plc_counter_timeout = self.mapiotype[board_id][logic_io]['plc_counter_timeout']
@@ -2905,8 +2906,8 @@ if __name__ == '__main__':
             if not b.RXtrama:
                 continue
             
-            if len(b.RXtrama) >=2 and b.RXtrama[0] == 8 and (b.RXtrama[2] == 4 or b.RXtrama[2] == 5):
-                print("-------------------"*6, b.RXtrama)
+            # if len(b.RXtrama) >=2 and b.RXtrama[0] == 8 and (b.RXtrama[2] == 4 or b.RXtrama[2] == 5):
+            #     print("-------------------"*6, b.RXtrama)
 
             if len(b.RXtrama) >= print_bus:  # stampa stringa a TOT caratteri
                 log.writelog(b.RXtrama, 'BLUE')
