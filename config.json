@@ -121,13 +121,14 @@
         "mqtt_topic": "dl485", # MQTT topic
         "mqtt_client_id": "dl485", # MQTT client id
         "overwrite_text": 1, // Flag per sovrascrivere "nome" e "descrizione" su Domoticz !!! Attenzione
-        "send_configuration": 1 # Flag to send configurations to all board
+        "send_configuration": 0 # Flag to send configurations to all board
     },
 
     "BOARD3": { # BOARD DIMMER 4CH
         "GENERAL_BOARD": {
             "name": "SCHEDA DIMMER", # Nome della BOARD
             "board_type_name": "DL485D4", # Tipo di Board DIMMER
+            "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "DIM1": { # Dimmer 0
@@ -338,6 +339,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA DIMMER", # Nome della BOARD
             "board_type_name": "DL485D3", # Tipo di Board DIMMER
+            "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "DIM1": { # Dimmer 1
@@ -523,6 +525,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA RMS", # Nome della BOARD
             "board_type_name": "DL485B", # Tipo di Board: Vedi TYPEB
+            "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
             "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "RMS_POWER_CONF": {
@@ -762,6 +765,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA FOTOVOLTAICO", # Nome della BOARD
             "board_type_name": "DL485B", # Tipo di Board: Vedi TYPEB
+            "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
             "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
 
@@ -896,6 +900,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA MASTER", # Nome della BOARD
             "board_type_name": "DL485M", # Tipo di Board: Vedi TYPEB
+            "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
             "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
@@ -1013,6 +1018,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA RELE", # Nome della BOARD
             "board_type_name": "DL485R", # Tipo di Board: Vedi TYPEB
+            "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
@@ -1170,6 +1176,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA CONTATORE", # Nome della BOARD
             "board_type_name": "DL485P", # Tipo di Board: Vedi TYPEB
+            "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
@@ -1283,6 +1290,7 @@
         "GENERAL_BOARD": {
             "name": "BUS", # Nome della BOARD
             "board_type_name": "DL485P", # Tipo di Board: Vedi TYPEB
+            "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
             "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
@@ -1498,6 +1506,7 @@
         "GENERAL_BOARD": {
             "name": "SCHEDA MASTER", // Nome della BOARD
             "board_type_name": "DL485M", // Tipo di Board: Vedi TYPEB
+            "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
             "enable": 0 // Abilitazione della BOARD: 0=disabilitata, 1=abilitata
         },
         "VIN": { // Tensione alimentazione BOARD
