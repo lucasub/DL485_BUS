@@ -26,7 +26,7 @@ from bus_dl485 import BusDL485
 from log import Log
 from bme280 import BME280
 # from dl485_mqtt import *
-import paho.mqtt.client as Client
+# import paho.mqtt.client as Client
 # import paho.mqtt.publish as publish
 
 
@@ -353,7 +353,7 @@ class Bus(BusDL485, Log, BME280):
         'DIMG':         {'pin':   41,  'name':     'DIMMER GENERALE'},
     }
     dl485d_gpio.update(common_gpio)
-    
+
     dl485d4_gpio = {  # Definizione GPIO DL485D
         'IN1':          {'pin':   23,  'name':     'IN1'},
         'IN2':          {'pin':   24,  'name':     'IN2'},
@@ -512,6 +512,7 @@ class Bus(BusDL485, Log, BME280):
         """
         Create self.config from JSON configuration file
         """
+        from collections import OrderedDict
         config = open(config_file_name, 'r')
         config = config.read()
         config = re.sub(r'#.*\n', '\n', config)
@@ -705,10 +706,12 @@ class Bus(BusDL485, Log, BME280):
                 for bb in self.config[b]:
                     if 'GENERAL_BOARD' in bb:
                         board_enable = self.config[b][bb]['enable']  # Board enable
-                        self.status[board_id]['boardtypename'] = self.config[b][bb]['board_type_name']
-                        board_type = self.board_type_available[self.config[b][bb]['board_type_name']]
                         if not board_enable:
                             self.writelog(f"{b:<7} DISABILITATA")
+                        self.status[board_id]['boardtypename'] = self.config[b][bb]['board_type_name']
+                        board_type = self.board_type_available[self.config[b][bb]['board_type_name']]
+                        board_overwrite_text = int(self.config[b][bb].get('overwrite_text', 0))
+                        
                     if 'RMS_POWER_CONF' in bb:
                         self.RMS_POWER_DICT[board_id] = {}
                         self.RMS_POWER_DICT[board_id] = self.config[b]['RMS_POWER_CONF']
@@ -774,6 +777,7 @@ class Bus(BusDL485, Log, BME280):
                         self.mapiotype[board_id][logic_io] = {
                             'altitude': int(self.config[b][bb].get('altitude', 0)),  # OFFSET altitudine
                             'board_enable': board_enable,  # Abilitazione scheda
+                            'board_overwrite_text': board_overwrite_text,
                             'board_type': board_type,  # Tipo scheda
                             'plc_rfid_card_code': self.config[b][bb].get('plc_rfid_card_code'),
                             'default_startup_filter_value': int(self.config[b][bb].get('default_startup_filter_value', 0)),  # 0 o 1
@@ -879,7 +883,7 @@ class Bus(BusDL485, Log, BME280):
                             'type_io': self.device_type_dict[device_type].get('type_io'),
                             'dunit': self.config[b][bb].get('dunit'),
                             'write_ee': self.config[b][bb].get('write_ee', []),
-                            
+
                             'va': int(self.config[b][bb].get('va', 0)),
                             'ada': int(self.config[b][bb].get('ada', 0)),
                             'vb': int(self.config[b][bb].get('vb', 0)),
@@ -1003,7 +1007,7 @@ class Bus(BusDL485, Log, BME280):
         if ada != adb:
             kmul = (vb - va) / (adb - ada)
             kadd = va - (kmul * ada)
-            
+
         return (value * kmul) + kadd  # Funzione che aggiusta il risultato
 
     def calculate(self, board_id, command, logic_io, value):
@@ -1039,7 +1043,7 @@ class Bus(BusDL485, Log, BME280):
             type_io = self.mapiotype[board_id][logic_io]['type_io']
             device_type = self.mapiotype[board_id][logic_io]['device_type']
             plc_function = self.mapiotype[board_id][logic_io]['plc_function']
-            
+
             # if board_id == 8 and logic_io == 13:
             #     print("-" * 100, board_id, logic_io, type_io, device_type, plc_function, value)
 
@@ -1235,7 +1239,7 @@ class Bus(BusDL485, Log, BME280):
                 return self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_temperature'])
 
             elif device_type == 'VINR1R2' or device_type == 'VINKMKA' or type_io == 'analog' or type_io == 'virtual':
-                
+
                 if device_type == 'VINR1R2':
                     rvcc = self.mapiotype[board_id][logic_io]['rvcc']
                     rgnd = self.mapiotype[board_id][logic_io]['rgnd']
@@ -1913,7 +1917,7 @@ class Bus(BusDL485, Log, BME280):
                     elif plc_time_unit == 2.5:
                         plc_time_unit_app = 0xC0
 
-                    
+
                     if sbyte8 == 'rfid_unit':
                         plc_rfid_unit_tpolling_nocard = self.mapiotype[board_id][logic_io]['plc_rfid_unit_tpolling_nocard']
                         plc.append(plc_rfid_unit_tpolling_nocard)
@@ -2073,7 +2077,7 @@ class Bus(BusDL485, Log, BME280):
                             plc_mode_timer = self.mapiotype[board_id][logic_io]['plc_mode_timer']
 
                             plc.append((plc_mode_timer & 0x3F) | plc_time_unit_app)
-                            
+
                             plc_timer_n_transitions = self.mapiotype[board_id][logic_io]['plc_timer_n_transitions']
                             if plc_timer_n_transitions > 255:
                                 self.writelog("ERRORE CONFIGURATION: plc_timer_n_transitions 0...255", 'RED')
@@ -2418,7 +2422,7 @@ class Bus(BusDL485, Log, BME280):
 
             if len(self.TXmsg):  # se qualcosa da trasmettere
                 msg = self.TXmsg.pop(0)  # prende dalla lista la prima trama da trasmettere (msg piu vecchio)
-                
+
                 if (len(msg) > 1 and msg[1] == self.code['CR_REBOOT']):  # il comando reboot va trasmesso alla fine della configurazione
                     if self.BUFF_MSG_TX or self.TXmsg:
                         # self.writelog("REBOOT NO              RIMESSO IN LISTA X ATTESA DIZIONARIO VUOTO")
@@ -2430,14 +2434,14 @@ class Bus(BusDL485, Log, BME280):
                         msg2 = self.encodeMsgCalcCrcTx(msg1)  # restituisce il messaggio codificato e completo di crc (1 o 2 crc in base al flag crcdoppio)
                         self.send_data_serial(self.Connection, msg2)  # invia alla seriale comando REBOOT,
                         self.send_data_serial(self.Connection, msg2)  # se non capisce il primo reboot, invia un secondo e un terzo reboot
-                
+
                 elif  len(msg) > 1 and msg[2] == 0:  # Trasmissione comando BROADCAST
                     self.writelog(f"TX                     {str(self.int2hex(msg)):<18} SEND BROADCAST")
                     msg1 = self.eight2seven(msg)  # trasforma messaggio in byte da 7 bit piu byte dei residui
                     msg2 = self.encodeMsgCalcCrcTx(msg1)  # restituisce il messaggio codificato e completo di crc (1 o 2 crc in base al flag crcdoppio)
                     self.send_data_serial(self.Connection, msg2)  # invia alla seriale comando REBOOT,
                     self.send_data_serial(self.Connection, msg2)  # se non capisce il primo reboot, invia un secondo e un terzo reboot
-                    
+
                 else:
                     if len(msg) > 1 and msg[2] in self.BUFF_MSG_TX:  # controllo se nodo deve ancora dare feedback a un msg precedente
                         # self.writelog(f"CONFIGURAZIONE         NODO OCCUPATO, POSTICIPATA TRASMISSIONE, MSG SOSPESI:{len(self.TXmsg)} - {msg} ")
@@ -2453,7 +2457,7 @@ class Bus(BusDL485, Log, BME280):
                             # print("TXPING:", self.int2hex(msg))
                         msg2 = self.encodeMsgCalcCrcTx(msg1)  # restituisce il messaggio codificato e completo di crc (1 o 2 crc in base al flag crcdoppio)
 
-                        
+
                         self.send_data_serial(self.Connection, msg2)  # invia alla seriale
 
                         if len(msg) > 1:
@@ -2531,7 +2535,7 @@ class Bus(BusDL485, Log, BME280):
                 self.writelog(f"RX {self.code[self.RXtrama[1]&0xDF]:<12}        {self.int2hex(self.RXtrama)} {self.RXtrama}")
 
 
-                
+
             elif self.RXtrama[1] == self.code['CR_GET_BOARD_TYPE'] | 32:  # GetTipoBoard
                 """
                 Creare DICT con caratteristiche della BOARD
@@ -2557,7 +2561,7 @@ class Bus(BusDL485, Log, BME280):
                 # 8: Byte: b0: rms_power - b1..b3 numero di DIMMER
                 # 9: Numero IO esclusi (a causa di logic_io o fisico fuori range)
                 # 10: Numero conflitti (es. IO assegnato a RX o assegnato a LED, pulsante, oppure OneWire e ingresso digitale, oppure ingresso analogico e ingresso digitale)
-                
+
                 board_id = self.RXtrama[0]
                 command = self.RXtrama[1]
                 logic_io = self.RXtrama[2]
@@ -2905,7 +2909,7 @@ if __name__ == '__main__':
             b.RXtrama = b.readSerial(d)
             if not b.RXtrama:
                 continue
-            
+
             # if len(b.RXtrama) >=2 and b.RXtrama[0] == 8 and (b.RXtrama[2] == 4 or b.RXtrama[2] == 5):
             #     print("-------------------"*6, b.RXtrama)
 
