@@ -1025,6 +1025,7 @@ class Bus(BusDL485, Log, BME280):
                 VINKMKA
                 Power_on
                 RMS_POWER (corrente, potenza, cosfi)
+                analog_in1_-_analog_in2
             Digital:
                 Digital input
 
@@ -1175,6 +1176,14 @@ class Bus(BusDL485, Log, BME280):
                     if value >= 32768:
                         value -= 65536
                 return value
+            
+            elif plc_function in ['analog_in1_-_analog_in2']:  # Aggiungere altri analog_in
+                # print(f"==>>> analog_in1_-_analog_in2")
+                rvcc = self.mapiotype[board_id][logic_io]['rvcc']
+                rgnd = self.mapiotype[board_id][logic_io]['rgnd']
+                value = (value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0)
+                value = self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_value'])
+                return self.round_value(value, self.mapiotype[board_id][logic_io]['round_value'])
 
             elif type_io == 'analog' and device_type == 'ANALOG_IN':
                 if len(value) >= 2:  # Attenzione: lasciare  altrimenti se si passa dalla configurazione DIGITAL_IN in ANALOG_IN, puo' dare errore
