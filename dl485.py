@@ -362,9 +362,9 @@ class Bus(BusDL485, Log, BME280):
         'IN5':          {'pin':   27,  'name':     'IN5'},
         'IN6':          {'pin':   28,  'name':     'IN6'},
         'DIM1':         {'pin':   1,  'name':      'DIMMER1'},
-        'DIM2':         {'pin':   13,  'name':     'DIMMER2'},
-        'DIM3':         {'pin':   15,  'name':     'DIMMER3'},
-        'DIM4':         {'pin':   14,  'name':     'DIMMER4'},
+        'DIM2':         {'pin':   15,  'name':     'DIMMER2'},
+        'DIM3':         {'pin':   14,  'name':     'DIMMER3'},
+        'DIM4':         {'pin':   13,  'name':     'DIMMER4'},
         'DIMG':         {'pin':   41,  'name':     'DIMMER GENERALE'},
     }
     dl485d4_gpio.update(common_gpio)
