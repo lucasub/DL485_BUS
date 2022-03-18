@@ -1,108 +1,108 @@
-# File di configurazione DL485
-# COMMENTI DEVONO INIZIARE SOLO CON # OPPURE con
+//File di configurazione DL485
+//COMMENTI DEVONO INIZIARE SOLO CON //OPPURE con
 
-# Dispositivi / Device Domoticz. Not all device are working and implemented
-# 'Temperature'                   : { 'Type': 80,         'SubType': 5,       'SwitchType': False},
-# 'Humidity'                      : { 'Type': 81,         'SubType': 1,       'SwitchType': False},
-# 'Temp+Hum'                      : { 'Type': 82,         'SubType': 1,       'SwitchType': False},
-# 'Temp+Hum+Baro'                 : { 'Type': 84,         'SubType': 1,       'SwitchType': False},
-# 'Temp+Hum+Baro2'                : { 'Type': 84,         'SubType': 2,       'SwitchType': False},
-# 'Weather Station Temp+Hum+Baro' : { 'Type': 84,         'SubType': 16,      'SwitchType': False},
-# 'Rain'                          : { 'Type': 85,         'SubType': 1,       'SwitchType': False},
-# 'Wind'                          : { 'Type': 86,         'SubType': 1,       'SwitchType': False},
-# 'UV'                            : { 'Type': 87,         'SubType': 1,       'SwitchType': False},
-# 'Ampere (3 Phase)'              : { 'Type': 89,         'SubType': 1,       'SwitchType': False},
-# 'Scale Weight'                  : { 'Type': 93,         'SubType': 1,       'SwitchType': False},
-# 'Counter Incremental'           : { 'Type': 113,        'SubType': 0,       'SwitchType': False},
-# 'RGBW'                          : { 'Type': 241,        'SubType': 1,       'SwitchType': False},
-# 'RGB'                           : { 'Type': 241,        'SubType': 2,       'SwitchType': False},
-# 'White'                         : { 'Type': 241,        'SubType': 3,       'SwitchType': False},
-# 'RGBWW'                         : { 'Type': 241,        'SubType': 4,       'SwitchType': False},
-# 'RGBWZ'                         : { 'Type': 241,        'SubType': 6,       'SwitchType': False},
-# 'RGBWWZ'                        : { 'Type': 241,        'SubType': 7,       'SwitchType': False},
-# 'Cold white+Warm white'         : { 'Type': 241,        'SubType': 8,       'SwitchType': False},
-# 'Setpoint'                      : { 'Type': 242,        'SubType': 1,       'SwitchType': False},
-# 'General Visibility'            : { 'Type': 243,        'SubType': 1,       'SwitchType': False},
-# 'General Solar Radiation'       : { 'Type': 243,        'SubType': 2,       'SwitchType': False},
-# 'General Solar Moisture'        : { 'Type': 243,        'SubType': 3,       'SwitchType': False},
-# 'General Leaf Wetness'          : { 'Type': 243,        'SubType': 4,       'SwitchType': False},
-# 'General Percentage'            : { 'Type': 243,        'SubType': 6,       'SwitchType': False},
-# 'Voltage'                       : { 'Type': 243,        'SubType': 8,       'SwitchType': False}, # General Voltage
-# 'General Pressure'              : { 'Type': 243,        'SubType': 9,       'SwitchType': False},
-# 'Text'                          : { 'Type': 243,        'SubType': 19,      'SwitchType': False}, # General Text
-# 'General Alert'                 : { 'Type': 243,        'SubType': 22,      'SwitchType': False},
-# 'Current (Single)'              : { 'Type': 243,        'SubType': 23,      'SwitchType': False}, # General Ampere (1 Phase)
-# 'General Sound Level'           : { 'Type': 243,        'SubType': 24,      'SwitchType': False},
-# 'General Barometer'             : { 'Type': 243,        'SubType': 26,      'SwitchType': False},
-# 'General Distance'              : { 'Type': 243,        'SubType': 27,      'SwitchType': False},
-# 'Counter Incremental'           : { 'Type': 243,        'SubType': 28,      'SwitchType': False}, # General Counter Incremental
-# 'kWh'                           : { 'Type': 243,        'SubType': 29,      'SwitchType': False}, # General kWh
-# 'General Waterflow'             : { 'Type': 243,        'SubType': 30,      'SwitchType': False},
-# 'Custom Sensor'                 : { 'Type': 243,        'SubType': 31,      'SwitchType': False},
-# 'General Managed counter Energy': { 'Type': 243,        'SubType': 33,      'SwitchType': 0},
-# 'General Managed counter Gas'   : { 'Type': 243,        'SubType': 33,      'SwitchType': 1},
-# 'General Managed counter Water' : { 'Type': 243,        'SubType': 33,      'SwitchType': 2},
-# 'General Managed counter Counter':{ 'Type': 243,        'SubType': 33,      'SwitchType': 3},
-# 'General Managed counter Energy Generated': {'Type': 243, 'SubType': 33,      'SwitchType': 4},
-# 'General Managed counter Time'  : { 'Type': 243,        'SubType': 33,      'SwitchType': 5},
-# 'Switch'                        : { 'Type': 244,        'SubType': 62,      'SwitchType': 0}, # Selector Switch On/Off
-# 'Selector Switch Doorbell'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 1},
-# 'Selector Switch Contact'       : { 'Type': 244,        'SubType': 62,      'SwitchType': 2},
-# 'Selector Switch Blinds'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 3},
-# 'Selector Switch X10 Siren'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 4},
-# 'Selector Switch Smoke Detector': { 'Type': 244,        'SubType': 62,      'SwitchType': 5},
-# 'Selector Switch Blinds Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 6},
-# 'Selector Switch Dimmer'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 7},
-# 'Selector Switch Motion Sensor' : { 'Type': 244,        'SubType': 62,      'SwitchType': 8},
-# 'Selector Switch Push On Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 9},
-# 'Selector Switch Push Off Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 10},
-# 'Switch Door Contact'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 11},
-# 'Switch Dusk Sensor'            : { 'Type': 244,        'SubType': 62,      'SwitchType': 12},
-# 'Switch Blinds Percentage'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 13},
-# 'Switch Venetian Blinds US'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 14},
-# 'Switch Venetian Blinds EU'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 15},
-# 'Switch Blinds Percentage Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 16},
-# 'Switch Media Player'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 17},
-# 'Switch Selector'               : { 'Type': 244,        'SubType': 62,      'SwitchType': 18},
-# 'Switch Door Lock'              : { 'Type': 244,        'SubType': 62,      'SwitchType': 19},
-# 'Switch Door Lock Inverted'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 20},
-# 'Illumination'                  : { 'Type': 246,        'SubType': 1,      'SwitchType': False}, # Lux
-# 'Temp+Baro'                     : { 'Type': 247,        'SubType': 1,      'SwitchType': False},
-# 'Usage Electric'                : { 'Type': 248,        'SubType': 1,      'SwitchType': False},
-# 'Air Quality'                   : { 'Type': 249,        'SubType': 1,      'SwitchType': False},
-# 'P1 Smart Meter Energy'         : { 'Type': 250,        'SubType': 1,      'SwitchType': False},
-# 'P1 Smart Meter Gas'            : { 'Type': 246,        'SubType': 1,      'SwitchType': False},
+//Dispositivi / Device Domoticz. Not all device are working and implemented
+//'Temperature'                   : { 'Type': 80,         'SubType': 5,       'SwitchType': False},
+//'Humidity'                      : { 'Type': 81,         'SubType': 1,       'SwitchType': False},
+//'Temp+Hum'                      : { 'Type': 82,         'SubType': 1,       'SwitchType': False},
+//'Temp+Hum+Baro'                 : { 'Type': 84,         'SubType': 1,       'SwitchType': False},
+//'Temp+Hum+Baro2'                : { 'Type': 84,         'SubType': 2,       'SwitchType': False},
+//'Weather Station Temp+Hum+Baro' : { 'Type': 84,         'SubType': 16,      'SwitchType': False},
+//'Rain'                          : { 'Type': 85,         'SubType': 1,       'SwitchType': False},
+//'Wind'                          : { 'Type': 86,         'SubType': 1,       'SwitchType': False},
+//'UV'                            : { 'Type': 87,         'SubType': 1,       'SwitchType': False},
+//'Ampere (3 Phase)'              : { 'Type': 89,         'SubType': 1,       'SwitchType': False},
+//'Scale Weight'                  : { 'Type': 93,         'SubType': 1,       'SwitchType': False},
+//'Counter Incremental'           : { 'Type': 113,        'SubType': 0,       'SwitchType': False},
+//'RGBW'                          : { 'Type': 241,        'SubType': 1,       'SwitchType': False},
+//'RGB'                           : { 'Type': 241,        'SubType': 2,       'SwitchType': False},
+//'White'                         : { 'Type': 241,        'SubType': 3,       'SwitchType': False},
+//'RGBWW'                         : { 'Type': 241,        'SubType': 4,       'SwitchType': False},
+//'RGBWZ'                         : { 'Type': 241,        'SubType': 6,       'SwitchType': False},
+//'RGBWWZ'                        : { 'Type': 241,        'SubType': 7,       'SwitchType': False},
+//'Cold white+Warm white'         : { 'Type': 241,        'SubType': 8,       'SwitchType': False},
+//'Setpoint'                      : { 'Type': 242,        'SubType': 1,       'SwitchType': False},
+//'General Visibility'            : { 'Type': 243,        'SubType': 1,       'SwitchType': False},
+//'General Solar Radiation'       : { 'Type': 243,        'SubType': 2,       'SwitchType': False},
+//'General Solar Moisture'        : { 'Type': 243,        'SubType': 3,       'SwitchType': False},
+//'General Leaf Wetness'          : { 'Type': 243,        'SubType': 4,       'SwitchType': False},
+//'General Percentage'            : { 'Type': 243,        'SubType': 6,       'SwitchType': False},
+//'Voltage'                       : { 'Type': 243,        'SubType': 8,       'SwitchType': False}, //General Voltage
+//'General Pressure'              : { 'Type': 243,        'SubType': 9,       'SwitchType': False},
+//'Text'                          : { 'Type': 243,        'SubType': 19,      'SwitchType': False}, //General Text
+//'General Alert'                 : { 'Type': 243,        'SubType': 22,      'SwitchType': False},
+//'Current (Single)'              : { 'Type': 243,        'SubType': 23,      'SwitchType': False}, //General Ampere (1 Phase)
+//'General Sound Level'           : { 'Type': 243,        'SubType': 24,      'SwitchType': False},
+//'General Barometer'             : { 'Type': 243,        'SubType': 26,      'SwitchType': False},
+//'General Distance'              : { 'Type': 243,        'SubType': 27,      'SwitchType': False},
+//'Counter Incremental'           : { 'Type': 243,        'SubType': 28,      'SwitchType': False}, //General Counter Incremental
+//'kWh'                           : { 'Type': 243,        'SubType': 29,      'SwitchType': False}, //General kWh
+//'General Waterflow'             : { 'Type': 243,        'SubType': 30,      'SwitchType': False},
+//'Custom Sensor'                 : { 'Type': 243,        'SubType': 31,      'SwitchType': False},
+//'General Managed counter Energy': { 'Type': 243,        'SubType': 33,      'SwitchType': 0},
+//'General Managed counter Gas'   : { 'Type': 243,        'SubType': 33,      'SwitchType': 1},
+//'General Managed counter Water' : { 'Type': 243,        'SubType': 33,      'SwitchType': 2},
+//'General Managed counter Counter':{ 'Type': 243,        'SubType': 33,      'SwitchType': 3},
+//'General Managed counter Energy Generated': {'Type': 243, 'SubType': 33,      'SwitchType': 4},
+//'General Managed counter Time'  : { 'Type': 243,        'SubType': 33,      'SwitchType': 5},
+//'Switch'                        : { 'Type': 244,        'SubType': 62,      'SwitchType': 0}, //Selector Switch On/Off
+//'Selector Switch Doorbell'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 1},
+//'Selector Switch Contact'       : { 'Type': 244,        'SubType': 62,      'SwitchType': 2},
+//'Selector Switch Blinds'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 3},
+//'Selector Switch X10 Siren'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 4},
+//'Selector Switch Smoke Detector': { 'Type': 244,        'SubType': 62,      'SwitchType': 5},
+//'Selector Switch Blinds Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 6},
+//'Selector Switch Dimmer'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 7},
+//'Selector Switch Motion Sensor' : { 'Type': 244,        'SubType': 62,      'SwitchType': 8},
+//'Selector Switch Push On Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 9},
+//'Selector Switch Push Off Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 10},
+//'Switch Door Contact'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 11},
+//'Switch Dusk Sensor'            : { 'Type': 244,        'SubType': 62,      'SwitchType': 12},
+//'Switch Blinds Percentage'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 13},
+//'Switch Venetian Blinds US'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 14},
+//'Switch Venetian Blinds EU'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 15},
+//'Switch Blinds Percentage Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 16},
+//'Switch Media Player'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 17},
+//'Switch Selector'               : { 'Type': 244,        'SubType': 62,      'SwitchType': 18},
+//'Switch Door Lock'              : { 'Type': 244,        'SubType': 62,      'SwitchType': 19},
+//'Switch Door Lock Inverted'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 20},
+//'Illumination'                  : { 'Type': 246,        'SubType': 1,      'SwitchType': False}, //Lux
+//'Temp+Baro'                     : { 'Type': 247,        'SubType': 1,      'SwitchType': False},
+//'Usage Electric'                : { 'Type': 248,        'SubType': 1,      'SwitchType': False},
+//'Air Quality'                   : { 'Type': 249,        'SubType': 1,      'SwitchType': False},
+//'P1 Smart Meter Energy'         : { 'Type': 250,        'SubType': 1,      'SwitchType': False},
+//'P1 Smart Meter Gas'            : { 'Type': 246,        'SubType': 1,      'SwitchType': False},
 
 
 
-# Descrizione PLC
-# All'interno delle singole board è presente un PLC che può essere attivato tramite la funzione desiderata (es. toggle_on)
+//Descrizione PLC
+//All'interno delle singole board è presente un PLC che può essere attivato tramite la funzione desiderata (es. toggle_on)
 
-#    plc_function:       => Funzione associata al PLC relativa a quell'uscita
-#       disable         => PLC disabilitato
-#       equal           => funzione uguale. Ad esempio uscita = ingresso
-#       and             => funzione AND
-#       or              => funzione OR
-#       xor             => funzione XOR
-#       odd             => funzione dispari. Uscita a 1 se gli ingressi a 1 sono dispari
-#       toggle_on       => fa il toggle sul fronte ON dell'ingresso
-#       toggle_off      => fa il toggle sul fronte OFF dell'ingresso
-#       toggle_on_off   => fa il toggle sul fronte OFF e ON dell'ingresso
-#       timer           => timer uscita
-#       power_on        => Uscita per comandare il rele di reset alimentazione RAPBERRY quando non risponde sulla seriale per un certo tempo.
+//   plc_function:       => Funzione associata al PLC relativa a quell'uscita
+//      disable         => PLC disabilitato
+//      equal           => funzione uguale. Ad esempio uscita = ingresso
+//      and             => funzione AND
+//      or              => funzione OR
+//      xor             => funzione XOR
+//      odd             => funzione dispari. Uscita a 1 se gli ingressi a 1 sono dispari
+//      toggle_on       => fa il toggle sul fronte ON dell'ingresso
+//      toggle_off      => fa il toggle sul fronte OFF dell'ingresso
+//      toggle_on_off   => fa il toggle sul fronte OFF e ON dell'ingresso
+//      timer           => timer uscita
+//      power_on        => Uscita per comandare il rele di reset alimentazione RAPBERRY quando non risponde sulla seriale per un certo tempo.
 
-#    inverted            => uscita negata
-#        0               => non invertita
-#        1               => invertita
+//   inverted            => uscita negata
+//       0               => non invertita
+//       1               => invertita
 
-# Board Type Available:
-# "DL485M": 1,
-# "DL485B": 2,
-# "DL485R": 4,
-# "DL485P": 5,
-# "DL485D": 6, Dimmer 1 canali
-# "DL485D3": 7, Dimmer 3 canali
-# "DL485D4": 8, Dimmer 4 canali
+//Board Type Available:
+//"DL485M": 1,
+//"DL485B": 2,
+//"DL485R": 4,
+//"DL485P": 5,
+//"DL485D": 6, Dimmer 1 canali
+//"DL485D3": 7, Dimmer 3 canali
+//"DL485D4": 8, Dimmer 4 canali
 
 { #inizio file
     # Configurazione generale del BUS
@@ -121,10 +121,10 @@
         "mqtt_topic": "dl485", # MQTT topic
         "mqtt_client_id": "dl485", # MQTT client id
         "overwrite_text": 1, // Flag per sovrascrivere "nome" e "descrizione" su Domoticz !!! Attenzione
-        "send_configuration": 0 # Flag to send configurations to all board
+        "send_configuration": 1 # Flag to send configurations to all board
     },
 
-    "BOARD3": { # BOARD DIMMER 4CH
+    "BOARD15": { # BOARD DIMMER 4CH
         "GENERAL_BOARD": {
             "name": "SCHEDA DIMMER", # Nome della BOARD
             "board_type_name": "DL485D4", # Tipo di Board DIMMER
@@ -205,7 +205,7 @@
             "dimmer_time_reset_dir": 100,
             "dimmer_change_memory": 1, # Imposta se le variazioni devono essere memorizzate
             "dimmer_manual_go_off": 0, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
-            "plc_tmax_on": 7, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
+            "plc_tmax_on": 0, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
             "name": "OUT3 DIMM BLUE", # Nome che verrà riportato su DOMOTICZ
             "description": "OUT3 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Selector Switch Dimmer"
@@ -231,7 +231,7 @@
             "dimmer_time_reset_dir": 100,
             "dimmer_change_memory": 1, # Imposta se le variazioni devono essere memorizzate
             "dimmer_manual_go_off": 0, # 1=Consente di arrivare a zero con il comando manuale, 0=si ferma a PWM MIN
-            "plc_tmax_on": 7, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
+            "plc_tmax_on": 0, // Max time output ON, 1-255 (0=infinito). 255=16256 secondi
             "name": "OUT4 DIMM BLUE", # Nome che verrà riportato su DOMOTICZ
             "description": "OUT4 DIMMER", # Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Selector Switch Dimmer"
@@ -763,7 +763,7 @@
 
     "BOARD9": { # per misure fotovoltaico
         "GENERAL_BOARD": {
-            "name": "SCHEDA FOTOVOLTAICO", # Nome della BOARD
+            "name": "FOTOVOLT", # Nome della BOARD
             "board_type_name": "DL485B", # Tipo di Board: Vedi TYPEB
             "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
             "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
