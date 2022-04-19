@@ -2549,7 +2549,7 @@ class Bus(BusDL485, Log, BME280):
                 """
                 Creare DICT con caratteristiche della BOARD
                 """
-                # print("=====>>>> GetBoardType: ", self.RXtrama)
+                print("=====>>>> GetBoardType: ", self.RXtrama)
                 # 0: Board_id
                 # 1: Get tipo board command
                 # 2: Tipo board (1: morsetti)
@@ -2561,14 +2561,20 @@ class Bus(BusDL485, Log, BME280):
                     6: DIMMER 1CH
                     7: DIMMER 3CH
                     8: DIMMER 4CH
+                    12: SMART 3 RELE 
+                    13: SMART 2 RELE 
+                    20: DIMMER DMX 4CH
+                    21: DIMMER 4CH + DMX
+                    25: DIMMER 1CH 230Vac
+                    26: DIMMER 1CH SMALL
                 """
                 # 3: Numero IO a boardo
                 # 4: Giorno
                 # 5: Mese
                 # 6: anno
-                # 7: Byte: b0: protezione attiva, b1: PLC, b2: PowerOn, b3: PWM out, b5: OneWire, b6: I2C, b7: RFID
+                # 7: Byte: b0: protezione attiva, b1: PLC, b2: PowerOn, b3: PWM out, b4: riservato, b5: OneWire, b6: I2C, b7: RFID
                 # 8: Byte: b0: rms_power - b1..b3 numero di DIMMER
-                # 9: Numero IO esclusi (a causa di logic_io o fisico fuori range)
+                # 9: Numero IO esclusi (a causa di logic_io o fisico fuori range). Conflitti a causa di incongruenze su file JSON
                 # 10: Numero conflitti (es. IO assegnato a RX o assegnato a LED, pulsante, oppure OneWire e ingresso digitale, oppure ingresso analogico e ingresso digitale)
 
                 board_id = self.RXtrama[0]
@@ -2582,23 +2588,28 @@ class Bus(BusDL485, Log, BME280):
                     self.get_board_type[board_id]['board_type'] = "{} - {}".format(self.RXtrama[2], self.board_type_available[str(self.RXtrama[2])])
                     self.get_board_type[board_id]['io_number'] = self.RXtrama[3]
                     self.get_board_type[board_id]['data_firmware'] = '{:02}/{:02}/{:2}'.format(self.RXtrama[4], self.RXtrama[5], self.RXtrama[6])
-                    self.get_board_type[board_id]['protection'] = self.byte2active(self.RXtrama[7], 1)
-                    self.get_board_type[board_id]['plc'] = self.byte2active(self.RXtrama[7], 2)
-                    self.get_board_type[board_id]['power_on'] = self.byte2active(self.RXtrama[7], 3)
-                    self.get_board_type[board_id]['pwm'] = self.byte2active(self.RXtrama[7], 4)
-                    self.get_board_type[board_id]['onewire'] = self.byte2active(self.RXtrama[7], 5)
-                    self.get_board_type[board_id]['i2c'] = self.byte2active(self.RXtrama[7], 6)
-                    self.get_board_type[board_id]['rfid'] = self.byte2active(self.RXtrama[7], 7)
+                    self.get_board_type[board_id]['protection'] = self.byte2active(self.RXtrama[7], 0b1)
+                    self.get_board_type[board_id]['plc'] = self.byte2active(self.RXtrama[7], 0b10)
+                    self.get_board_type[board_id]['power_on'] = self.byte2active(self.RXtrama[7], 0b100)
+                    self.get_board_type[board_id]['pwm'] = self.byte2active(self.RXtrama[7], 0b1000)
+                    self.get_board_type[board_id]['onewire'] = self.byte2active(self.RXtrama[7], 0b100000)
+                    self.get_board_type[board_id]['i2c'] = self.byte2active(self.RXtrama[7], 0b1000000)
+                    self.get_board_type[board_id]['rfid'] = self.byte2active(self.RXtrama[7], 0b10000000)
                 except:
                     self.writelog(f"ERROR: {self.RXtrama}", 'RED')
                     # sys.exit()
 
                 if len(self.RXtrama) == 11:
                     """ Byte aggiunti il 23/10/2020 """
+                    # Byte 8
                     self.get_board_type[board_id]['rms_power'] = self.byte2active(self.RXtrama[8], 1)
                     self.get_board_type[board_id]['dimmer'] = (self.RXtrama[8] >> 1) & 0x7
+                    # Byte 9
                     self.get_board_type[board_id]['error_logic_io_fisic_io'] = self.RXtrama[9]
                     self.get_board_type[board_id]['error_conflict'] = self.RXtrama[9]
+                    # Byte 10
+                    
+
                 else:
                     self.get_board_type[board_id]['rms_power'] = 0
                     self.get_board_type[board_id]['dimmer'] = 0
@@ -2673,7 +2684,7 @@ class Bus(BusDL485, Log, BME280):
 
             if not self.cronoldtime % 30:
                 self.cron_sec = 30  # Dont remove
-                # self.TXmsg += [self.getBoardType(0)]
+                # self.TXmsg += [self.getBoardType(5)]
                 # self.writeLog()VINKMKA
 
             if not self.cronoldtime % 60:

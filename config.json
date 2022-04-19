@@ -114,7 +114,7 @@
         "telegram_token": "", # Telegram TOKEN
         "telegram_enable": 0, # TO activate telegram bot
         "mqtt_enable": 0, # 1 to enable MQTT
-        "mqtt_broker": "2.37.188.75", # IP to MQTT broker
+        "mqtt_broker": "2.37.188.00", # IP to MQTT broker
         "mqtt_port": "1883", # PORT of MQTT broker
         "mqtt_broker_username": "mqtt_user", # Username to connect to MQTT broker
         "mqtt_broker_password": "12311", # Password to connect to MQTT broker
@@ -526,7 +526,7 @@
             "name": "SCHEDA RMS", # Nome della BOARD
             "board_type_name": "DL485B", # Tipo di Board: Vedi TYPEB
             "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
-            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "RMS_POWER_CONF": {
             "rms_power_mode": 1,
@@ -901,7 +901,7 @@
             "name": "SCHEDA MASTER", # Nome della BOARD
             "board_type_name": "DL485M", # Tipo di Board: Vedi TYPEB
             "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
-            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
@@ -1173,6 +1173,147 @@
     }, #fine board
 
     "BOARD5": {
+        "GENERAL_BOARD": {
+            "name": "SC.BATT", # Nome della BOARD
+            "board_type_name": "DL485P", # Tipo di Board: Vedi TYPEB
+            "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
+            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+        },
+        "VIN": { # Tensione alimentazione BOARD
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 1, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINR1R2",
+            "rvcc": 12000, # Valore resistenza posta tra IO e ingresso alimentazione.
+            "rgnd": 470, # Valore resistenza posta tra IO e 0V.
+            "round_value": 1,
+            "name": "Vin", # Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione alimentazione scheda" # Descrizione che verrà riportato su DOMOTICZ
+        },
+        "TEMP_ATMEGA": {
+            "enable": 1,
+            "logic_io": 2,
+            "time_refresh": 600,
+            "device_type": "TEMP_ATMEGA",
+            "name": "TEMP_ATMEGA",
+            "description": "Temperatura Board ATMEGA328PB"
+        },
+        "PC0": {
+            "enable": 1,
+            "logic_io": 3,
+            "device_type": "ANALOG_IN",
+            "device_type": "VINR1R2",
+            "time_refresh": 600,
+            "rvcc": 100000,            
+            "rgnd": 1800,
+            "round_value": 1,
+            "name": "BATT1",
+            "description": "Analog IN Batteria 1 (12V)"
+        },
+        "PC1": {
+            "enable": 1,
+            "logic_io": 4,
+            //"device_type": "ANALOG_IN",
+            "device_type": "VINR1R2",
+            "time_refresh": 600,
+            "rvcc": 100000,            
+            "rgnd": 1800,
+            "round_value": 1,
+            "name": "BATT2",
+            "description": "Analog IN Batteria 2 (24V)"
+        },
+        "PC2": {
+            "enable": 1,
+            "logic_io": 5,
+            //"device_type": "ANALOG_IN",
+            "device_type": "VINR1R2",
+            "time_refresh": 600,
+            "rvcc": 100000,
+            "rgnd": 1800,
+            "round_value": 1,
+            "name": "BATT3",
+            "description": "Analog IN Batteria 3 (36V)"
+        },
+        "PC3": {
+            "enable": 1,
+            "logic_io": 6,
+            "device_type": "VINR1R2",
+            "time_refresh": 600,
+            "rvcc": 100000,
+            "rgnd": 1800,
+            "round_value": 1,
+            "name": "AIN 1 - BATT4",
+            "description": "Analog IN Batteria 4 (48V)"
+        },
+        "PE2": {
+            "enable": 1,
+            "logic_io": 7,
+            "device_type": "VINR1R2",
+            "time_refresh": 600,
+            "rvcc": 4700,
+            "rgnd": 1000,
+            "round_value": 2,
+            "name": "BATT_A",
+            "description": "Sensore di corrente +-50A"
+        },
+        "PB1": {
+            "enable": 1,
+            "logic_io": 8,
+            "device_type": "DIGITAL_OUT",
+            "default_startup_filter_value": 0,
+            "time_refresh": 600,
+            "name": "RELE4",
+            "description": "RELE4"
+        },
+        "PB2": {
+            "enable": 1,
+            "logic_io": 9,
+            "device_type": "DIGITAL_OUT",
+            "default_startup_filter_value": 0,
+            "time_refresh": 600,
+            "name": "RELE3",
+            "description": "RELE3"
+        },
+        "PD6": {
+            "enable": 1,
+            "logic_io": 10,
+            "device_type": "DIGITAL_OUT",
+            "default_startup_filter_value": 0,
+            "time_refresh": 600,
+            "name": "RELE2",
+            "description": "RELE2"
+        },
+        "PE1": {
+            "enable": 1,
+            "logic_io": 11,
+            "device_type": "DIGITAL_OUT",
+            "default_startup_filter_value": 0,
+            "time_refresh": 600,
+            "name": "RELE1",
+            "description": "RELE1"
+        },
+        "VIRT1": {  // Diff btw BATT2 - BATT1
+            "enable": 1,
+            "logic_io": 12,
+            "device_type": "VIRTUAL",
+            "filter": 200,
+            "time_refresh": 600,
+            "rvcc": 100000,
+            "rgnd": 1800,
+            "round_value": 1,
+            "default_startup_value": 0, //valore preset uscita prima del primo calcolo
+            "plc_function": "analog_in1_-_analog_in2",
+            "plc_linked_board_id_logic_io": [
+                "*-1",
+                "*-4"
+            ], //io logico ingressi analogici
+            "name": "BATT 2",
+            "description": "BATT 2",
+            "dtype": "Voltage"
+        }
+    },
+
+    "BOARD25": {
         "GENERAL_BOARD": {
             "name": "SCHEDA CONTATORE", # Nome della BOARD
             "board_type_name": "DL485P", # Tipo di Board: Vedi TYPEB
