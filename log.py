@@ -43,7 +43,7 @@ class Log:
         """
         Write log to file or screen
         """
-        print(color)
+        # print(color)
         if self.logstate & 1:
             logging.debug(f'data')  # Write LOG to file
         if self.logstate & 2:

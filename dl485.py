@@ -131,6 +131,7 @@ class Bus(BusDL485, Log, BME280):
         'TSL2561':              {'type_io':'i2c',           'direction':'input',    'dtype':'Illumination',     'pullup':0},
         'VINR1R2':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
         'VINKMKA':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
+        'VIN4V':                {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
         'VIRTUAL':              {'type_io':'discrete',      'direction':'output',   'dtype':'Temperature',      'pullup':0},
     }
 
@@ -588,7 +589,7 @@ class Bus(BusDL485, Log, BME280):
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'ANALOG_IN':
-                        key_ANALOG_IN = ['plc_function', 'round_value']
+                        key_ANALOG_IN = ['plc_function', 'round_value', 'va', 'ada', 'vb', 'adb']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_ANALOG_IN and ccc not in key_general:
                                 self.writelog(f"ERROR config.json in board: {c:<6} - logic_io: {self.config[c][cc].get('logic_io'):>1}: wrong key: {ccc:<20}  on section {self.config[c][cc].get('device_type'):<10}", 'RED')
@@ -609,7 +610,7 @@ class Bus(BusDL485, Log, BME280):
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'VINKMKA':
-                        key_VINKMKA = ['kadd', 'kmul', 'round_value', 'va', 'ada', 'vb', 'adb']
+                        key_VINKMKA = ['kadd', 'kmul', 'rvcc', 'rgnd', 'round_value', 'va', 'ada', 'vb', 'adb', 'analog_filter']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_VINKMKA and ccc not in key_general:
                                 self.writelog(f"ERROR config.json in board: {c:<6} - logic_io: {self.config[c][cc].get('logic_io'):>1}: wrong key: {ccc:<20}  on section {self.config[c][cc].get('device_type'):<10}", 'RED')
@@ -776,6 +777,7 @@ class Bus(BusDL485, Log, BME280):
                         # pprint(self.config[b][bb])
                         self.mapiotype[board_id][logic_io] = {
                             'altitude': int(self.config[b][bb].get('altitude', 0)),  # OFFSET altitudine
+                            'analog_filter': self.config[b][bb].get('analog_filter', False),  # Analog Filter
                             'board_enable': board_enable,  # Abilitazione scheda
                             'board_overwrite_text': board_overwrite_text,
                             'board_type': board_type,  # Tipo scheda
@@ -884,12 +886,13 @@ class Bus(BusDL485, Log, BME280):
                             'dunit': self.config[b][bb].get('dunit'),
                             'write_ee': self.config[b][bb].get('write_ee', []),
 
-                            'va': int(self.config[b][bb].get('va', 0)),
+                            'va': int(self.config[b][bb].get('va', 0)), 
                             'ada': int(self.config[b][bb].get('ada', 0)),
                             'vb': int(self.config[b][bb].get('vb', 0)),
                             'adb': int(self.config[b][bb].get('adb', 0)),
                         }
 
+                        
                         app = []
                         plc_xor_input = 0
                         plc_byte_list_io = []
@@ -984,6 +987,7 @@ class Bus(BusDL485, Log, BME280):
         Il nuovo valore new_value viene limitato tra min e max e anche nella massima variazione consentita.
         Poi viene filtrato attraverso il valore filter (tra 0 e 1). 0= nessun filtro e 1= filtro infinito
         """
+        
         val_app = new_value
         if new_value > max:
             val_app = max
@@ -1001,6 +1005,17 @@ class Bus(BusDL485, Log, BME280):
             val_app = old_value - delta
         return old_value * filter + val_app * (1 - filter)
 
+    def adjust4v(self, value, va, ada, vb, adb):
+        """ Ritorna il valore VALUE tarato secondo la retta passante per VA,ADA - VB,ADB """
+        if ada != adb:
+            kmul = (vb - va) / (adb - ada)
+            kadd = va - (kmul * ada)
+            val = (value * kmul) + kadd  # Funzione che aggiusta il risultato
+            return val
+        else:
+            print(f"ERROR adjust4v: ADA==ADB, some ADC with different inputs. Parameters: value:{value}, va:{va}, ada:{ada}, vb:{vb}, adb:{adb}")
+            sys.exit()
+
     def adjust(self, value, kmul, kadd, va, ada, vb, adb):
         """ Ritorna il valore aggiustato con KMUL e KADD """
         # adjust = lambda value: (value * kmul) + kadd  # Funzione che aggiusta il risultato
@@ -1008,7 +1023,11 @@ class Bus(BusDL485, Log, BME280):
             kmul = (vb - va) / (adb - ada)
             kadd = va - (kmul * ada)
 
+        # Da rivedere perché forse è meglio fare (value + kadd) * kmul. Anche perché cosi, se si moltiplica * -1, kadd raddoppia.
         return (value * kmul) + kadd  # Funzione che aggiusta il risultato
+
+    
+
 
     def calculate(self, board_id, command, logic_io, value):
         """
@@ -1044,6 +1063,7 @@ class Bus(BusDL485, Log, BME280):
             type_io = self.mapiotype[board_id][logic_io]['type_io']
             device_type = self.mapiotype[board_id][logic_io]['device_type']
             plc_function = self.mapiotype[board_id][logic_io]['plc_function']
+            analog_filter = self.mapiotype[board_id][logic_io]['analog_filter']
 
             # if board_id == 8 and logic_io == 13:
             #     print("-" * 100, board_id, logic_io, type_io, device_type, plc_function, value)
@@ -1185,12 +1205,6 @@ class Bus(BusDL485, Log, BME280):
                 value = self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_value'])
                 return self.round_value(value, self.mapiotype[board_id][logic_io]['round_value'])
 
-            elif type_io == 'analog' and device_type == 'ANALOG_IN':
-                if len(value) >= 2:  # Attenzione: lasciare  altrimenti se si passa dalla configurazione DIGITAL_IN in ANALOG_IN, puo' dare errore
-                    return self.byteLSMS2uint(value[0], value[1])
-                    # return value[0] + (value[1] * 256)
-                return 0
-
             elif device_type == 'BME280_CALIB':
                 self.calibBME(board_id, logic_io, value)  # Genera valori di calibrazione sul dict BME280
 
@@ -1247,21 +1261,26 @@ class Bus(BusDL485, Log, BME280):
                 value = (value[0] + (value[1] * 256)) - 270 + 25
                 return self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_temperature'])
 
-            elif device_type == 'VINR1R2' or device_type == 'VINKMKA' or type_io == 'analog' or type_io == 'virtual':
-
+            elif device_type in ['ANALOG_IN', 'VINR1R2', 'VINKMKA', 'VIN4V'] and type_io in ['analog', 'virtual']:
+                old_value = self.status[board_id]['io'][logic_io - 1] # Valore precedente salvato per il filtro analogico eventuale
+                value = self.byteLSMS2uint(value[0], value[1])  # ANALOG_IN comuni agli altri casi
+                
                 if device_type == 'VINR1R2':
                     rvcc = self.mapiotype[board_id][logic_io]['rvcc']
                     rgnd = self.mapiotype[board_id][logic_io]['rgnd']
-                    value = (value[0] + (value[1] * 256)) * (rvcc + rgnd) / (rgnd * 930.0)
-                    value = self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_value'])
+                    value = value * (rvcc + rgnd) / (rgnd * 930.0)
+                    # value = self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_value'])
+                
+                elif device_type == 'VINKMKA':
+                    value = (value * kmul) + kadd
+                
+                elif device_type == 'VIN4V':
+                    value = self.adjust4v(value, va, ada, vb, adb)
 
-                else:
-                    old_value = self.status[board_id]['io'][logic_io - 1]
-                    new_value = self.round_value(self.adjust(value[0] + (value[1] * 256), kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_value'])
-                    value = self.analogFilter(old_value, new_value, 0, 180, 10, 10, 0.8)
-
-                    # if board_id == 9 and logic_io == 3:
-                    #     print(f"===>>> Valore prima e dopo del filtro analogico: old_value:{old_value}, new_value={new_value}, value_filtrato:{value}")
+                if analog_filter and 'filter' in analog_filter and analog_filter['filter']:
+                    print("Analog filter parameters", analog_filter)
+                    value = self.analogFilter(old_value, value, analog_filter['min'], analog_filter['max'], analog_filter['max_delta_inc'], analog_filter['max_delta_dec'], analog_filter['filter'])
+                print("value", value )
 
                 bio = "{}-{}".format(board_id, logic_io)
                 if bio in self.mapproc:
@@ -1287,7 +1306,9 @@ class Bus(BusDL485, Log, BME280):
                         self.writelog(f"count={self.poweroff_voltage_counter}")
 
                 # print("ANALOG VALUE:", value)
-                return self.round_value(value, self.mapiotype[board_id][logic_io]['round_value'])
+                value = self.round_value(value, self.mapiotype[board_id][logic_io]['round_value'])
+                # print("ANALOG VALUE:", value)
+                return value
 
             elif device_type in ['DIGITAL_IN', 'DIGITAL_IN_PULLUP', 'DIGITAL_OUT']:
                 # b0: dato filtrato
