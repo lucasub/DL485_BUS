@@ -1,20 +1,12 @@
-#!/usr/bin/python3.4
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# pylint: disable=C0301
-# pylint: disable=C0302
-
-# pylint: disable=C0330
-# pylint: disable=C0411
-# immediately inside parentheses, brackets or braces.
 """
 Class protocol DL485
 """
 import json
-# import logging
 import os
 from pprint import pprint
 import re
-# import serial
 import signal
 import sys
 import telepot
@@ -133,6 +125,8 @@ class Bus(BusDL485, Log, BME280):
         'VINKMKA':              {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
         'VIN4V':                {'type_io':'analog',        'direction':'input',    'dtype':'Voltage',          'pullup':0},
         'VIRTUAL':              {'type_io':'discrete',      'direction':'output',   'dtype':'Temperature',      'pullup':0},
+        'RTC':                  {'type_io':'discrete',      'direction':'output',   'dtype':'',                 'pullup':0},
+        'TIME':                 {'type_io':'discrete',      'direction':'input',    'dtype':'',                 'pullup':0},
     }
 
     """ Dict I2C constant """
@@ -253,6 +247,8 @@ class Bus(BusDL485, Log, BME280):
         'VIRT7':        {'pin':   41,  'name':     'VIRT7'},
         'VIRT8':        {'pin':   41,  'name':     'VIRT8'},
         'VIRT9':        {'pin':   41,  'name':     'VIRT9'},
+        'TIME':         {'pin':   41,  'name':     'TIME'},
+        'RTC':          {'pin':   41,  'name':     'RTC'},
         'I2C1':         {'pin':   27,  'name':     'I2C1'},
         'I2C2':         {'pin':   27,  'name':     'I2C2'},
         'I2C3':         {'pin':   27,  'name':     'I2C3'},
@@ -389,9 +385,9 @@ class Bus(BusDL485, Log, BME280):
         5: 14400,
         6: 19200,  # Default
         7: 28800,
-        8: 38400,
-        9: 57600,
-        0: 115200,
+        8: 38400, # Do not use
+        9: 57600, # Do not use
+        0: 115200, # Do not use
 
         1200: 1,
         2400: 2,
@@ -400,11 +396,10 @@ class Bus(BusDL485, Log, BME280):
         14400: 5,
         19200: 6,
         28800: 7,
-        38400: 8,
-        57600: 9,
-        115200: 0,
+        38400: 8, # Do not use
+        57600: 9, # Do not use
+        115200: 0, # Do not use
     }
-
 
     def __init__(self, config_file_name, logstate=0):
         super().__init__(config_file_name, logstate)
@@ -421,11 +416,11 @@ class Bus(BusDL485, Log, BME280):
         self.poweroff_voltage_setup = 10  # Time to make shutdown for unvervoltage limit
         self.poweroff_voltage_counter = self.poweroff_voltage_setup
         self.poweron_linked = 0
-        self.getJsonConfig(config_file_name)
+        self.get_json_config(config_file_name)
         self.BOARD_ADDRESS = int(self.config['GENERAL_NET']['board_address'])  # ID assegnato a Raspberry PI per accedere al Bus
         self.MAX_BOARD_ADDRESS = int(self.config['GENERAL_NET'].get('max_board_address', 63))  # Max number of boards
         self.checkConfigFile()
-        self.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo boards attive)
+        self.dict_board_io()  # Crea il DICT con i valori IO basato sul file di configurazione (solo boards attive)
         self.bus_baudrate = int(self.config['GENERAL_NET']['bus_baudrate'])  # Legge la velocità del BUS
         self.bus_port = self.config['GENERAL_NET']['bus_port']  # Legge la porta del BUS di Raspberry PI
         self.overwrite_text = int(self.config['GENERAL_NET'].get('overwrite_text', 0))  # Flag per sovrascrivere "nome" e "descrizione" degli IO su Domoticz
@@ -442,7 +437,7 @@ class Bus(BusDL485, Log, BME280):
         self.telegram_enable = int(self.config['GENERAL_NET'].get('telegram_enable', False))  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
         self.telegram_token = self.config['GENERAL_NET'].get('telegram_token', False)  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
         self.telegram_bot = False  # Instance
-        self.initBot()
+        self.init_bot()
         self.chat_id = ''
         self.get_board_type = {}
         self.crondata = {}  # DICT with periodic command
@@ -450,7 +445,6 @@ class Bus(BusDL485, Log, BME280):
         self.getConfiguration()  # Set configuration of boardsx e mette la configurazione in coda da inviare
         self.cronStartup = False  # Flag per invio di cron una sola volta dopo lo startup
         self.mqtt_enable = int(self.config['GENERAL_NET']['mqtt_enable'])
-
 
         if self.mqtt_enable:
             try:
@@ -497,9 +491,10 @@ class Bus(BusDL485, Log, BME280):
         # except:
         #     print("MQTT ERROR RECEIVED:", message._topic.decode(), message.payload.decode() )
 
-
-
     def dict_raise_on_duplicates(self, pairs):
+        """
+        Check if config.json have duplicate keys
+        """
         error = []
         board_list = []
         for k, v in pairs:
@@ -509,11 +504,20 @@ class Bus(BusDL485, Log, BME280):
                 board_list.append(k)
         return error
 
-    def getJsonConfig(self, config_file_name):
+    def recursiveKeyOnDict(self, d, target):
+        # print("recursiveKeyOnDict")
+        for key, value in d.items():
+            yield key
+            if isinstance(value, dict):
+                yield from self.recursiveKeyOnDict(value, key)
+            # elif key == target:
+            #     yield key
+
+    def get_json_config(self, config_file_name):
         """
         Create self.config from JSON configuration file
         """
-        from collections import OrderedDict
+        # from collections import OrderedDict
         config = open(config_file_name, 'r')
         config = config.read()
         config = re.sub(r'#.*\n', '\n', config)
@@ -535,16 +539,11 @@ class Bus(BusDL485, Log, BME280):
             self.writelog("Error into config.json file: {e}", 'RED')
             sys.exit()
 
-    def recursiveKeyOnDict(self, d, target):
-        print("recursiveKeyOnDict")
-        for key, value in d.items():
-            yield key
-            if isinstance(value, dict):
-                yield from self.recursiveKeyOnDict(value, key)
-            # elif key == target:
-            #     yield key
-
     def checkConfigFile(self):
+        """
+        Check if keys present for each IO are right
+        To need complete!!!
+        """
         print("== checkConfigFile == \n")
         key_general_net = ['bus_port', 'bus_baudrate', 'max_board_address', 'board_address', 'telegram_token',
                            'telegram_enable', 'overwrite_text', 'send_configuration',
@@ -603,7 +602,7 @@ class Bus(BusDL485, Log, BME280):
                                 sys.exit()
 
                     if self.config[c][cc].get('device_type') == 'DIGITAL_OUT':
-                        key_DIGITAL_OUT = ['default_startup_filter_value', 'default_startup_value', 'inverted', 'plc_preset_input']
+                        key_DIGITAL_OUT = ['default_startup_filter_value', 'default_startup_value', 'inverted', 'plc_preset_input', 'plc_params']
                         for ccc in self.config[c][cc]:
                             if ccc not in key_DIGITAL_OUT and ccc not in key_general and ccc not in key_plc:
                                 self.writelog(f"ERROR config.json in board: {c:<6} - logic_io: {self.config[c][cc].get('logic_io'):>1}: wrong key: {ccc:<20}  on section {self.config[c][cc].get('device_type'):<10}", 'RED')
@@ -693,7 +692,7 @@ class Bus(BusDL485, Log, BME280):
                                 self.writelog(f"ERROR config.json in board: {c:<6} - logic_io: {self.config[c][cc].get('logic_io'):>1}: wrong key: {ccc:<20}  on section {self.config[c][cc].get('device_type'):<10}", 'RED')
                                 # sys.exit()
 
-    def dictBoardIo(self):
+    def dict_board_io(self):
         """
         Crea la mappa dove saranno inseriti i valori dei vari di tutti gli IO presenti in self.config
         Crea inoltre il DICT self.mapiotype che permette di recuparare dati utili in breve tempo
@@ -707,8 +706,10 @@ class Bus(BusDL485, Log, BME280):
                 for bb in self.config[b]:
                     if 'GENERAL_BOARD' in bb:
                         board_enable = self.config[b][bb]['enable']  # Board enable
-                        if not board_enable:
-                            self.writelog(f"{b:<7} DISABILITATA")
+                        if board_enable == 0:
+                            self.writelog(f"{b:<8} DISABLED")
+                        else:
+                            self.writelog(f"{b:<8} ENABLED")
                         self.status[board_id]['boardtypename'] = self.config[b][bb]['board_type_name']
                         board_type = self.board_type_available[self.config[b][bb]['board_type_name']]
                         board_overwrite_text = int(self.config[b][bb].get('overwrite_text', 0))
@@ -722,7 +723,6 @@ class Bus(BusDL485, Log, BME280):
                 self.status[board_id]['name'] = name
                 try:
                     self.status[board_id]['io'] = [0] * len(self.iomap[board_type])
-                    # self.status[board_id]['boardtypename'] = self.config['TYPEB']["%s" %board_type]
                 except:
                     self.writelog(f"BOARD TYPE {board_type} non esistente")
                     sys.exit()
@@ -731,8 +731,10 @@ class Bus(BusDL485, Log, BME280):
                     if 'GENERAL_BOARD' not in bb:
                         enable = self.config[b][bb].get('enable', 0)
                         if not enable:
-                            self.writelog(f"{b:<7} IO DISABILITATO {self.config[b][bb].get('logic_io', 0)}")
+                            self.writelog(f"{b:<10} IO DISABLED {self.config[b][bb].get('logic_io', 0)}")
                             continue
+                        else:
+                            self.writelog(f"{b:<10} IO ENABLED {self.config[b][bb].get('logic_io', 0)}")
 
                         logic_io = int(self.config[b][bb].get('logic_io', 0))
                         if not logic_io:
@@ -824,7 +826,6 @@ class Bus(BusDL485, Log, BME280):
                             'name': self.config[b][bb].get('name', 'NO Name'),
                             'offset_pression': int(self.config[b][bb].get('offset_pression', 0)),  # OFFSET pression
                             'offset_humidity': int(self.config[b][bb].get('offset_humidity', 0)),  # OFFSET temperature
-                            # 'offset_temperature': int(self.config[b][bb].get('offset_temperature', 0)),  # OFFSET temperature Sostituito con kadd - kmul
                             'only_fronte_off': int(self.config[b][bb].get('only_fronte_off', 0)),
                             'only_fronte_on': int(self.config[b][bb].get('only_fronte_on', 0)),
                             'pin_label': bb,
@@ -892,7 +893,6 @@ class Bus(BusDL485, Log, BME280):
                             'adb': int(self.config[b][bb].get('adb', 0)),
                         }
 
-                        
                         app = []
                         plc_xor_input = 0
                         plc_byte_list_io = []
@@ -930,7 +930,7 @@ class Bus(BusDL485, Log, BME280):
         # print("value2", value)
         return value
 
-    def calcCrcDS(self, b, crc):
+    def calc_crc_DS(self, b, crc):
         """
         Calc CRC of DS18xxx
         """
@@ -981,7 +981,7 @@ class Bus(BusDL485, Log, BME280):
         else:
             return int(value)
 
-    def analogFilter(self, old_value, new_value, min, max, max_delta_inc, max_delta_dec, filter):
+    def analog_filter(self, old_value, new_value, min, max, max_delta_inc, max_delta_dec, filter):
         """
         Filtro per segnali analogici:
         Il nuovo valore new_value viene limitato tra min e max e anche nella massima variazione consentita.
@@ -1023,11 +1023,9 @@ class Bus(BusDL485, Log, BME280):
             kmul = (vb - va) / (adb - ada)
             kadd = va - (kmul * ada)
 
-        # Da rivedere perché forse è meglio fare (value + kadd) * kmul. Anche perché cosi, se si moltiplica * -1, kadd raddoppia.
+        # Da rivedere perché forse è meglio fare (value + kadd) * kmul. Anche perché cosi, se si moltiplica * -1,
+        # kadd raddoppia.
         return (value * kmul) + kadd  # Funzione che aggiusta il risultato
-
-    
-
 
     def calculate(self, board_id, command, logic_io, value):
         """
@@ -1074,7 +1072,7 @@ class Bus(BusDL485, Log, BME280):
                     return None
                 crc = 0
                 for x in value[0:8]:
-                    crc = self.calcCrcDS(x, crc)
+                    crc = self.calc_crc_DS(x, crc)
                 if crc == value[8]:
                     value = float(((value[1] << 8) + value[0])) * 0.0625
                     if value == 85:
@@ -1109,15 +1107,19 @@ class Bus(BusDL485, Log, BME280):
                                 elif umidita_relativa_percentuale < 0:
                                     self.writelog("PSYCHROMETER WARNING: Umidità < 0,  Set umidità=0")
                                     umidita_relativa_percentuale = 0
-                                # umidita_specifica_alla_saturazione = 0.622 * pressione_vapore_saturo_temperatura_sensore_asciutto / pressione_approssimata_all_altezza
-                                # umidita_specifica = umidita_relativa_percentuale*umidita_specifica_alla_saturazione / 100
-                                val_hum = self.round_value(umidita_relativa_percentuale, self.mapiotype[board_id][logic_io]['round_humidity'])
+                                # umidita_specifica_alla_saturazione = 0.622 *
+                                # pressione_vapore_saturo_temperatura_sensore_asciutto /
+                                # pressione_approssimata_all_altezza umidita_specifica =
+                                # umidita_relativa_percentuale*umidita_specifica_alla_saturazione / 100
+                                val_hum = self.round_value(umidita_relativa_percentuale,
+                                                           self.mapiotype[board_id][logic_io]['round_humidity'])
 
                                 self.writelog(f"PSYCHROMETER HUMIDITY: {val_hum}")
                                 self.status[board_id_linked]['io'][logic_io_linked - 1] = val_hum
                             else:
                                 self.writelog('PSYCHROMETER ERROR: Temp1 or Temp2 have None value', 'RED')
-                    value = self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb), self.mapiotype[board_id][logic_io]['round_temperature'])
+                    value = self.round_value(self.adjust(value, kmul, kadd, va, ada, vb, adb),
+                                             self.mapiotype[board_id][logic_io]['round_temperature'])
                     return value
                 else:
                     # print("=====>>>>> Errore CRC DS", ((value[1] << 8) + value[0]) * 0.0625)
@@ -1125,31 +1127,42 @@ class Bus(BusDL485, Log, BME280):
 
             elif plc_function == 'rms_power':
                 # print("==>>", board_id, logic_io, self.byteLSMS2uint(value[0], value[1]))
-                if 'rms_power_logic_id_ch1' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch1'] == logic_io:
+                if 'rms_power_logic_id_ch1' in self.RMS_POWER_DICT[board_id] and \
+                        self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch1'] == logic_io:
 
-                    value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_ch1'] / self.RMS_POWER_DICT[board_id]['rms_power_mul_ch1']
+                    value = self.byteLSMS2uint(value[0], value[1]) * \
+                            self.RMS_POWER_DICT[board_id]['rms_power_scale_ch1'] / \
+                            self.RMS_POWER_DICT[board_id]['rms_power_mul_ch1']
                     return self.round_value(value, 2)
 
-                elif 'rms_power_logic_id_ch2' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] == logic_io:
-                    value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale_ch2'] / self.RMS_POWER_DICT[board_id]['rms_power_mul_ch2']
+                elif 'rms_power_logic_id_ch2' in self.RMS_POWER_DICT[board_id] and \
+                        self.RMS_POWER_DICT[board_id]['rms_power_logic_id_ch2'] == logic_io:
+                    value = self.byteLSMS2uint(value[0], value[1]) * \
+                            self.RMS_POWER_DICT[board_id]['rms_power_scale_ch2'] / \
+                            self.RMS_POWER_DICT[board_id]['rms_power_mul_ch2']
                     # print("==>>> RMS_POWER CH2 {} {} {}".format(board_id, logic_io, value))
                     return self.round_value(value, 0)
 
-                elif 'rms_power_logic_id_real' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_real'] == logic_io:
+                elif 'rms_power_logic_id_real' in self.RMS_POWER_DICT[board_id] and \
+                        self.RMS_POWER_DICT[board_id]['rms_power_logic_id_real'] == logic_io:
                     value = self.byteLSMS2int(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale']
                     # print("==>>> RMS_POWER REAL {} {} {}".format(board_id, logic_io, value))
                     return self.round_value(value, 1)
 
-                elif 'rms_power_logic_id_apparent' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_apparent'] == logic_io:
+                elif 'rms_power_logic_id_apparent' in self.RMS_POWER_DICT[board_id] and \
+                        self.RMS_POWER_DICT[board_id]['rms_power_logic_id_apparent'] == logic_io:
                     value = self.byteLSMS2uint(value[0], value[1]) * self.RMS_POWER_DICT[board_id]['rms_power_scale']
                     # print("==>>> RMS_POWER APPARENT {} {} {}".format(board_id, logic_io, value))
                     return self.round_value(value, 1)
 
-                elif 'rms_power_logic_id_cosfi' in self.RMS_POWER_DICT[board_id] and self.RMS_POWER_DICT[board_id]['rms_power_logic_id_cosfi'] == logic_io:
+                elif 'rms_power_logic_id_cosfi' in self.RMS_POWER_DICT[board_id] and \
+                        self.RMS_POWER_DICT[board_id]['rms_power_logic_id_cosfi'] == logic_io:
                     value = self.byteLSMS2int(value[0], value[1])
                     p_real = self.status[board_id]['io'][self.RMS_POWER_DICT[board_id]['rms_power_logic_id_real'] - 1]
-                    p_apparent = self.status[board_id]['io'][self.RMS_POWER_DICT[board_id]['rms_power_logic_id_apparent'] - 1]
-                    # print("==>>> RMS_POWER BID:{} LogicIO:{} COSFI:{} P.REAL:{} p.APPARENT:{}".format(board_id, logic_io, value, p_real, p_apparent))
+                    p_apparent = self.status[board_id]['io'][self.RMS_POWER_DICT[board_id]
+                                                             ['rms_power_logic_id_apparent'] - 1]
+                    # print("==>>> RMS_POWER BID:{} LogicIO:{} COSFI:{} P.REAL:{} p.APPARENT:{}".format(board_id,
+                    # logic_io, value, p_real, p_apparent))
                     if p_real > 3 or p_apparent > 3:
                         return value
                     return 1000
@@ -1278,9 +1291,9 @@ class Bus(BusDL485, Log, BME280):
                     value = self.adjust4v(value, va, ada, vb, adb)
 
                 if analog_filter and 'filter' in analog_filter and analog_filter['filter']:
-                    print("Analog filter parameters", analog_filter)
-                    value = self.analogFilter(old_value, value, analog_filter['min'], analog_filter['max'], analog_filter['max_delta_inc'], analog_filter['max_delta_dec'], analog_filter['filter'])
-                print("value", value )
+                    # print("Analog filter parameters", analog_filter)
+                    value = self.analog_filter(old_value, value, analog_filter['min'], analog_filter['max'], analog_filter['max_delta_inc'], analog_filter['max_delta_dec'], analog_filter['filter'])
+                # print("value", value )
 
                 bio = "{}-{}".format(board_id, logic_io)
                 if bio in self.mapproc:
@@ -2570,7 +2583,7 @@ class Bus(BusDL485, Log, BME280):
                 """
                 Creare DICT con caratteristiche della BOARD
                 """
-                print("=====>>>> GetBoardType: ", self.RXtrama)
+                # print("=====>>>> GetBoardType: ", self.RXtrama)
                 # 0: Board_id
                 # 1: Get tipo board command
                 # 2: Tipo board (1: morsetti)
@@ -2599,9 +2612,9 @@ class Bus(BusDL485, Log, BME280):
                 # 10: Numero conflitti (es. IO assegnato a RX o assegnato a LED, pulsante, oppure OneWire e ingresso digitale, oppure ingresso analogico e ingresso digitale)
 
                 board_id = self.RXtrama[0]
-                command = self.RXtrama[1]
-                logic_io = self.RXtrama[2]
-                value = self.RXtrama[3:]
+                # command = self.RXtrama[1]
+                # logic_io = self.RXtrama[2]
+                # value = self.RXtrama[3:]
                 try:
                     if not self.RXtrama[0] in self.get_board_type:
                         self.get_board_type[self.RXtrama[0]] = {}
@@ -2629,8 +2642,6 @@ class Bus(BusDL485, Log, BME280):
                     self.get_board_type[board_id]['error_logic_io_fisic_io'] = self.RXtrama[9]
                     self.get_board_type[board_id]['error_conflict'] = self.RXtrama[9]
                     # Byte 10
-                    
-
                 else:
                     self.get_board_type[board_id]['rms_power'] = 0
                     self.get_board_type[board_id]['dimmer'] = 0
@@ -2660,7 +2671,7 @@ class Bus(BusDL485, Log, BME280):
             else:
                 self.writelog(f"TRAMA ALTRO COMANDO    {self.RXtrama} Codice: {self.code.get(self.RXtrama[1])}")
 
-    def writeLog(self):
+    def write_log(self):
         """
         parte che stampa il log ogni TIME_PRINT_LOG
         e aggiorna le board presenti
@@ -2693,8 +2704,8 @@ class Bus(BusDL485, Log, BME280):
 
             if not self.cronoldtime % 5:
                 self.cron_sec = 5  # Dont remove
-                self.writeLog()
-                # self.writeLog()
+                self.write_log()
+                # self.write_log()
                 # self.TXmsg += [self.setMaxBoardAddress(0, self.MAX_BOARD_ADDRESS)]
                 # self.TXmsg += [self.boardReboot(0)]
                 # self.TXmsg += [self.timeLoop(8)]
@@ -2706,7 +2717,7 @@ class Bus(BusDL485, Log, BME280):
             if not self.cronoldtime % 30:
                 self.cron_sec = 30  # Dont remove
                 # self.TXmsg += [self.getBoardType(5)]
-                # self.writeLog()VINKMKA
+                # self.write_log()
 
             if not self.cronoldtime % 60:
 
@@ -2729,7 +2740,7 @@ class Bus(BusDL485, Log, BME280):
                 self.cron_day = 1  # Dont remove
                 # print(f"{self.cronoldtime:<11} CRON                   1 DAY")
 
-    def initBot(self):
+    def init_bot(self):
         """ Telegram BOT """
         if self.telegram_enable:
             print("Bot Telegram begin")

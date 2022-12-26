@@ -73,8 +73,6 @@
 //'P1 Smart Meter Energy'         : { 'Type': 250,        'SubType': 1,      'SwitchType': False},
 //'P1 Smart Meter Gas'            : { 'Type': 246,        'SubType': 1,      'SwitchType': False},
 
-
-
 //Descrizione PLC
 //All'interno delle singole board è presente un PLC che può essere attivato tramite la funzione desiderata (es. toggle_on)
 
@@ -121,7 +119,7 @@
         "mqtt_topic": "dl485", # MQTT topic
         "mqtt_client_id": "dl485", # MQTT client id
         "overwrite_text": 1, // Flag per sovrascrivere "nome" e "descrizione" su Domoticz !!! Attenzione
-        "send_configuration": 1 # Flag to send configurations to all board
+        "send_configuration": 0 # Flag to send configurations to all board
     },
 
     "BOARD15": { # BOARD DIMMER 4CH
@@ -526,7 +524,7 @@
             "name": "SCHEDA RMS", # Nome della BOARD
             "board_type_name": "DL485B", # Tipo di Board: Vedi TYPEB
             "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
-            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "RMS_POWER_CONF": {
             "rms_power_mode": 1,
@@ -683,7 +681,7 @@
             "kadd": 0,
             "plc_counter_filter": 0, # non usato
             "plc_time_unit": 0.01, # Centesimi di secondo per la misura del periodo impulsi
-            "round_value": 0,
+            // "round_value": 0,
             // "plc_counter_timeout": 500, # 500 centesimi=5 secondi
             "plc_counter_timeout": 3000, # 500 centesimi=5 secondi
             "plc_linked_board_id_logic_io": ["*-11"], # usa ingresso LDR
@@ -790,61 +788,88 @@
             "description": "Temperatura Board ATMEGA328PB Fotovoltaico",
             "dtype": "Temperature"
         },
-        "IO1": { # Tensione alimentazione
+        "IO1": {
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 3, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            "device_type": "VINKMKA",
+            "device_type": "VIN4V",
             "va": 0, 
             "ada": 477.1, # 0.513V
             "vb": 4.35, # 4,35A
             "adb": 365.5,  # 0.393V 
+            "analog_filter": {
+                "min": -2,
+                "max": 10,
+                "max_delta_inc": 1, 
+                "max_delta_dec": 1, 
+                "filter": 0.8
+            },
             "round_value": 2,
             "name": "A. PANN 1", # Nome che verrà riportato su DOMOTICZ
             "description": "A. PANN 1", # Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Custom Sensor",
             "dunit": "A"
         },
-        "IO2": { # Tensione alimentazione
+        "IO2": {
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 4, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            "device_type": "VINKMKA",
+            "device_type": "VIN4V",
             "va": 0, 
             "ada": 484.5, # 0.521V 
             "vb": 4.17, # 4.17A
             "adb": 373.9,  # 0.402V 
+            "analog_filter": {
+                "min": -2,
+                "max": 10,
+                "max_delta_inc": 1, 
+                "max_delta_dec": 1, 
+                "filter": 0.8
+            },            
             "round_value": 2,
             "name": "A. PANN 2", # Nome che verrà riportato su DOMOTICZ
             "description": "A. PANN 2", # Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Custom Sensor",
             "dunit": "A"
         },
-        //
-        "IO3": { # Tensione alimentazione
+        "IO3": {
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 5, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            "device_type": "VINKMKA",
+            "device_type": "VIN4V",
             "va": 0, 
             "ada": 475.2, # 0.511V 
             "vb": 4.26, # 4.26A
             "adb": 361,  # 0.398V 
+            "analog_filter": {
+                "min": -2,
+                "max": 10,
+                "max_delta_inc": 1, 
+                "max_delta_dec": 1, 
+                "filter": 0.8
+            },            
             "round_value": 2,
             "name": "A. PANN 3", # Nome che verrà riportato su DOMOTICZ
             "description": "A. PANN 3", # Descrizione che verrà riportato su DOMOTICZ
             "dtype": "Custom Sensor",
             "dunit": "A"
         },
-        "IO4": { # Tensione alimentazione
+        "IO4": {
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 6, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            "device_type": "VINKMKA",
+            "device_type": "VIN4V",
             "va": 0, 
             "ada": 474.3, # 0.510V 
             "vb": 4.31, # 4.31A
             "adb": 362.7,  # 0.390V 
+            "analog_filter": {
+                "min": -2,
+                "max": 10,
+                "max_delta_inc": 1, 
+                "max_delta_dec": 1, 
+                "filter": 0.8
+            },            
             "round_value": 2,
             "name": "A. PANN 4", # Nome che verrà riportato su DOMOTICZ
             "description": "A. PANN 4", # Descrizione che verrà riportato su DOMOTICZ
@@ -855,11 +880,18 @@
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 7, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            "device_type": "VINKMKA",
+            "device_type": "VIN4V",
             "va": 0, 
             "ada": 479, # 0.515V 
             "vb": 4.11, # 4.11A
             "adb": 357,  # 0.393V 
+            "analog_filter": {
+                "min": -2,
+                "max": 10,
+                "max_delta_inc": 1, 
+                "max_delta_dec": 1, 
+                "filter": 0.8
+            },            
             "round_value": 2,
             "name": "A. PANN 5", # Nome che verrà riportato su DOMOTICZ
             "description": "A. PANN 5", # Descrizione che verrà riportato su DOMOTICZ
@@ -870,11 +902,18 @@
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
             "logic_io": 8, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
             "time_refresh": 30, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
-            "device_type": "VINKMKA",
+            "device_type": "VIN4V",
             "va": 0, 
             "ada": 475.2, # 0.511V 
             "vb": 4.27, # 4.27A
             "adb": 365,  # 0.402V 
+            "analog_filter": {
+                "min": -2,
+                "max": 10,
+                "max_delta_inc": 1, 
+                "max_delta_dec": 1, 
+                "filter": 0.8
+            },            
             "round_value": 2,
             "name": "A. PANN 6", # Nome che verrà riportato su DOMOTICZ
             "description": "A. PANN 6", # Descrizione che verrà riportato su DOMOTICZ
@@ -892,6 +931,21 @@
             "round_value": 2,
             "name": "V.BATT", # Nome che verrà riportato su DOMOTICZ
             "description": "Tensione batteria fotovoltaico" # Descrizione che verrà riportato su DOMOTICZ
+        },
+        "OUT1": {
+            "enable": 1,
+            "logic_io": 10,
+            "device_type": "DIGITAL_OUT",
+            "default_startup_filter_value": 0,
+            "default_startup_value": 0,
+            "inverted": 1,
+            "time_refresh": 60,
+            "plc_function": "analog_in_schmitt",
+            "plc_params": [420, 455], # 420=12V 455=13V 491=14V  - Calcoli fatti con misura 13.71 e uscita 223
+            "plc_linked_board_id_logic_io": ["*-9"],  
+            "name": "RELE SWITCH 230Vac",
+            "description": "Se chiuso funziona l'inverter. Se aperto tutto il sistema prende alimentazione dalla RETE 230Vac",
+            "dtype": "Switch"
         }
     },  //fine board 9
 
@@ -1172,12 +1226,12 @@
         }
     }, #fine board
 
-    "BOARD5": {
+    "BOARD51": {
         "GENERAL_BOARD": {
             "name": "SC.BATT", # Nome della BOARD
             "board_type_name": "DL485P", # Tipo di Board: Vedi TYPEB
             "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
-            "enable": 1 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
         },
         "VIN": { # Tensione alimentazione BOARD
             "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
@@ -1312,8 +1366,153 @@
             "dtype": "Voltage"
         }
     },
-
-    "BOARD25": {
+    "BOARD5": {
+        "GENERAL_BOARD": {
+            "name": "SC.BATT", # Nome della BOARD
+            "board_type_name": "DL485B", # Tipo di Board: Vedi TYPEB
+            "overwrite_text": 0, // Sovrascrive name e description di config.json con name e description di Domoticz
+            "enable": 0 # Abilitazione della BOARD: 0=programmazione disabilitata, 1=cancella tutto e riprogramma, 2=cancella tutto e non riprogramma
+        },
+        "VIN": { # Tensione alimentazione BOARD
+            "enable": 1, # Valori: 0 disabilitato, 1 abilitato. Abilitazione dell'IO
+            "logic_io": 1, # Valori interi. IO LOGICO che deve essere UNIVOCO per ciascun IO della stessa BOARD
+            "time_refresh": 600, # Valori: 0...16382 decimi di secondo, 16384 MAI. Tempo di ritrasmissione del valore dell'IO sul BUS. 600 = 60 secondi
+            "device_type": "VINR1R2",
+            "rvcc": 12000, # Valore resistenza posta tra IO e ingresso alimentazione.
+            "rgnd": 470, # Valore resistenza posta tra IO e 0V.
+            "round_value": 1,
+            "name": "Vin", # Nome che verrà riportato su DOMOTICZ
+            "description": "Tensione alimentazione scheda" # Descrizione che verrà riportato su DOMOTICZ
+        },
+        "TEMP_ATMEGA": {
+            "enable": 1,
+            "logic_io": 2,
+            "time_refresh": 600,
+            "device_type": "TEMP_ATMEGA",
+            "name": "TEMP_ATMEGA",
+            "description": "Temperatura Board ATMEGA328PB"
+        },
+        "IO1": {
+            "enable": 1,
+            "logic_io": 3,
+            "device_type": "ANALOG_IN",
+            "device_type": "VINR1R2",
+            "time_refresh": 60,
+            "rvcc": 100000,            
+            "rgnd": 1800,
+            "round_value": 1,
+            "name": "BATT1",
+            "description": "Analog IN Batteria 1 (12V)"
+        },
+        "IO2": {
+            "enable": 1,
+            "logic_io": 4,
+            //"device_type": "ANALOG_IN",
+            "device_type": "VINR1R2",
+            "time_refresh": 60,
+            "rvcc": 100000,            
+            "rgnd": 1800,
+            "round_value": 1,
+            "name": "BATT2",
+            "description": "Analog IN Batteria 2 (24V)"
+        },
+        "IO3": {
+            "enable": 1,
+            "logic_io": 5,
+            //"device_type": "ANALOG_IN",
+            "device_type": "VINR1R2",
+            "time_refresh": 60,
+            "rvcc": 100000,
+            "rgnd": 1800,
+            "round_value": 1,
+            "name": "BATT3",
+            "description": "Analog IN Batteria 3 (36V)"
+        },
+        "IO4": {
+            "enable": 1,
+            "logic_io": 6,
+            "device_type": "VINR1R2",
+            "time_refresh": 60,
+            "rvcc": 100000,
+            "rgnd": 1800,
+            "round_value": 1,
+            "name": "AIN 1 - BATT4",
+            "description": "Analog IN Batteria 4 (48V)"
+        },
+        "SDA": {
+            "enable": 1,
+            "logic_io": 7,
+            "device_type": "VINR1R2",
+            "time_refresh": 60,
+            "rvcc": 4700,
+            "rgnd": 1000,
+            "round_value": 2,
+            "name": "BATT_A",
+            "description": "Sensore di corrente +-50A"
+        },
+        "SCL": {
+            "enable": 1,
+            "logic_io": 8,
+            "device_type": "ANALOG_IN",
+            "device_type": "VINR1R2",
+            "time_refresh": 60,
+            "rvcc": 100000,            
+            "rgnd": 1800,
+            "round_value": 1,
+            "name": "BATT1",
+            "description": "Analog IN Batteria 1 (12V)"
+        },
+        "OUT1": {
+            "enable": 1,
+            "logic_io": 9,
+            "device_type": "DIGITAL_OUT",
+            "inverted": 1,
+            "default_startup_filter_value": 0,
+            "time_refresh": 600,
+            "name": "RELE1",
+            "description": "RELE1"
+        },
+        "OUT2": {
+            "enable": 1,
+            "logic_io": 10,
+            "device_type": "DIGITAL_OUT",
+            "inverted": 1,
+            "default_startup_filter_value": 0,
+            "time_refresh": 600,
+            "name": "RELE2",
+            "description": "RELE2"
+        },
+        "OUT3": {
+            "enable": 1,
+            "logic_io": 11,
+            "device_type": "DIGITAL_OUT",
+            "inverted": 1,
+            "default_startup_filter_value": 0,
+            "time_refresh": 600,
+            "name": "RELE3",
+            "description": "RELE3"
+        },
+        "VIRT1": {  // Diff btw BATT2 - BATT1
+            "enable": 1,
+            "logic_io": 13,
+            "device_type": "VIRTUAL",
+            "filter": 200,
+            "time_refresh": 60,
+            "rvcc": 100000,
+            "rgnd": 1800,
+            "round_value": 1,
+            "default_startup_value": 0, //valore preset uscita prima del primo calcolo
+            "plc_function": "analog_in1_-_analog_in2",
+            "plc_linked_board_id_logic_io": [
+                "*-3",
+                "*-4"
+            ], //io logico ingressi analogici
+            "name": "BATT 2",
+            "description": "BATT 2",
+            "dtype": "Voltage"
+        }
+    },
+    "BOARD35": {
         "GENERAL_BOARD": {
             "name": "SCHEDA CONTATORE", # Nome della BOARD
             "board_type_name": "DL485P", # Tipo di Board: Vedi TYPEB
