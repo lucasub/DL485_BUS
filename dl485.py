@@ -10,8 +10,8 @@ import re
 import signal
 import sys
 import telepot
-from telepot.loop import MessageLoop
-from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
+# from telepot.loop import MessageLoop
+# from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 import time
 from tsl2561 import tsl2561_calculate
 from bus_dl485 import BusDL485
@@ -20,6 +20,26 @@ from bme280 import BME280
 # from dl485_mqtt import *
 # import paho.mqtt.client as Client
 # import paho.mqtt.publish as publish
+# from dl485_telegram import message as telegram_message, init_bot, handle
+from dl485_telegram import TelBot
+
+
+
+
+def timed_function(f, *args, **kwargs):
+    """
+    Show time of running function
+    Put decorator @timed_function on function to meter
+    """
+    myname = str(f).split(' ')[1]
+
+    def new_func(*args, **kwargs):
+        t = time.time()
+        result = f(*args, **kwargs)
+        delta = time.time() - t
+        print('                                                   Function {} Time = {:6.5f}ms'.format(myname, delta * 1000))
+        return result
+    return new_func
 
 
 class Bus(BusDL485, Log, BME280):
@@ -385,9 +405,9 @@ class Bus(BusDL485, Log, BME280):
         5: 14400,
         6: 19200,  # Default
         7: 28800,
-        8: 38400, # Do not use
-        9: 57600, # Do not use
-        0: 115200, # Do not use
+        8: 38400,  # Do not use
+        9: 57600,  # Do not use
+        0: 115200,  # Do not use
 
         1200: 1,
         2400: 2,
@@ -396,9 +416,9 @@ class Bus(BusDL485, Log, BME280):
         14400: 5,
         19200: 6,
         28800: 7,
-        38400: 8, # Do not use
-        57600: 9, # Do not use
-        115200: 0, # Do not use
+        38400: 8,  # Do not use
+        57600: 9,  # Do not use
+        115200: 0,  # Do not use
     }
 
     def __init__(self, config_file_name, logstate=0):
@@ -406,7 +426,8 @@ class Bus(BusDL485, Log, BME280):
 
         self.system = ''  # Variabile con il sistema che instanzia la classe (Domoticz, Home Assistence, ....)
         self.boardbadcounter_n = 10  # Numero di conteggi prima che la board venga disabilitata
-        self.boardbadcounter = [self.boardbadcounter_n for x in range(64)] # Contatore SCHEDE che non rispondono. Per evitare che la configurazione si blocchi
+        # Contatore SCHEDE che non rispondono. Per evitare che la configurazione si blocchi
+        self.boardbadcounter = [self.boardbadcounter_n for x in range(64)]
         self.BOARD_ADDRESS = 0
         self.config = {}  # Configuration dict
         self.status = {}  # Stauts of all IO Board
@@ -417,13 +438,15 @@ class Bus(BusDL485, Log, BME280):
         self.poweroff_voltage_counter = self.poweroff_voltage_setup
         self.poweron_linked = 0
         self.get_json_config(config_file_name)
-        self.BOARD_ADDRESS = int(self.config['GENERAL_NET']['board_address'])  # ID assegnato a Raspberry PI per accedere al Bus
+        # ID assegnato a Raspberry PI per accedere al Bus
+        self.BOARD_ADDRESS = int(self.config['GENERAL_NET']['board_address'])
         self.MAX_BOARD_ADDRESS = int(self.config['GENERAL_NET'].get('max_board_address', 63))  # Max number of boards
         self.checkConfigFile()
         self.dict_board_io()  # Crea il DICT con i valori IO basato sul file di configurazione (solo boards attive)
         self.bus_baudrate = int(self.config['GENERAL_NET']['bus_baudrate'])  # Legge la velocità del BUS
         self.bus_port = self.config['GENERAL_NET']['bus_port']  # Legge la porta del BUS di Raspberry PI
-        self.overwrite_text = int(self.config['GENERAL_NET'].get('overwrite_text', 0))  # Flag per sovrascrivere "nome" e "descrizione" degli IO su Domoticz
+        # Flag per sovrascrivere "nome" e "descrizione" degli IO su Domoticz
+        self.overwrite_text = int(self.config['GENERAL_NET'].get('overwrite_text', 0))
         self.TIME_PRINT_LOG = 4  # intervallo di tempo in secondi per la stampa periodica del log a schermo
         self.nowtime = self.oldtime = int(time.time())
         self.RXtrama = []
@@ -433,11 +456,14 @@ class Bus(BusDL485, Log, BME280):
         self.NLOOPTIMEOUT = 5  # numero di giri del loop dopo i quali si ritrasmettera il messaggio
         self.LOOP_WAIT_REINSERIMENTO = 3
         self.Connection = False   # Setup serial
-        self.send_configuration = int(self.config['GENERAL_NET'].get('send_configuration', 1))  # Flag per inviare la configurazone dei nodi al boot
-        self.telegram_enable = int(self.config['GENERAL_NET'].get('telegram_enable', False))  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
-        self.telegram_token = self.config['GENERAL_NET'].get('telegram_token', False)  # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
+        # Flag per inviare la configurazone dei nodi al boot
+        self.send_configuration = int(self.config['GENERAL_NET'].get('send_configuration', 1))
+        # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
+        self.telegram_enable = int(self.config['GENERAL_NET'].get('telegram_enable'))
+        # Legge ID assegnato a Raspberry PI per accedere al Bus # Instanza telegram bot
+        self.telegram_token = self.config['GENERAL_NET'].get('telegram_token', False)
         self.telegram_bot = False  # Instance
-        self.init_bot()
+        self.telegram = False  # Instance bot
         self.chat_id = ''
         self.get_board_type = {}
         self.crondata = {}  # DICT with periodic command
@@ -467,6 +493,10 @@ class Bus(BusDL485, Log, BME280):
             except:
                 self.writelog("ERROR MQTT CONNECTION. It will be disabled!!!", 'RED')
                 self.mqtt_enable = 0
+
+        if self.telegram_enable:
+            self.telegram = TelBot(self.telegram_token, self.get_board_type, self.mapiotype, self.status)
+            self.telegram.init_bot()
 
     def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
@@ -513,6 +543,7 @@ class Bus(BusDL485, Log, BME280):
             # elif key == target:
             #     yield key
 
+    @timed_function
     def get_json_config(self, config_file_name):
         """
         Create self.config from JSON configuration file
@@ -711,6 +742,7 @@ class Bus(BusDL485, Log, BME280):
                         else:
                             self.writelog(f"{b:<8} ENABLED")
                         self.status[board_id]['boardtypename'] = self.config[b][bb]['board_type_name']
+                        self.status[board_id]['boardenable'] = self.config[b][bb]['enable']
                         board_type = self.board_type_available[self.config[b][bb]['board_type_name']]
                         board_overwrite_text = int(self.config[b][bb].get('overwrite_text', 0))
                         
@@ -731,10 +763,10 @@ class Bus(BusDL485, Log, BME280):
                     if 'GENERAL_BOARD' not in bb:
                         enable = self.config[b][bb].get('enable', 0)
                         if not enable:
-                            self.writelog(f"{b:<10} IO DISABLED {self.config[b][bb].get('logic_io', 0)}")
+                            self.writelog(f"{b:<10} IO {self.config[b][bb].get('logic_io', 0):>3} DISABLED")
                             continue
                         else:
-                            self.writelog(f"{b:<10} IO ENABLED {self.config[b][bb].get('logic_io', 0)}")
+                            self.writelog(f"{b:<10} IO {self.config[b][bb].get('logic_io', 0):>3} ENABLED")
 
                         logic_io = int(self.config[b][bb].get('logic_io', 0))
                         if not logic_io:
@@ -1362,12 +1394,12 @@ class Bus(BusDL485, Log, BME280):
             msg += "{:>6} ".format(i)
 
         for b in self.status:
-            msg += f"\n{b:>2} {self.status[b]['name'][:11]:<11} {self.status[b]['board_type']}  {self.status[b]['boardtypename']:<7}"
-
-            for i in self.status[b]['io'][:20]:
-                if i.__class__ == dict:
-                    i = 'DICT'
-                msg += " {:>6}".format(str(i))
+            if self.status[b]['boardenable']:
+                msg += f"\n{b:>2} {self.status[b]['name'][:11]:<11} {self.status[b]['board_type']}  {self.status[b]['boardtypename']:<7}"
+                for i in self.status[b]['io'][:20]:
+                    if i.__class__ == dict:
+                        i = 'DICT'
+                    msg += " {:>6}".format(str(i))
         msg += "\n" + "-" * 83 + "END STATUS" + "-" * 83 + "\n"
         self.writelog(msg)
 
@@ -2440,12 +2472,31 @@ class Bus(BusDL485, Log, BME280):
             msg.append(self.boardReboot(0))
         else:
             self.writelog("NESSUNA CONFIGURAZIONE BOARD DA INVIARE")
-        pprint(msg)
+        # pprint(msg)
         self.TXmsg = msg
 
+    # def handle(self, msg):
+    #     content_type, chat_type, chat_id = telepot.glance(msg)
+    #     nameuser = msg['chat']['first_name']
+    #     if content_type != 'text':
+    #         self.telegram_bot.sendMessage(chat_id, 'Ammesso solo TESTO')
+    #         return
+    #     command = msg['text']
+    #     print("-----------", command, chat_id)
+    #     # result = telegram_message(command, data='')
+    #
+    #     self.telegram.sendMessage(chat_id, result)
+    #     # if content_type == 'text':
+    #     #     self.telegram.sendMessage(chat_id,'ciao sono un Bot autonomo')
+
     def arrivatatrama(self):
+        # response = self.telegram.getUpdates()
+        # if response:
+        #     pprint(response)
         self.nowtime = int(time.time())  # seleziona la parte intera dei secondi
         self.board_ready[self.RXtrama[0]] = self.nowtime  # Aggiorna la data di quando è stato ricevuto la trama del nodo, serve per dizionario delle boards rilevate sul bus
+
+        # TelBot.handle(self, msg)
 
         if self.RXtrama[0] + 1 == self.BOARD_ADDRESS:  # test su address ricevuto, e' ora di trasmettere
 
@@ -2546,6 +2597,7 @@ class Bus(BusDL485, Log, BME280):
                 value = self.RXtrama[3:]
                 # print("TRAMA:", board_id, logic_io, value)
                 try:
+
                     value = self.calculate(board_id, command, logic_io, value)  # Ritorna il valore calcolato a seconda del tipo e del dispositivo connesso
                 except:
                     device_type = self.mapiotype[board_id][logic_io]['device_type']
@@ -2576,8 +2628,6 @@ class Bus(BusDL485, Log, BME280):
                     self.writelog(f"Key not found          {self.RXtrama}")
 
                 self.writelog(f"RX {self.code[self.RXtrama[1]&0xDF]:<12}        {self.int2hex(self.RXtrama)} {self.RXtrama}")
-
-
 
             elif self.RXtrama[1] == self.code['CR_GET_BOARD_TYPE'] | 32:  # GetTipoBoard
                 """
@@ -2740,147 +2790,147 @@ class Bus(BusDL485, Log, BME280):
                 self.cron_day = 1  # Dont remove
                 # print(f"{self.cronoldtime:<11} CRON                   1 DAY")
 
-    def init_bot(self):
-        """ Telegram BOT """
-        if self.telegram_enable:
-            print("Bot Telegram begin")
-            self.telegram_bot = telepot.Bot(self.telegram_token)
-            # from telepot.loop import MessageLoop
-            MessageLoop(self.telegram_bot, {
-                'chat': self.handle, 'callback_query':
-                self.on_callback_query}).run_as_thread()
+    # def init_bot(self):
+    #     """ Telegram BOT """
+    #     if self.telegram_enable:
+    #         print("Bot Telegram begin")
+    #         self.telegram_bot = telepot.Bot(self.telegram_token)
+    #         # from telepot.loop import MessageLoop
+    #         MessageLoop(self.telegram_bot, {
+    #             'chat': self.handle, 'callback_query':
+    #             self.on_callback_query}).run_as_thread()
 
-    def handle(self, msg):
-        # print(msg)
-        content_type, chat_type, chat_id = telepot.glance(msg, flavor="chat")
-        # self.chat_id = chat_id
-        # print(content_type)
-        # chat_id = msg['chat']['id']
-        nameuser = msg['chat']['first_name']
-        print("Telegram Nome User:", nameuser)
-        if content_type != 'text':
-            self.telegram_bot.sendMessage(chat_id, 'Ammesso solo TESTO')
-            return
-        command = msg['text']
-        print("telegram_bot Command:", command)
-
-        if command == '/INFO':
-            self.telegram_bot.sendMessage(chat_id, """
-Telegram Bot per Domoticz
-Interfaccia per intergire con DL485 Board,
-schede per la Domotica su BUS RS485.
-Autori: Luca e Daniele
-Info su www.domocontrol.info/domocontrol-it/domotica
-            """)
-            self.telegram_bot.sendMessage(chat_id, """Comandi disponibili:
-    /INFO (informazioni)
-    /BOARD (info board presenti)
-    /TYPE_BOARD (caratteristiche Board)
-
-            """)
-
-        elif command == '/BOARD':
-            res = ''
-            for v in self.status:
-                # print(v, self.status[v], self.status[v]['name'])
-                res += '/BOARD{:<2} {}\n'.format(v, self.status[v]['name'])
-            self.telegram_bot.sendMessage(chat_id, f'Board presenti: \n{res}')
-
-        elif command == '/BOARD_TYPE':
-            for board_id in self.get_board_type.keys():
-                msg = "/BOARD_TYPE_{}".format(board_id)
-                self.telegram_bot.sendMessage(chat_id, msg)
-
-        elif '/BOARD_TYPE_' in command:
-            board_id = int(command[12:])
-            msg = f"/BOARD_TYPE \n /BOARD_ID_{board_id}\n"
-            msg += f"Board Type: \
-                {self.get_board_type[board_id]['board_type']}\n"
-            msg += f"Data Firmware: \
-                {self.get_board_type[board_id]['data_firmware']}\n"
-            msg += f"I/O Numbers: \
-                {self.get_board_type[board_id]['io_number']}\n"
-            msg += f"I2C: {self.get_board_type[board_id]['i2c']}\n"
-            msg += f"One Wire: {self.get_board_type[board_id]['onewire']}\n"
-            msg += f"PLC: {self.get_board_type[board_id]['plc']}\n"
-            msg += f"Power On: {self.get_board_type[board_id]['power_on']}\n"
-            msg += f"PWM: {self.get_board_type[board_id]['pwm']}\n"
-            msg += f"RFID: {self.get_board_type[board_id]['rfid']}\n"
-            msg += f"PRO: {self.get_board_type[board_id]['protection']}\n"
-            # print(self.get_board_type[board_id])
-            self.telegram_bot.sendMessage(chat_id, msg)
-
-        elif '/BOARD' in command:  # MOstra board presenti sul bus
-            # print(command)
-            bid = int(command[6:])
-            res = 'I/O della Board {}\n'.format(command)
-            # lendict = len(self.mapiotype[bid])
-            for n in self.mapiotype[bid]:
-                # pprint(self.mapiotype[bid][n])
-                # pprint(self.status[bid]['io'])
-                # dtype = self.mapiotype[bid][n]['dtype']
-                name = self.mapiotype[bid][n]['name']
-                logic_io = int(self.mapiotype[bid][n]['logic_io'])
-                value = self.status[bid]['io'][logic_io - 1]
-                device_type = self.mapiotype[bid][n]['device_type']
-                # print(command, bid, logic_io, name, value)
-                add_slash = ' '
-                if device_type in ['DIGITAL_OUT']:
-                    value &= 1
-                    add_slash = '/'
-                res += f'{add_slash}{bid}_{logic_io} {name} {value}\n'
-            self.telegram_bot.sendMessage(chat_id, res)
-
-        elif '_' in command and '/' in command:  # Setta I/O
-            # print(command)
-            bl = command[1:].split("_")
-            bid = int(bl[0])
-            logic_io = int(bl[1])
-            value = self.status[bid]['io'][logic_io - 1] & 1
-            value_new = 1 - value
-            res = "/BOARD{} : Cambia il valore dell'uscita\n".format(bid)
-            res += '/{}_{}  {} => {}'.format(bid, logic_io, value, value_new)
-            cmd = self.writeIO(bid, logic_io, [value_new])
-            # print(cmd)
-            self.TXmsg.append(cmd)
-            self.telegram_bot.sendMessage(chat_id, res)
-
-        elif '_' in command:  # Setta I/O
-            # print(command)
-            board_id, logic_io = command[1:].split('_')
-            board_id = int(board_id)
-            logic_io = int(logic_io)
-            # print(board_id, logic_io)
-            pprint(self.mapiotype[board_id][logic_io])
-
-            keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text='Press me', callback_data='press')],
-                ])
-            self.telegram_bot.sendMessage(chat_id, '-', reply_markup=keyboard)
-
-        # elif command == '/R':
-        #     self.telegram_bot.sendMessage(
-        #       chat_id, 'Leggi il valore di un I/O - Da Fare')
-        # elif command == '/S':
-        #     self.telegram_bot.sendMessage(
-        #       chat_id, 'Scrivi il valore di un I/O - Da Fare')
-        else:
-            self.telegram_bot.sendMessage(chat_id, """commandi disponibili:
-    /INFO (informazioni)
-    /BOARD (info board presenti)
-    /BOARD_TYPE (info type board)
-
-            """)
-
-    def on_callback_query(self, msg):
-        query_id, from_id, query_data = telepot.glance(
-            msg, flavor='callback_query')
-        print('Callback Query:', query_id, from_id, query_data)
-        self.telegram_bot.answerCallbackQuery(query_id, text="da completare")
-
-    def signal_handler(self, sig, frame):
-        print('\n================= You pressed Ctrl+C! ====================')
-        sys.exit(0)
+#     def handle(self, msg):
+#         # print(msg)
+#         content_type, chat_type, chat_id = telepot.glance(msg, flavor="chat")
+#         # self.chat_id = chat_id
+#         # print(content_type)
+#         # chat_id = msg['chat']['id']
+#         nameuser = msg['chat']['first_name']
+#         print("Telegram Nome User:", nameuser)
+#         if content_type != 'text':
+#             self.telegram_bot.sendMessage(chat_id, 'Ammesso solo TESTO')
+#             return
+#         command = msg['text']
+#         print("telegram_bot Command:", command)
+#
+#         if command == '/INFO':
+#             self.telegram_bot.sendMessage(chat_id, """
+# Telegram Bot per Domoticz
+# Interfaccia per intergire con DL485 Board,
+# schede per la Domotica su BUS RS485.
+# Autori: Luca e Daniele
+# Info su www.domocontrol.info/domocontrol-it/domotica
+#             """)
+#             self.telegram_bot.sendMessage(chat_id, """Comandi disponibili:
+#     /INFO (informazioni)
+#     /BOARD (info board presenti)
+#     /TYPE_BOARD (caratteristiche Board)
+#
+#             """)
+#
+#         elif command == '/BOARD':
+#             res = ''
+#             for v in self.status:
+#                 # print(v, self.status[v], self.status[v]['name'])
+#                 res += '/BOARD{:<2} {}\n'.format(v, self.status[v]['name'])
+#             self.telegram_bot.sendMessage(chat_id, f'Board presenti: \n{res}')
+#
+#         elif command == '/BOARD_TYPE':
+#             for board_id in self.get_board_type.keys():
+#                 msg = "/BOARD_TYPE_{}".format(board_id)
+#                 self.telegram_bot.sendMessage(chat_id, msg)
+#
+#         elif '/BOARD_TYPE_' in command:
+#             board_id = int(command[12:])
+#             msg = f"/BOARD_TYPE \n /BOARD_ID_{board_id}\n"
+#             msg += f"Board Type: \
+#                 {self.get_board_type[board_id]['board_type']}\n"
+#             msg += f"Data Firmware: \
+#                 {self.get_board_type[board_id]['data_firmware']}\n"
+#             msg += f"I/O Numbers: \
+#                 {self.get_board_type[board_id]['io_number']}\n"
+#             msg += f"I2C: {self.get_board_type[board_id]['i2c']}\n"
+#             msg += f"One Wire: {self.get_board_type[board_id]['onewire']}\n"
+#             msg += f"PLC: {self.get_board_type[board_id]['plc']}\n"
+#             msg += f"Power On: {self.get_board_type[board_id]['power_on']}\n"
+#             msg += f"PWM: {self.get_board_type[board_id]['pwm']}\n"
+#             msg += f"RFID: {self.get_board_type[board_id]['rfid']}\n"
+#             msg += f"PRO: {self.get_board_type[board_id]['protection']}\n"
+#             # print(self.get_board_type[board_id])
+#             self.telegram_bot.sendMessage(chat_id, msg)
+#
+#         elif '/BOARD' in command:  # MOstra board presenti sul bus
+#             # print(command)
+#             bid = int(command[6:])
+#             res = 'I/O della Board {}\n'.format(command)
+#             # lendict = len(self.mapiotype[bid])
+#             for n in self.mapiotype[bid]:
+#                 # pprint(self.mapiotype[bid][n])
+#                 # pprint(self.status[bid]['io'])
+#                 # dtype = self.mapiotype[bid][n]['dtype']
+#                 name = self.mapiotype[bid][n]['name']
+#                 logic_io = int(self.mapiotype[bid][n]['logic_io'])
+#                 value = self.status[bid]['io'][logic_io - 1]
+#                 device_type = self.mapiotype[bid][n]['device_type']
+#                 # print(command, bid, logic_io, name, value)
+#                 add_slash = ' '
+#                 if device_type in ['DIGITAL_OUT']:
+#                     value &= 1
+#                     add_slash = '/'
+#                 res += f'{add_slash}{bid}_{logic_io} {name} {value}\n'
+#             self.telegram_bot.sendMessage(chat_id, res)
+#
+#         elif '_' in command and '/' in command:  # Setta I/O
+#             # print(command)
+#             bl = command[1:].split("_")
+#             bid = int(bl[0])
+#             logic_io = int(bl[1])
+#             value = self.status[bid]['io'][logic_io - 1] & 1
+#             value_new = 1 - value
+#             res = "/BOARD{} : Cambia il valore dell'uscita\n".format(bid)
+#             res += '/{}_{}  {} => {}'.format(bid, logic_io, value, value_new)
+#             cmd = self.writeIO(bid, logic_io, [value_new])
+#             # print(cmd)
+#             self.TXmsg.append(cmd)
+#             self.telegram_bot.sendMessage(chat_id, res)
+#
+#         elif '_' in command:  # Setta I/O
+#             # print(command)
+#             board_id, logic_io = command[1:].split('_')
+#             board_id = int(board_id)
+#             logic_io = int(logic_io)
+#             # print(board_id, logic_io)
+#             pprint(self.mapiotype[board_id][logic_io])
+#
+#             keyboard = InlineKeyboardMarkup(inline_keyboard=[
+#                 [InlineKeyboardButton(text='Press me', callback_data='press')],
+#                 ])
+#             self.telegram_bot.sendMessage(chat_id, '-', reply_markup=keyboard)
+#
+#         # elif command == '/R':
+#         #     self.telegram_bot.sendMessage(
+#         #       chat_id, 'Leggi il valore di un I/O - Da Fare')
+#         # elif command == '/S':
+#         #     self.telegram_bot.sendMessage(
+#         #       chat_id, 'Scrivi il valore di un I/O - Da Fare')
+#         else:
+#             self.telegram_bot.sendMessage(chat_id, """commandi disponibili:
+#     /INFO (informazioni)
+#     /BOARD (info board presenti)
+#     /BOARD_TYPE (info type board)
+#
+#             """)
+#
+#     def on_callback_query(self, msg):
+#         query_id, from_id, query_data = telepot.glance(
+#             msg, flavor='callback_query')
+#         print('Callback Query:', query_id, from_id, query_data)
+#         self.telegram_bot.answerCallbackQuery(query_id, text="da completare")
+#
+#     def signal_handler(self, sig, frame):
+#         print('\n================= You pressed Ctrl+C! ====================')
+#         sys.exit(0)
 
     def helpCommand(self):
         msg = """
@@ -2911,10 +2961,10 @@ if __name__ == '__main__':
     if len(sys.argv) == 3:
         try:
             print_bus = int(sys.argv[2])
-        except:
-            pass
-
-    if len(sys.argv) < 2:
+        except ValueError as ve:
+            print("The third paramenter must be NUMBER", ve)
+            sys.exit()
+    elif len(sys.argv) < 2:
         logstate = 0
         print("""Avvio programma DL485P \n
         -------------------------------------
@@ -2951,7 +3001,7 @@ if __name__ == '__main__':
         res = b.Connection.read()
 
     while 1:
-        signal.signal(signal.SIGINT, b.signal_handler)
+        # signal.signal(signal.SIGINT, b.signal_handler)
         rxbytes = b.Connection.read()  # legge uno o piu caratteri da seriale
 
         if not rxbytes:  # seriale senza caratteri
@@ -2966,7 +3016,7 @@ if __name__ == '__main__':
             #     print("-------------------"*6, b.RXtrama)
 
             if len(b.RXtrama) >= print_bus:  # stampa stringa a TOT caratteri
-                log.writelog(b.RXtrama, 'BLUE')
+                log.writelog(b.RXtrama, 'GREEN')
 
             b.arrivatatrama()
             b.RXtrama = []  # Azzera trama ricezione
