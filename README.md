@@ -121,6 +121,40 @@ git clone https://github.com/lucasub/DL485_BUS_2.git
 cd ~/DL485_BUS_2
 ```
 
+3A. Creating the Python Virtual Environment (only first time):
+```
+python3 -m venv .    
+```
+
+3B. Activated the Virtual Environment
+```
+./source/bin/activate
+```
+
+3C. Install all required dependencies (only after first installation)
+```
+pip install serial colorama paho.mqtt telepot
+
+```
+
+3D. Enable UART /dev/ttyAMA0 on Rasberry Pi by editing file cmdline.txt and config.txt
+```
+sudo nano /boot/firmware/cmdline.txt and remove console=serial0,115200
+sudo nano /boot/firmware/config.txt and make of this 4 last lines:
+
+[all]
+enable_uart=1
+dtoverlay=w1-gpio
+dtoverlay=disabilita-bt
+dtoverlay=pi3-miniuart-bt
+```
+Save and reboot. Then check that exist /dev/ttyAMA0 device
+
+Change permission of /dev/ttyAMA0:
+```
+sudo chmod 666 /dev/ttyAMA0
+```
+
 4. Inside there are some files including:
 - dl485p.py -> python3 file to node management
 - config.json -> contains all the configuration of the boards to be controlled
@@ -133,9 +167,11 @@ cd ~/DL485_BUS_2
 
 ### Setting the configuration file config.json  
 
-See at this address <a href="https://wiki.my-tek.it/doku.php"> Domocontrol Wiki </a> 
+See at this address <a href="https://wiki.elettro.info/doku.php"> Domocontrol Wiki </a> 
 
 ### Execution of the program 
+
+Plese configure serial Port and Baunrate on config.json
 
 From terminal:
 
